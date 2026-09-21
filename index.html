@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion budget</title>
+  <meta name="description" content="Suivez vos charges, estimez vos économies possibles et simulez le rendement de votre épargne avec les taux de votre choix (2 % et 10 % par défaut).">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <h1 class="brand">Gestion budget</h1>
+    <nav class="nav" aria-label="Sections">
+      <a href="#revenus">Revenus</a>
+      <a href="#charges">Charges</a>
+      <a href="#economies">Économies</a>
+      <a href="#rendement">Rendement</a>
+      <a href="#synthese">Synthèse</a>
+    </nav>
+    <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+      <span>Thème</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- Résumé -->
+  <section class="kpis" aria-label="Résumé" aria-live="polite">
+    <article class="tile">
+      <p class="tile__label">Revenus par mois</p>
+      <p class="tile__value" id="kpiRevenus">–</p>
+      <p class="tile__sub" id="kpiRevenusSub">&nbsp;</p>
+    </article>
+    <article class="tile">
+      <p class="tile__label">Charges par mois</p>
+      <p class="tile__value" id="kpiMensuel">–</p>
+      <p class="tile__sub" id="kpiNbLignes">&nbsp;</p>
+    </article>
+    <article class="tile">
+      <p class="tile__label">Solde par mois (revenus − charges)</p>
+      <p class="tile__value" id="kpiSolde">–</p>
+      <p class="tile__sub" id="kpiSoldeSub">&nbsp;</p>
+    </article>
+    <article class="tile">
+      <p class="tile__label">Charges par an</p>
+      <p class="tile__value" id="kpiAnnuel">–</p>
+      <p class="tile__sub">mensuel × 12</p>
+    </article>
+    <article class="tile">
+      <p class="tile__label">Économie possible par an</p>
+      <p class="tile__value tile__value--good" id="kpiEco">–</p>
+      <p class="tile__sub" id="kpiEcoSub">&nbsp;</p>
+    </article>
+    <article class="tile">
+      <p class="tile__label" id="kpiCapLabel">Capital placé</p>
+      <p class="tile__value" id="kpiCap">–</p>
+      <p class="tile__sub" id="kpiCapSub">&nbsp;</p>
+    </article>
+  </section>
+
+  <!-- 1. Revenus -->
+  <section id="revenus" class="card" aria-labelledby="h-rev">
+    <div class="card__head">
+      <span class="step">1</span>
+      <div>
+        <h2 id="h-rev">Revenus mensuels et annuels</h2>
+        <p class="lead">Ajoutez vos rentrées d'argent : salaire ou aides. Le montant annuel est calculé automatiquement (mensuel × 12).</p>
+      </div>
+    </div>
+
+    <form id="revenuForm" class="form-row" autocomplete="off">
+      <label>Catégorie
+        <select id="rCat"></select>
+      </label>
+      <label class="grow">Libellé
+        <input id="rNom" type="text" maxlength="60" placeholder="Ex. Salaire net, Aide au logement" required>
+      </label>
+      <label>Montant mensuel (€)
+        <input id="rMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+      </label>
+      <button class="btn" type="submit">Ajouter</button>
+    </form>
+
+    <div class="table-wrap">
+      <table class="table" id="revenusTable">
+        <caption class="sr-only">Liste des revenus</caption>
+        <thead>
+          <tr>
+            <th scope="col">Libellé</th>
+            <th scope="col">Catégorie</th>
+            <th scope="col" class="num">Mensuel (€)</th>
+            <th scope="col" class="num">Annuel (× 12)</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="revenusBody"></tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="2">Total</th>
+            <td class="num" id="totRevMensuel">–</td>
+            <td class="num" id="totRevAnnuel">–</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <h3 class="h3 h3--gap">Solde : ce qu'il vous reste après vos charges</h3>
+    <div class="mini-kpis" aria-live="polite">
+      <div class="mini"><span class="mini__label">Revenus par mois</span><strong id="soldeRev">–</strong></div>
+      <div class="mini"><span class="mini__label">Charges par mois</span><strong id="soldeCharges">–</strong></div>
+      <div class="mini"><span class="mini__label">Solde par mois</span><strong id="soldeMois">–</strong></div>
+      <div class="mini"><span class="mini__label">Solde par an (× 12)</span><strong id="soldeAn">–</strong></div>
+    </div>
+    <p class="preview" id="soldeMsg" aria-live="polite">&nbsp;</p>
+  </section>
+
+  <!-- 2. Charges -->
+  <section id="charges" class="card" aria-labelledby="h-charges">
+    <div class="card__head">
+      <span class="step">2</span>
+      <div>
+        <h2 id="h-charges">Charges mensuelles et annuelles</h2>
+        <p class="lead">Saisissez vos charges par mois. Le montant annuel est calculé automatiquement (mensuel × 12).</p>
+      </div>
+    </div>
+
+    <form id="chargeForm" class="form-row" autocomplete="off">
+      <label>Catégorie
+        <select id="cCat"></select>
+      </label>
+      <label class="grow">Libellé
+        <input id="cNom" type="text" maxlength="60" placeholder="Ex. Électricité" required>
+      </label>
+      <label>Montant mensuel (€)
+        <input id="cMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+      </label>
+      <button class="btn" type="submit">Ajouter</button>
+    </form>
+
+    <div class="table-wrap">
+      <table class="table" id="chargesTable">
+        <caption class="sr-only">Liste des charges</caption>
+        <thead>
+          <tr>
+            <th scope="col">Libellé</th>
+            <th scope="col">Catégorie</th>
+            <th scope="col" class="num">Mensuel (€)</th>
+            <th scope="col" class="num">Annuel (× 12)</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="chargesBody"></tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" colspan="2">Total</th>
+            <td class="num" id="totMensuel">–</td>
+            <td class="num" id="totAnnuel">–</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 class="h3">Répartition par catégorie</h3>
+        <div id="breakdown" class="breakdown"></div>
+      </div>
+      <div class="actions">
+        <button id="btnExample" class="btn btn--ghost" type="button">Recharger l'exemple</button>
+        <button id="btnClear" class="btn btn--ghost" type="button">Tout effacer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Économies potentielles -->
+  <section id="economies" class="card" aria-labelledby="h-eco">
+    <div class="card__head">
+      <span class="step">3</span>
+      <div>
+        <h2 id="h-eco">Économie potentielle</h2>
+        <p class="lead">Et si vous remplaciez une ligne (facture, courses, loyer…) par une autre option ? Comparez le coût actuel au nouveau coût.</p>
+      </div>
+    </div>
+
+    <form id="scForm" class="form-row" autocomplete="off">
+      <label>Ligne à remplacer
+        <select id="sLigne"></select>
+      </label>
+      <label class="grow">Option alternative
+        <input id="sOption" type="text" maxlength="60" placeholder="Ex. Fournisseur moins cher" required>
+      </label>
+      <label>Nouveau montant mensuel (€)
+        <input id="sMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+      </label>
+      <button class="btn" type="submit">Ajouter la comparaison</button>
+    </form>
+    <p class="preview" id="sPreview" aria-live="polite">&nbsp;</p>
+
+    <div class="mini-kpis" aria-live="polite">
+      <div class="mini"><span class="mini__label">Économie par mois</span><strong id="ecoMois">–</strong></div>
+      <div class="mini"><span class="mini__label">Économie par an (× 12)</span><strong id="ecoAn" class="good">–</strong></div>
+      <div class="mini"><span class="mini__label">Part de vos charges</span><strong id="ecoPart">–</strong></div>
+      <div class="mini"><span class="mini__label">Nouveau total mensuel</span><strong id="ecoNouveau">–</strong></div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table" id="scTable">
+        <caption class="sr-only">Comparaisons d'options</caption>
+        <thead>
+          <tr>
+            <th scope="col">Ligne</th>
+            <th scope="col">Option alternative</th>
+            <th scope="col" class="num">Actuel / mois</th>
+            <th scope="col" class="num">Nouveau / mois</th>
+            <th scope="col" class="num">Écart / mois</th>
+            <th scope="col" class="num">Écart / an (× 12)</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="scBody"></tbody>
+      </table>
+    </div>
+    <p class="note">Si plusieurs options concernent la même ligne, seule la plus économique est comptée dans les totaux.</p>
+  </section>
+
+  <!-- 4. Rendement -->
+  <section id="rendement" class="card" aria-labelledby="h-rend">
+    <div class="card__head">
+      <span class="step">4</span>
+      <div>
+        <h2 id="h-rend">Gain par rendement : 2 % ou 10 %</h2>
+        <p class="lead">Simulez ce que rapporte votre épargne selon deux rendements annuels que vous choisissez (2 % et 10 % par défaut), et consultez le gain de l'année de votre choix.</p>
+      </div>
+    </div>
+
+    <div class="form-row" id="yieldForm">
+      <label>Capital de départ (€)
+        <input id="yCapital" type="number" min="0" step="1" inputmode="decimal">
+      </label>
+      <label>Épargne mensuelle (€)
+        <input id="yVersement" type="number" min="0" step="1" inputmode="decimal">
+      </label>
+      <label>Durée (années)
+        <input id="yAnnees" type="number" min="1" max="50" step="1" inputmode="numeric">
+      </label>
+      <label>Rendement 1 (% par an)
+        <input id="yTaux1" type="number" min="0" max="100" step="0.1" inputmode="decimal">
+      </label>
+      <label>Rendement 2 (% par an)
+        <input id="yTaux2" type="number" min="0" max="100" step="0.1" inputmode="decimal">
+      </label>
+      <label>Année du gain affiché
+        <input id="yAnneeGain" type="number" min="1" max="50" step="1" inputmode="numeric">
+      </label>
+      <button id="btnUseEco" class="btn btn--ghost" type="button">Utiliser mon économie mensuelle</button>
+    </div>
+
+    <div class="results" id="yieldCards"></div>
+
+    <div class="chart-head">
+      <h3 class="h3">Évolution du capital</h3>
+      <ul class="legend" id="legend" aria-label="Légende"></ul>
+    </div>
+    <div class="chart-wrap">
+      <div id="chart"></div>
+      <div id="chartTip" class="tip" hidden></div>
+    </div>
+
+    <details class="details">
+      <summary>Voir le détail année par année</summary>
+      <div class="table-wrap">
+        <table class="table table--compact" id="yearTable">
+          <caption class="sr-only">Capital année par année</caption>
+          <thead>
+            <tr>
+              <th scope="col">Année</th>
+              <th scope="col" class="num">Total versé</th>
+              <th scope="col" class="num" id="thCapLow">Capital à 2 %</th>
+              <th scope="col" class="num" id="thGainLow">Gain à 2 %</th>
+              <th scope="col" class="num" id="thCapHigh">Capital à 10 %</th>
+              <th scope="col" class="num" id="thGainHigh">Gain à 10 %</th>
+            </tr>
+          </thead>
+          <tbody id="yearBody"></tbody>
+        </table>
+      </div>
+    </details>
+
+    <p class="note">Hypothèses : rendement annuel constant, intérêts composés chaque mois, versement en fin de mois. Un rendement élevé n'est pas garanti et implique un risque de perte ; le « gain de l'année » est l'intérêt gagné pendant cette seule année (le « gain » du résultat est cumulé sur toute la durée) ; ce simulateur est un outil d'illustration, pas un conseil financier.</p>
+  </section>
+
+  <!-- 5. Synthèse -->
+  <section id="synthese" class="card" aria-labelledby="h-syn">
+    <div class="card__head">
+      <span class="step">5</span>
+      <div>
+        <h2 id="h-syn">Synthèse</h2>
+        <p class="lead">Le bilan de votre budget en un coup d'œil : où va votre argent, puis chaque ligne en barres.</p>
+      </div>
+    </div>
+
+    <div class="syn-tools">
+      <p class="preview" id="synMsg" aria-live="polite">&nbsp;</p>
+      <div class="seg" role="group" aria-label="Période affichée">
+        <button type="button" id="viewMois" aria-pressed="true">Par mois</button>
+        <button type="button" id="viewAn" aria-pressed="false">Par an (× 12)</button>
+      </div>
+    </div>
+
+    <div class="syn-grid">
+      <div>
+        <h3 class="h3">Où va votre argent ?</h3>
+        <div class="pie-box">
+          <div class="pie-wrap" id="pieWrap">
+            <div id="pie"></div>
+            <div id="pieTip" class="tip" hidden></div>
+          </div>
+          <ul class="plegend" id="pieLegend" aria-label="Légende du camembert"></ul>
+        </div>
+        <p class="note" id="pieNote"></p>
+      </div>
+      <div>
+        <h3 class="h3">Bilan</h3>
+        <dl class="bilan" id="bilan"></dl>
+      </div>
+    </div>
+
+    <div class="chart-head chart-head--gap">
+      <h3 class="h3">Chaque ligne en barres</h3>
+      <ul class="legend" id="barLegend" aria-label="Légende des barres"></ul>
+    </div>
+    <div class="chart-scroll">
+      <div class="chart-inner">
+        <div id="barChart"></div>
+        <div id="barTip" class="tip" hidden></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap foot">
+  <p>Vos données sont enregistrées uniquement dans votre navigateur.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
