@@ -6,22 +6,23 @@
 
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --muted: #898781;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
-  --wash: rgba(11, 11, 11, 0.04);
+  /* thème clair : beige doux plutôt que blanc éclatant */
+  --page: #ece6d8;
+  --surface: #f5f0e4;
+  --ink: #2a251c;
+  --ink-2: #5a5346;
+  --muted: #7a7161;
+  --grid: #ddd5c3;
+  --axis: #c4b9a3;
+  --border: rgba(60, 45, 20, 0.13);
+  --wash: rgba(60, 45, 20, 0.05);
   --accent: #256abf;
   --accent-ink: #ffffff;
   --series-1: #2a78d6; /* rendement 2 %  */
   --series-2: #eb6834; /* rendement 10 % */
   --good: #006300;
   --bad: #c22f2f;
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04);
+  --shadow: 0 1px 2px rgba(60, 45, 20, 0.06);
   /* couleurs des catégories (identiques dans le camembert et les barres) */
   --cat-salaire: #1baf7a;
   --cat-aide: #008300;
@@ -33,7 +34,7 @@
   --cat-activite: #9a6a3a;
   --cat-plaisir: #7a9a0e;
   --cat-autre: #e34948;
-  --neutral-fill: #d4d2c9;
+  --neutral-fill: #d6ccb6;
 }
 
 @media (prefers-color-scheme: dark) {
