@@ -1,0 +1,8 @@
+v0.00.1 = Prototype
+v0.00.2 = renamme en gestion de budget 
+v0.00.3 = mode dark / light theme
+v0.00.4 = patchNote + next Idea
+
+** Next idea **
+calcule rendement 
+ajout responsive
