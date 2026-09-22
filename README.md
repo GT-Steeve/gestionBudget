@@ -41,3 +41,7 @@ HTML, CSS et JavaScript « vanilla », sans framework ni étape de build.
 - `index.html` — structure de la page
 - `style.css` — thème (clair/sombre), mise en page, responsive
 - `script.js` — logique de l'application (calculs, rendu, stockage local)
+
+## Licence
+
+Distribué sous licence [MIT](LICENSE).

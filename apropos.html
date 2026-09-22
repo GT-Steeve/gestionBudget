@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>À propos · Gestion budget</title>
+  <meta name="description" content="Ce qu'est Gestion budget, ses limites (estimation uniquement, inflation et fiscalité non prises en compte) et la confidentialité de vos données.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gt-steeve.github.io/gestionBudget/apropos.html">
+  <meta property="og:site_name" content="Gestion budget">
+  <meta property="og:title" content="À propos · Gestion budget">
+  <meta property="og:description" content="Ce qu'est Gestion budget, ses limites (estimation uniquement, inflation et fiscalité non prises en compte) et la confidentialité de vos données.">
+  <meta property="og:image" content="https://gt-steeve.github.io/gestionBudget/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="À propos · Gestion budget">
+  <meta name="twitter:description" content="Ce qu'est Gestion budget, ses limites (estimation uniquement, inflation et fiscalité non prises en compte) et la confidentialité de vos données.">
+  <meta name="twitter:image" content="https://gt-steeve.github.io/gestionBudget/og-image.png">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <h1 class="brand">Gestion budget</h1>
+    <button id="menuBtn" class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="siteMenu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+        <path class="menu-icon menu-icon--bars" d="M3 5.5h14M3 10h14M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="menu-icon menu-icon--close" d="M4.5 4.5l11 11M15.5 4.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div id="siteMenu" class="site-menu">
+      <nav class="nav" aria-label="Sections">
+        <a href="index.html#revenus">Revenus</a>
+        <a href="index.html#charges">Charges</a>
+        <a href="index.html#economies">Économies</a>
+        <a href="index.html#rendement">Rendement</a>
+        <a href="index.html#synthese">Graphique</a>
+        <a href="apropos.html" aria-current="page">À propos</a>
+      </nav>
+      <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+        <span>Thème</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="card">
+    <div class="card__head">
+      <div>
+        <h2 class="about-title">À propos</h2>
+        <p class="lead">Un tableau de bord simple pour suivre ses revenus, ses charges et estimer ses économies possibles — sans compte, sans serveur.</p>
+      </div>
+    </div>
+
+    <h3 class="h3 h3--gap">Ce que l'outil ne fait pas</h3>
+    <p class="about-text">
+      Gestion budget est un simple outil d'estimation : il ne tient pas compte d'autres paramètres
+      comme l'inflation, la fiscalité ou les frais, et ne remplace pas un conseil financier.
+      Les simulations de rendement supposent un taux annuel constant, alors qu'un placement réel
+      varie d'une année à l'autre et peut aussi perdre de la valeur.
+    </p>
+
+    <h3 class="h3 h3--gap">Vos données</h3>
+    <p class="about-text">
+      Rien n'est envoyé à un serveur : tout ce que vous saisissez reste enregistré localement,
+      dans le stockage de votre navigateur, sur cet appareil.
+    </p>
+  </section>
+
+</main>
+
+<footer class="wrap foot">
+  <p>Vos données sont enregistrées uniquement dans votre navigateur. Pour tout effacer, rendez-vous sur la <a href="index.html" class="link-btn">page principale</a>.</p>
+</footer>
+
+<script src="nav.js"></script>
+</body>
+</html>

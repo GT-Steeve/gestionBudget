@@ -234,6 +234,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .h3 { font-size: 14px; font-weight: 650; color: var(--ink); }
 .h3--gap { margin-top: 24px; }
 .note { font-size: 13px; color: var(--muted); margin-top: 14px; max-width: 80ch; }
+.about-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin-top: 8px; max-width: 70ch; }
+.about-title { text-align: center; }
 
 /* ---------- Tables ---------- */
 
@@ -397,6 +399,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* ---------- Footer ---------- */
 
 .foot { padding-top: 8px; padding-bottom: 40px; font-size: 13px; color: var(--muted); text-align: center; }
+.foot p + p { margin-top: 6px; }
 .link-btn {
   font: inherit; color: var(--accent); background: none; border: 0; padding: 0;
   text-decoration: underline; cursor: pointer;

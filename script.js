@@ -11,7 +11,6 @@
   /* ---------- Constantes ---------- */
 
   const STORAGE_KEY = 'gestion-epargne-v1';
-  const THEME_KEY = 'gestion-epargne-theme';
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide'];
   const HINTS = {
@@ -1159,63 +1158,6 @@
   }
 
   /* ==========================================================================
-     Menu mobile (hamburger)
-     ========================================================================== */
-
-  function initMenu() {
-    const btn = $('#menuBtn');
-    const menu = $('#siteMenu');
-    if (!btn || !menu) return;
-
-    const close = () => {
-      menu.classList.remove('is-open');
-      btn.setAttribute('aria-expanded', 'false');
-    };
-    const open = () => {
-      menu.classList.add('is-open');
-      btn.setAttribute('aria-expanded', 'true');
-    };
-
-    btn.addEventListener('click', () => {
-      if (menu.classList.contains('is-open')) close(); else open();
-    });
-    // Referme le menu une fois un lien de section (ou le bouton thème) activé.
-    menu.addEventListener('click', (e) => {
-      if (e.target.closest('a, button')) close();
-    });
-    document.addEventListener('click', (e) => {
-      if (!menu.classList.contains('is-open')) return;
-      if (menu.contains(e.target) || btn.contains(e.target)) return;
-      close();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && menu.classList.contains('is-open')) {
-        close();
-        btn.focus();
-      }
-    });
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 640) close();
-    });
-  }
-
-  /* ==========================================================================
-     Thème
-     ========================================================================== */
-
-  function initTheme() {
-    const saved = store.get(THEME_KEY);
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-    $('#themeBtn').addEventListener('click', () => {
-      const current = document.documentElement.dataset.theme
-        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      store.set(THEME_KEY, next);
-    });
-  }
-
-  /* ==========================================================================
      Démarrage
      ========================================================================== */
 
@@ -1232,8 +1174,6 @@
   }
 
   function init() {
-    initMenu();
-    initTheme();
     renderLineForms();
     bindLines();
     bindScenarios();
