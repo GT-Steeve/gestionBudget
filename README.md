@@ -5,6 +5,12 @@ potentielles, simulation de rendement d'épargne et synthèse visuelle.
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
+> **Avertissement :** cet outil ne fournit qu'une **estimation**. Il ne tient
+> pas compte de nombreux paramètres réels (inflation, fiscalité, frais…) et
+> les simulations de rendement supposent un taux annuel constant, ce qui
+> n'est jamais le cas d'un placement réel. Il ne remplace pas un conseil
+> financier.
+
 ## Fonctionnalités
 
 - **Revenus & charges** — saisie par catégorie, totaux mensuels et annuels

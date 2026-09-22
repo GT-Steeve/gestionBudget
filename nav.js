@@ -73,6 +73,26 @@
     });
   }
 
+  /* ---------- Bouton « Pour tout effacer » du footer ----------
+     Sur index.html, script.js gère déjà ce bouton (présence de #revenusBody) :
+     on ne s'en occupe que sur les pages qui n'ont pas le tableau de bord (ex. À propos). */
+
+  function initClearFooter() {
+    const btn = $('#btnClearFooter');
+    if (!btn || $('#revenusBody')) return;
+    const STORAGE_KEY = 'gestion-epargne-v1';
+    btn.addEventListener('click', () => {
+      if (!window.confirm('Supprimer tous les revenus, charges et comparaisons ?')) return;
+      const saved = store.get(STORAGE_KEY) || {};
+      saved.revenus = [];
+      saved.charges = [];
+      saved.scenarios = [];
+      store.set(STORAGE_KEY, saved);
+      location.href = 'index.html';
+    });
+  }
+
   initMenu();
   initTheme();
+  initClearFooter();
 })();

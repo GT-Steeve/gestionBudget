@@ -6,5 +6,6 @@ v0.00.5 = rendement modifiable + polish
 v0.00.6 = responsive mobile / tablette
 v0.00.7 = balise Open Graph
 v1.00.0 = Page A propos
+v1.00.1 = polish page a propos
 
 ** Next idea **
