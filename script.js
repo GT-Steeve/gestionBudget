@@ -199,11 +199,13 @@
   const LINE_TYPES = {
     revenus: {
       body: '#revenusBody', cats: sortAlpha(REV_CATEGORIES),
-      empty: 'Aucun revenu pour le moment. Ajoutez votre première ligne ci-dessus.'
+      empty: 'Aucun revenu pour le moment. Ajoutez votre première ligne ci-dessus.',
+      wrap: '#revenusTableWrap', left: '#revenusScrollLeft', right: '#revenusScrollRight'
     },
     charges: {
       body: '#chargesBody', cats: sortAlpha(CATEGORIES),
-      empty: 'Aucune charge pour le moment. Ajoutez votre première ligne ci-dessus.'
+      empty: 'Aucune charge pour le moment. Ajoutez votre première ligne ci-dessus.',
+      wrap: '#chargesTableWrap', left: '#chargesScrollLeft', right: '#chargesScrollRight'
     }
   };
 
@@ -212,7 +214,7 @@
     $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
   }
 
-  const CLOSE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+  const TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7.5v4M9.5 7.5v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
 
   function renderLines(type) {
     const cfg = LINE_TYPES[type];
@@ -221,6 +223,7 @@
 
     if (!state[type].length) {
       body.append(h('tr', {}, h('td', { colspan: 5, class: 'empty' }, cfg.empty)));
+      updateScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
       return;
     }
 
@@ -254,7 +257,7 @@
       });
 
       const del = h('button', {
-        class: 'icon-btn', type: 'button', 'aria-label': `Supprimer ${c.nom}`, title: 'Supprimer',
+        class: 'icon-btn', type: 'button', 'aria-label': `Effacer ${c.nom}`, title: 'Effacer',
         onclick: () => {
           state[type] = state[type].filter((x) => x.id !== c.id);
           if (type === 'charges') state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
@@ -262,7 +265,7 @@
           refresh();
         }
       });
-      del.innerHTML = CLOSE_ICON;
+      del.innerHTML = TRASH_ICON;
 
       body.append(h('tr', {},
         h('td', {}, nameInput),
@@ -272,6 +275,7 @@
         h('td', { class: 'num' }, del)
       ));
     }
+    updateScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
   }
 
   /** Affiche un montant signé : vert si positif, rouge si négatif. */
@@ -346,7 +350,11 @@
     bindForm('revenus', { form: '#revenuForm', cat: '#rCat', nom: '#rNom', montant: '#rMontant' });
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
 
-    $('#btnClear').addEventListener('click', () => {
+    for (const cfg of Object.values(LINE_TYPES)) {
+      bindScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
+    }
+
+    const clearAll = () => {
       if (!window.confirm('Supprimer tous les revenus, charges et comparaisons ?')) return;
       state.revenus = [];
       state.charges = [];
@@ -354,7 +362,9 @@
       renderLines('revenus');
       renderLines('charges');
       refresh();
-    });
+    };
+    $('#btnClear').addEventListener('click', clearAll);
+    $('#btnClearFooter').addEventListener('click', clearAll);
   }
 
   /* ==========================================================================
@@ -411,6 +421,7 @@
     body.replaceChildren();
     if (!rows.length) {
       body.append(h('tr', {}, h('td', { colspan: 7, class: 'empty' }, 'Aucune comparaison. Choisissez une ligne, une option alternative et son nouveau montant.')));
+      updateScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
       return;
     }
 
@@ -437,10 +448,10 @@
       }, 'Appliquer');
 
       const del = h('button', {
-        class: 'icon-btn', type: 'button', 'aria-label': `Supprimer la comparaison ${sc.option}`, title: 'Supprimer',
+        class: 'icon-btn', type: 'button', 'aria-label': `Effacer la comparaison ${sc.option}`, title: 'Effacer',
         onclick: () => { state.scenarios = state.scenarios.filter((x) => x.id !== sc.id); refresh(); }
       });
-      del.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+      del.innerHTML = TRASH_ICON;
 
       body.append(h('tr', {},
         h('td', {}, charge.nom, h('span', { class: 'sub' }, charge.categorie)),
@@ -452,9 +463,11 @@
         h('td', { class: 'num' }, eco > 0 ? apply : null, del)
       ));
     }
+    updateScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
   }
 
   function bindScenarios() {
+    bindScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
     $('#scForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const chargeId = $('#sLigne').value;
@@ -1078,15 +1091,26 @@
     }
 
     box.append(svg);
-    updateBarScrollArrows();
+    updateScrollArrows($('#barScroll'), $('#barScrollLeft'), $('#barScrollRight'));
   }
 
-  /** Affiche/masque les flèches de défilement selon la position de scroll du graphique en barres. */
-  function updateBarScrollArrows() {
-    const el = $('#barScroll');
-    const canScroll = el.scrollWidth > el.clientWidth + 1;
-    $('#barScrollLeft').hidden = !canScroll || el.scrollLeft <= 0;
-    $('#barScrollRight').hidden = !canScroll || el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+  /** Affiche/masque une paire de flèches selon la position de scroll horizontal de leur conteneur. */
+  function updateScrollArrows(scrollEl, leftBtn, rightBtn) {
+    const canScroll = scrollEl.scrollWidth > scrollEl.clientWidth + 1;
+    leftBtn.hidden = !canScroll || scrollEl.scrollLeft <= 0;
+    rightBtn.hidden = !canScroll || scrollEl.scrollLeft >= scrollEl.scrollWidth - scrollEl.clientWidth - 1;
+  }
+
+  /** Relie une paire de flèches à leur conteneur défilant (clic = défile, scroll = rafraîchit l'affichage). */
+  function bindScrollArrows(scrollEl, leftBtn, rightBtn) {
+    updateScrollArrows(scrollEl, leftBtn, rightBtn);
+    scrollEl.addEventListener('scroll', () => updateScrollArrows(scrollEl, leftBtn, rightBtn));
+    leftBtn.addEventListener('click', () => {
+      scrollEl.scrollBy({ left: -scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
+    rightBtn.addEventListener('click', () => {
+      scrollEl.scrollBy({ left: scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
   }
 
   function bindSynthese() {
@@ -1095,13 +1119,7 @@
     $('#viewAn').addEventListener('click', () => setView('an'));
 
     const scrollEl = $('#barScroll');
-    scrollEl.addEventListener('scroll', updateBarScrollArrows);
-    $('#barScrollLeft').addEventListener('click', () => {
-      scrollEl.scrollBy({ left: -scrollEl.clientWidth * 0.8, behavior: 'smooth' });
-    });
-    $('#barScrollRight').addEventListener('click', () => {
-      scrollEl.scrollBy({ left: scrollEl.clientWidth * 0.8, behavior: 'smooth' });
-    });
+    bindScrollArrows(scrollEl, $('#barScrollLeft'), $('#barScrollRight'));
 
     if ('ResizeObserver' in window) {
       let lastW = 0;
@@ -1141,6 +1159,47 @@
   }
 
   /* ==========================================================================
+     Menu mobile (hamburger)
+     ========================================================================== */
+
+  function initMenu() {
+    const btn = $('#menuBtn');
+    const menu = $('#siteMenu');
+    if (!btn || !menu) return;
+
+    const close = () => {
+      menu.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
+    };
+    const open = () => {
+      menu.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+    };
+
+    btn.addEventListener('click', () => {
+      if (menu.classList.contains('is-open')) close(); else open();
+    });
+    // Referme le menu une fois un lien de section (ou le bouton thème) activé.
+    menu.addEventListener('click', (e) => {
+      if (e.target.closest('a, button')) close();
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.classList.contains('is-open')) return;
+      if (menu.contains(e.target) || btn.contains(e.target)) return;
+      close();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.classList.contains('is-open')) {
+        close();
+        btn.focus();
+      }
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 640) close();
+    });
+  }
+
+  /* ==========================================================================
      Thème
      ========================================================================== */
 
@@ -1173,6 +1232,7 @@
   }
 
   function init() {
+    initMenu();
     initTheme();
     renderLineForms();
     bindLines();

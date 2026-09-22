@@ -15,17 +15,25 @@
 <header class="topbar">
   <div class="wrap topbar__in">
     <h1 class="brand">Gestion budget</h1>
-    <nav class="nav" aria-label="Sections">
-      <a href="#revenus">Revenus</a>
-      <a href="#charges">Charges</a>
-      <a href="#economies">Économies</a>
-      <a href="#rendement">Rendement</a>
-      <a href="#synthese">Graphique</a>
-    </nav>
-    <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
-      <span>Thème</span>
+    <button id="menuBtn" class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="siteMenu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+        <path class="menu-icon menu-icon--bars" d="M3 5.5h14M3 10h14M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="menu-icon menu-icon--close" d="M4.5 4.5l11 11M15.5 4.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
     </button>
+    <div id="siteMenu" class="site-menu">
+      <nav class="nav" aria-label="Sections">
+        <a href="#revenus">Revenus</a>
+        <a href="#charges">Charges</a>
+        <a href="#economies">Économies</a>
+        <a href="#rendement">Rendement</a>
+        <a href="#synthese">Graphique</a>
+      </nav>
+      <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+        <span>Thème</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -88,28 +96,36 @@
       <button class="btn" type="submit">Ajouter</button>
     </form>
 
-    <div class="table-wrap">
-      <table class="table" id="revenusTable">
-        <caption class="sr-only">Liste des revenus</caption>
-        <thead>
-          <tr>
-            <th scope="col">Libellé</th>
-            <th scope="col">Catégorie</th>
-            <th scope="col" class="num">Mensuel (€)</th>
-            <th scope="col" class="num">Annuel (× 12)</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody id="revenusBody"></tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" colspan="2">Total</th>
-            <td class="num" id="totRevMensuel">–</td>
-            <td class="num" id="totRevAnnuel">–</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="table-scroll-wrap">
+      <div class="table-wrap" id="revenusTableWrap">
+        <table class="table" id="revenusTable">
+          <caption class="sr-only">Liste des revenus</caption>
+          <thead>
+            <tr>
+              <th scope="col">Libellé</th>
+              <th scope="col">Catégorie</th>
+              <th scope="col" class="num">Mensuel (€)</th>
+              <th scope="col" class="num">Annuel (× 12)</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="revenusBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="2">Total</th>
+              <td class="num" id="totRevMensuel">–</td>
+              <td class="num" id="totRevAnnuel">–</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="revenusScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="revenusScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
 
     <h3 class="h3 h3--gap">Solde : ce qu'il vous reste après vos charges</h3>
@@ -145,28 +161,36 @@
       <button class="btn" type="submit">Ajouter</button>
     </form>
 
-    <div class="table-wrap">
-      <table class="table" id="chargesTable">
-        <caption class="sr-only">Liste des charges</caption>
-        <thead>
-          <tr>
-            <th scope="col">Libellé</th>
-            <th scope="col">Catégorie</th>
-            <th scope="col" class="num">Mensuel (€)</th>
-            <th scope="col" class="num">Annuel (× 12)</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody id="chargesBody"></tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" colspan="2">Total</th>
-            <td class="num" id="totMensuel">–</td>
-            <td class="num" id="totAnnuel">–</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="table-scroll-wrap">
+      <div class="table-wrap" id="chargesTableWrap">
+        <table class="table" id="chargesTable">
+          <caption class="sr-only">Liste des charges</caption>
+          <thead>
+            <tr>
+              <th scope="col">Libellé</th>
+              <th scope="col">Catégorie</th>
+              <th scope="col" class="num">Mensuel (€)</th>
+              <th scope="col" class="num">Annuel (× 12)</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="chargesBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="2">Total</th>
+              <td class="num" id="totMensuel">–</td>
+              <td class="num" id="totAnnuel">–</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="chargesScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="chargesScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
 
     <div class="split">
@@ -211,22 +235,30 @@
       <div class="mini"><span class="mini__label">Nouveau total mensuel</span><strong id="ecoNouveau">–</strong></div>
     </div>
 
-    <div class="table-wrap">
-      <table class="table" id="scTable">
-        <caption class="sr-only">Comparaisons d'options</caption>
-        <thead>
-          <tr>
-            <th scope="col">Ligne</th>
-            <th scope="col">Option alternative</th>
-            <th scope="col" class="num">Actuel / mois</th>
-            <th scope="col" class="num">Nouveau / mois</th>
-            <th scope="col" class="num">Écart / mois</th>
-            <th scope="col" class="num">Écart / an (× 12)</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody id="scBody"></tbody>
-      </table>
+    <div class="table-scroll-wrap">
+      <div class="table-wrap" id="scTableWrap">
+        <table class="table" id="scTable">
+          <caption class="sr-only">Comparaisons d'options</caption>
+          <thead>
+            <tr>
+              <th scope="col">Ligne</th>
+              <th scope="col">Option alternative</th>
+              <th scope="col" class="num">Actuel / mois</th>
+              <th scope="col" class="num">Nouveau / mois</th>
+              <th scope="col" class="num">Écart / mois</th>
+              <th scope="col" class="num">Écart / an (× 12)</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="scBody"></tbody>
+        </table>
+      </div>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="scScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="scScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
     <p class="note">Si plusieurs options concernent la même ligne, seule la plus économique est comptée dans les totaux.</p>
   </section>
@@ -316,7 +348,7 @@
     </div>
 
     <div class="syn-grid">
-      <div>
+      <div class="pie-col">
         <h3 class="h3">Où va votre argent ?</h3>
         <div class="pie-box">
           <div class="pie-wrap" id="pieWrap">
@@ -356,7 +388,7 @@
 </main>
 
 <footer class="wrap foot">
-  <p>Vos données sont enregistrées uniquement dans votre navigateur.</p>
+  <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, appuyez ici.</button></p>
 </footer>
 
 <script src="script.js"></script>

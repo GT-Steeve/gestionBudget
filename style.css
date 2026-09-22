@@ -130,14 +130,40 @@ h1, h2, h3, p { margin: 0; }
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
-.topbar__in { display: flex; align-items: center; gap: 16px; height: 56px; }
+.topbar__in { position: relative; display: flex; align-items: center; gap: 16px; height: 56px; }
 .brand { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; margin-right: auto; }
+
+/* Sur desktop, le conteneur ne fait que grouper nav + thème sans exister dans la mise en page :
+   .nav et #themeBtn restent des enfants flex directs de .topbar__in, comme avant. */
+.site-menu { display: contents; }
+
 .nav { display: flex; gap: 4px; }
 .nav a {
   color: var(--ink-2); text-decoration: none; font-size: 14px;
   padding: 6px 10px; border-radius: 8px;
 }
 .nav a:hover { background: var(--wash); color: var(--ink); }
+
+/* Bouton hamburger : masqué sur desktop, activé en media query mobile. */
+.menu-toggle {
+  display: none; flex: none;
+  width: 40px; height: 40px; padding: 0;
+  align-items: center; justify-content: center;
+  color: var(--ink); background: transparent;
+  border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+}
+.menu-toggle:hover { background: var(--wash); }
+
+/* Bascule animée barres <-> croix (fondu + légère rotation) plutôt qu'un
+   affichage/masquage brut. */
+.menu-icon {
+  transform-box: fill-box; transform-origin: 50% 50%;
+  transition: opacity .2s ease, transform .25s ease;
+}
+.menu-icon--bars { opacity: 1; transform: rotate(0deg); }
+.menu-icon--close { opacity: 0; transform: rotate(-45deg); }
+.menu-toggle[aria-expanded="true"] .menu-icon--bars { opacity: 0; transform: rotate(45deg); }
+.menu-toggle[aria-expanded="true"] .menu-icon--close { opacity: 1; transform: rotate(0deg); }
 
 /* ---------- Buttons & fields ---------- */
 
@@ -211,7 +237,12 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 
 /* ---------- Tables ---------- */
 
-.table-wrap { position: relative; overflow-x: auto; margin-top: 12px; }
+/* Enveloppe non scrollable : porte les flèches, qui restent fixes pendant que
+   .table-wrap défile en dessous (sinon elles défileraient avec le tableau). */
+.table-scroll-wrap { position: relative; }
+/* padding-bottom : laisse la place à la barre de défilement native du navigateur,
+   qui sinon chevauche la ligne « Total » du tfoot juste en dessous. */
+.table-wrap { position: relative; overflow-x: auto; margin-top: 12px; padding-bottom: 4px; }
 .table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }
 .table th, .table td { padding: 8px 10px; text-align: left; vertical-align: middle; }
 .table thead th {
@@ -365,54 +396,12 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 /* ---------- Footer ---------- */
 
-.foot { padding-top: 8px; padding-bottom: 40px; font-size: 13px; color: var(--muted); }
-
-/* ---------- Responsive ---------- */
-
-/* Tablette */
-@media (max-width: 900px) {
-  .wrap { padding: 0 14px; }
-  .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
-  .kpis { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.foot { padding-top: 8px; padding-bottom: 40px; font-size: 13px; color: var(--muted); text-align: center; }
+.link-btn {
+  font: inherit; color: var(--accent); background: none; border: 0; padding: 0;
+  text-decoration: underline; cursor: pointer;
 }
-
-/* Mobile */
-@media (max-width: 640px) {
-  .wrap { padding: 0 12px; }
-  .topbar__in { gap: 10px; }
-  .brand { font-size: 15px; }
-  .nav { display: none; }
-  .card { padding: 16px 14px; border-radius: 14px; }
-  .card__head { gap: 10px; }
-  .tile__value { font-size: 24px; }
-  .form-row { gap: 10px; }
-  .form-row label, .form-row label.grow { flex: 1 1 100%; }
-  .form-row .btn { width: 100%; }
-  .breakdown { grid-template-columns: 90px 1fr auto; }
-  .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
-  .kpis { grid-template-columns: minmax(0, 1fr); }
-  .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .plegend li { grid-template-columns: 12px minmax(0, 1fr) auto; }
-  .plegend .pl-pct { display: none; }
-  .pie-wrap { flex: 1 1 100%; }
-  .split { gap: 16px; }
-  .res__big { font-size: 26px; }
-}
-
-@media (max-width: 380px) {
-  .mini-kpis { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-}
-
-@media print {
-  .topbar, .form-row, .actions, .icon-btn { display: none !important; }
-  body { background: #fff; }
-  .card { break-inside: avoid; box-shadow: none; }
-}
+.link-btn:hover { color: var(--accent); filter: brightness(1.15); }
 
 /* ---------- Synthèse ---------- */
 
@@ -458,17 +447,23 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .chart-scroll { overflow-x: auto; margin-top: 8px; padding-bottom: 16px; }
 .chart-inner { position: relative; width: max-content; min-width: 100%; }
 
-/* Flèches indiquant qu'il y a d'autres lignes à faire défiler horizontalement.
-   Cantonnées à la zone des barres, pour ne chevaucher ni le repère « € / mois »
-   en haut à gauche, ni les libellés et légendes de groupe en bas. */
+/* Flèches indiquant qu'il y a d'autre contenu à faire défiler horizontalement
+   (graphique en barres, tableaux). Fond transparent pour ne pas masquer le
+   contenu qu'elles survolent. */
 .scroll-arrow {
-  position: absolute; top: 40px; bottom: 90px; width: 36px;
+  position: absolute; top: 0; bottom: 0; width: 36px;
   display: flex; align-items: center; border: 0; padding: 0; margin: 0;
-  color: var(--ink-2); cursor: pointer;
+  background: transparent; color: var(--ink-2); cursor: pointer;
 }
+/* `display: flex` ci-dessus a plus de poids qu'une règle du navigateur : sans
+   ceci, l'attribut `hidden` est posé par le JS mais n'a plus aucun effet visuel. */
+.scroll-arrow[hidden] { display: none; }
 .scroll-arrow:hover { color: var(--ink); }
-.scroll-arrow--left { left: 0; justify-content: flex-start; background: linear-gradient(to right, var(--surface) 45%, transparent); }
-.scroll-arrow--right { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--surface) 45%, transparent); }
+.scroll-arrow--left { left: 0; justify-content: flex-start; }
+.scroll-arrow--right { right: 0; justify-content: flex-end; }
+/* Cantonnées à la zone des barres, pour ne chevaucher ni le repère « € / mois »
+   en haut à gauche, ni les libellés et légendes de groupe en bas. */
+.chart-scroll-wrap .scroll-arrow { top: 40px; bottom: 90px; }
 #barChart svg { display: block; max-width: none; overflow: visible; }
 .bar { outline: none; }
 .bar:hover .bar-mark, .bar:focus-visible .bar-mark { opacity: 0.85; }
@@ -476,3 +471,87 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .g-val { fill: var(--ink-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .g-xl { fill: var(--ink-2); font-size: 12px; }
 .g-cap { fill: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+
+/* ---------- Responsive ----------
+   Ce bloc doit rester en dernier dans le fichier : les media queries
+   ci-dessous ont la même spécificité que les règles de base qu'elles
+   surchargent (.syn-grid, .pie-wrap, .plegend, .syn-tools…), donc seul
+   leur ordre dans la cascade leur permet de gagner. */
+
+/* Tablette */
+@media (max-width: 900px) {
+  .wrap { padding: 0 14px; }
+  .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .wrap { padding: 0 12px; }
+  .topbar__in { gap: 10px; }
+  .brand { font-size: 15px; margin-right: 0; margin-left: auto; }
+
+  /* Nav + thème passent dans le menu hamburger au lieu de disparaître.
+     Le bouton passe avant le titre, qui se retrouve donc à droite. */
+  .menu-toggle { display: inline-flex; order: -1; }
+  /* Animation d'ouverture/fermeture façon « déroulé » : le menu reste dans le
+     flux (display: flex en permanence) et c'est max-height/opacity qui
+     l'escamotent, pour pouvoir les transitionner (display ne s'anime pas). */
+  .site-menu {
+    display: flex;
+    position: absolute; top: calc(100% + 1px); left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 4px;
+    padding: 10px 12px 14px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+    max-height: 0; opacity: 0; overflow: hidden; pointer-events: none;
+    transition: max-height .28s ease, opacity .2s ease;
+  }
+  .site-menu.is-open { max-height: 420px; opacity: 1; pointer-events: auto; }
+  .nav { flex-direction: column; gap: 2px; }
+  .nav a { padding: 10px 12px; }
+  .site-menu #themeBtn { align-self: flex-start; margin-top: 6px; }
+
+  .card { padding: 16px 14px; border-radius: 14px; }
+  .card__head { gap: 10px; }
+  .tile__value { font-size: 22px; }
+  .form-row { gap: 10px; }
+  .form-row label, .form-row label.grow { flex: 1 1 100%; }
+  .form-row .btn { width: 100%; }
+  /* Formulaire Rendement : des champs assez courts pour tenir 2 par ligne. */
+  #yieldForm label { flex: 1 1 calc(50% - 5px); }
+  .breakdown { grid-template-columns: 90px 1fr auto; }
+  .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tile { padding: 12px 14px; }
+  .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plegend li { grid-template-columns: 12px minmax(0, 1fr) auto; }
+  .plegend .pl-pct { display: none; }
+  .pie-wrap { flex: 1 1 100%; display: flex; justify-content: center; }
+  .split { gap: 16px; }
+  .results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .res { padding: 12px 14px; }
+  .res__big { font-size: 22px; }
+  .chart-head, .syn-tools { gap: 10px 16px; }
+
+  /* Camembert : titre centré, donut centré dans sa largeur, bascule mois/an centrée. */
+  .pie-col .h3 { text-align: center; }
+  #synMsg { text-align: center; }
+  .seg { margin: 0 auto; }
+}
+
+@media (max-width: 380px) {
+  .mini-kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .site-menu, .menu-icon { transition: none; }
+}
+
+@media print {
+  .topbar, .form-row, .actions, .icon-btn { display: none !important; }
+  body { background: #fff; }
+  .card { break-inside: avoid; box-shadow: none; }
+}
