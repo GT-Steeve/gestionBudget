@@ -43,7 +43,7 @@
   const eur2 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   const eur0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
   const eurCompact = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', notation: 'compact', maximumFractionDigits: 1 });
-  const pct1 = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 1 });
+  const pct1 = new Intl.NumberFormat('fr-FR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const rateNf = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
   /** Taux annuel affiché, ex. « 2 % » ou « 7,5 % » (espace insécable). */
   const fmtRate = (r) => `${rateNf.format(r)} %`;
@@ -86,15 +86,15 @@
   /* ---------- État ---------- */
 
   function exampleState() {
-    const loyer = { id: uid(), categorie: 'Loyer', nom: 'Loyer', mensuel: 750 };
-    const elec = { id: uid(), categorie: 'Factures', nom: 'Électricité', mensuel: 65 };
-    const inter = { id: uid(), categorie: 'Factures', nom: 'Internet + mobile', mensuel: 45 };
-    const courses = { id: uid(), categorie: 'Courses', nom: 'Courses alimentaires', mensuel: 320 };
-    const transport = { id: uid(), categorie: 'Transport', nom: 'Pass transport', mensuel: 75 };
+    const loyer = { id: uid(), categorie: 'Loyer', nom: 'Loyer', mensuel: 1200 };
+    const elec = { id: uid(), categorie: 'Factures', nom: 'Électricité', mensuel: 120 };
+    const inter = { id: uid(), categorie: 'Factures', nom: 'Internet + mobile', mensuel: 90 };
+    const courses = { id: uid(), categorie: 'Courses', nom: 'Courses alimentaires', mensuel: 400 };
+    const transport = { id: uid(), categorie: 'Transport', nom: 'Pass transport', mensuel: 90 };
     return {
       revenus: [
-        { id: uid(), categorie: 'Salaire', nom: 'Salaire net', mensuel: 1600 },
-        { id: uid(), categorie: 'Aide', nom: 'Aide au logement', mensuel: 150 }
+        { id: uid(), categorie: 'Salaire', nom: 'Salaire net', mensuel: 2000 },
+        { id: uid(), categorie: 'Aide', nom: 'Aide enfant', mensuel: 150 }
       ],
       charges: [loyer, elec, inter, courses, transport],
       scenarios: [
@@ -244,12 +244,13 @@
 
       const amountInput = h('input', {
         class: 'cell num', type: 'number', min: 0, step: '0.01', inputmode: 'decimal',
-        value: c.mensuel, 'aria-label': `Montant mensuel de ${c.nom}`,
+        value: c.mensuel.toFixed(2), 'aria-label': `Montant mensuel de ${c.nom}`,
         oninput: (e) => {
           c.mensuel = num(e.target.value);
           annualCell.textContent = eur2.format(annual(c.mensuel));
           refresh();
-        }
+        },
+        onblur: (e) => { e.target.value = c.mensuel.toFixed(2); }
       });
 
       const del = h('button', {
@@ -322,7 +323,8 @@
         h('span', { class: 'bd__name' }, cat),
         h('div', { class: 'bd__track', role: 'presentation' },
           h('div', { class: 'bd__bar', style: `width:${(total / max) * 100}%` })),
-        h('span', { class: 'bd__val' }, eur2.format(total), ' ', h('span', {}, `· ${pct1.format(total / m)}`))
+        h('span', { class: 'bd__amt' }, eur2.format(total)),
+        h('span', { class: 'bd__pct' }, pct1.format(total / m))
       ));
     }
   }
@@ -343,18 +345,6 @@
     };
     bindForm('revenus', { form: '#revenuForm', cat: '#rCat', nom: '#rNom', montant: '#rMontant' });
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
-
-    $('#btnExample').addEventListener('click', () => {
-      const ex = exampleState();
-      state.revenus = ex.revenus;
-      state.charges = ex.charges;
-      state.scenarios = ex.scenarios;
-      state.yield = ex.yield;
-      syncYieldInputs();
-      renderLines('revenus');
-      renderLines('charges');
-      refresh();
-    });
 
     $('#btnClear').addEventListener('click', () => {
       if (!window.confirm('Supprimer tous les revenus, charges et comparaisons ?')) return;
@@ -986,6 +976,8 @@
     const { items } = m;
     if (!items.length) {
       box.append(h('p', { class: 'note' }, 'Ajoutez des revenus et des charges pour afficher le graphique.'));
+      $('#barScrollLeft').hidden = true;
+      $('#barScrollRight').hidden = true;
       return;
     }
 
@@ -1086,6 +1078,15 @@
     }
 
     box.append(svg);
+    updateBarScrollArrows();
+  }
+
+  /** Affiche/masque les flèches de défilement selon la position de scroll du graphique en barres. */
+  function updateBarScrollArrows() {
+    const el = $('#barScroll');
+    const canScroll = el.scrollWidth > el.clientWidth + 1;
+    $('#barScrollLeft').hidden = !canScroll || el.scrollLeft <= 0;
+    $('#barScrollRight').hidden = !canScroll || el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
   }
 
   function bindSynthese() {
@@ -1093,12 +1094,21 @@
     $('#viewMois').addEventListener('click', () => setView('mois'));
     $('#viewAn').addEventListener('click', () => setView('an'));
 
+    const scrollEl = $('#barScroll');
+    scrollEl.addEventListener('scroll', updateBarScrollArrows);
+    $('#barScrollLeft').addEventListener('click', () => {
+      scrollEl.scrollBy({ left: -scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
+    $('#barScrollRight').addEventListener('click', () => {
+      scrollEl.scrollBy({ left: scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
+
     if ('ResizeObserver' in window) {
       let lastW = 0;
       new ResizeObserver(() => {
-        const w = Math.floor($('.chart-scroll').clientWidth);
+        const w = Math.floor(scrollEl.clientWidth);
         if (w && w !== lastW) { lastW = w; if (synModel) renderBars(synModel); }
-      }).observe($('.chart-scroll'));
+      }).observe(scrollEl);
     }
   }
 

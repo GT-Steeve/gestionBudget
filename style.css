@@ -178,7 +178,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 
 .kpis {
   display: grid; gap: 12px; margin: 24px 0 8px;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
 }
 .tile {
   background: var(--surface); border: 1px solid var(--border);
@@ -268,13 +268,20 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .split > div:first-child { flex: 1 1 320px; max-width: 560px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.breakdown { display: grid; gap: 10px; margin-top: 12px; }
-.bd { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: center; font-size: 14px; }
+/* Grille partagée par toutes les lignes : les colonnes (donc les chiffres) restent
+   alignées d'une ligne à l'autre, chaque `.bd` n'étant qu'un groupe transparent. */
+.breakdown {
+  display: grid; grid-template-columns: 110px 1fr auto auto;
+  column-gap: 12px; row-gap: 10px; align-items: center; margin-top: 12px;
+}
+.bd { display: contents; font-size: 14px; }
 .bd__name { color: var(--ink-2); }
 .bd__track { height: 8px; background: var(--wash); border-radius: 4px; overflow: hidden; }
 .bd__bar { height: 100%; background: var(--series-1); border-radius: 0 4px 4px 0; }
-.bd__val { font-variant-numeric: tabular-nums; text-align: right; min-width: 132px; }
-.bd__val span { color: var(--muted); }
+.bd__amt, .bd__pct {
+  font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+}
+.bd__pct { color: var(--muted); min-width: 56px; }
 
 /* ---------- Économies ---------- */
 
@@ -299,7 +306,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 .results {
   display: grid; gap: 12px; margin: 16px 0 24px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
 }
 .res {
   border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
@@ -362,14 +369,39 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 /* ---------- Responsive ---------- */
 
+/* Tablette */
+@media (max-width: 900px) {
+  .wrap { padding: 0 14px; }
+  .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+}
+
+/* Mobile */
 @media (max-width: 640px) {
-  .card { padding: 18px 16px; border-radius: 14px; }
+  .wrap { padding: 0 12px; }
+  .topbar__in { gap: 10px; }
+  .brand { font-size: 15px; }
   .nav { display: none; }
+  .card { padding: 16px 14px; border-radius: 14px; }
+  .card__head { gap: 10px; }
   .tile__value { font-size: 24px; }
+  .form-row { gap: 10px; }
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
   .form-row .btn { width: 100%; }
-  .bd { grid-template-columns: 90px 1fr; }
-  .bd__val { grid-column: 1 / -1; text-align: left; min-width: 0; }
+  .breakdown { grid-template-columns: 90px 1fr auto; }
+  .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
+  .kpis { grid-template-columns: minmax(0, 1fr); }
+  .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plegend li { grid-template-columns: 12px minmax(0, 1fr) auto; }
+  .plegend .pl-pct { display: none; }
+  .pie-wrap { flex: 1 1 100%; }
+  .split { gap: 16px; }
+  .res__big { font-size: 26px; }
+}
+
+@media (max-width: 380px) {
+  .mini-kpis { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -420,8 +452,23 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .bilan dd small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
 
 .chart-head--gap { margin-top: 32px; }
-.chart-scroll { overflow-x: auto; margin-top: 8px; }
+.chart-scroll-wrap { position: relative; }
+/* Marge basse pour laisser la place à la barre de défilement du navigateur,
+   qui sinon chevauche les légendes REVENUS / CHARGES du graphique. */
+.chart-scroll { overflow-x: auto; margin-top: 8px; padding-bottom: 16px; }
 .chart-inner { position: relative; width: max-content; min-width: 100%; }
+
+/* Flèches indiquant qu'il y a d'autres lignes à faire défiler horizontalement.
+   Cantonnées à la zone des barres, pour ne chevaucher ni le repère « € / mois »
+   en haut à gauche, ni les libellés et légendes de groupe en bas. */
+.scroll-arrow {
+  position: absolute; top: 40px; bottom: 90px; width: 36px;
+  display: flex; align-items: center; border: 0; padding: 0; margin: 0;
+  color: var(--ink-2); cursor: pointer;
+}
+.scroll-arrow:hover { color: var(--ink); }
+.scroll-arrow--left { left: 0; justify-content: flex-start; background: linear-gradient(to right, var(--surface) 45%, transparent); }
+.scroll-arrow--right { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--surface) 45%, transparent); }
 #barChart svg { display: block; max-width: none; overflow: visible; }
 .bar { outline: none; }
 .bar:hover .bar-mark, .bar:focus-visible .bar-mark { opacity: 0.85; }
@@ -429,7 +476,3 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .g-val { fill: var(--ink-2); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .g-xl { fill: var(--ink-2); font-size: 12px; }
 .g-cap { fill: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
-
-@media (max-width: 820px) {
-  .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-}

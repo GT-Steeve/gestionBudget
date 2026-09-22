@@ -20,7 +20,7 @@
       <a href="#charges">Charges</a>
       <a href="#economies">Économies</a>
       <a href="#rendement">Rendement</a>
-      <a href="#synthese">Synthèse</a>
+      <a href="#synthese">Graphique</a>
     </nav>
     <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
@@ -175,7 +175,6 @@
         <div id="breakdown" class="breakdown"></div>
       </div>
       <div class="actions">
-        <button id="btnExample" class="btn btn--ghost" type="button">Recharger l'exemple</button>
         <button id="btnClear" class="btn btn--ghost" type="button">Tout effacer</button>
       </div>
     </div>
@@ -298,12 +297,12 @@
     <p class="note">Hypothèses : rendement annuel constant, intérêts composés chaque mois, versement en fin de mois. Un rendement élevé n'est pas garanti et implique un risque de perte ; le « gain de l'année » est l'intérêt gagné pendant cette seule année (le « gain » du résultat est cumulé sur toute la durée) ; ce simulateur est un outil d'illustration, pas un conseil financier.</p>
   </section>
 
-  <!-- 5. Synthèse -->
+  <!-- 5. Graphique -->
   <section id="synthese" class="card" aria-labelledby="h-syn">
     <div class="card__head">
       <span class="step">5</span>
       <div>
-        <h2 id="h-syn">Synthèse</h2>
+        <h2 id="h-syn">Graphique</h2>
         <p class="lead">Le bilan de votre budget en un coup d'œil : où va votre argent, puis chaque ligne en barres.</p>
       </div>
     </div>
@@ -338,11 +337,19 @@
       <h3 class="h3">Chaque ligne en barres</h3>
       <ul class="legend" id="barLegend" aria-label="Légende des barres"></ul>
     </div>
-    <div class="chart-scroll">
-      <div class="chart-inner">
-        <div id="barChart"></div>
-        <div id="barTip" class="tip" hidden></div>
+    <div class="chart-scroll-wrap">
+      <div class="chart-scroll" id="barScroll">
+        <div class="chart-inner">
+          <div id="barChart"></div>
+          <div id="barTip" class="tip" hidden></div>
+        </div>
       </div>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="barScrollLeft" aria-label="Faire défiler vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="barScrollRight" aria-label="Faire défiler vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   </section>
 
