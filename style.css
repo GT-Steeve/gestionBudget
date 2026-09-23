@@ -215,11 +215,21 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .tile {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow);
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 12px;
 }
+.tile__body { flex: 1 1 0%; min-width: 0; }
 .tile__label { font-size: 13px; color: var(--ink-2); }
 .tile__value { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; margin-top: 4px; }
 .tile__value--good { color: var(--good); }
 .tile__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.tile__edit {
+  flex: 0 0 auto; display: inline-flex; align-items: center; margin-left: auto;
+  height: 30px; padding: 0 10px;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+  background: transparent; border: 1px solid var(--border); border-radius: 8px;
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.tile__edit:hover { background: var(--wash); }
 
 /* ---------- Cards ---------- */
 
@@ -231,14 +241,11 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .card__head { display: flex; gap: 14px; align-items: flex-start; }
 .card__head h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
 .lead { color: var(--ink-2); font-size: 14px; margin-top: 2px; max-width: 62ch; }
-.step {
-  flex: none; width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center; margin-top: 1px;
-  font-size: 14px; font-weight: 700;
-  color: var(--accent-ink); background: var(--accent);
-}
 .h3 { font-size: 14px; font-weight: 650; color: var(--ink); }
 .h3--gap { margin-top: 24px; }
+.back-link { margin: 20px 0 4px; }
+.back-link a { color: var(--ink-2); font-size: 14px; text-decoration: none; }
+.back-link a:hover { color: var(--ink); text-decoration: underline; }
 .note { font-size: 13px; color: var(--muted); margin-top: 14px; max-width: 80ch; }
 .about-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 8px auto 0; max-width: 70ch; text-align: justify; }
 /* .card__head ne fait pas grandir ses enfants (flex sans grow) : sans width:100%,
@@ -248,6 +255,15 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .about-head .lead { font-size: 15px; line-height: 1.6; max-width: 70ch; margin: 8px auto 0; text-align: justify; }
 .about-title { text-align: center; text-transform: uppercase; }
 .about-subtitle { text-align: center; }
+/* Même besoin que .about-head ci-dessus : sans width:100%, le titre centré
+   paraît décalé à gauche sur les écrans larges. */
+.syn-head { width: 100%; }
+#h-syn { text-align: center; }
+.syn-head .lead { text-align: center; margin: 4px auto 0; }
+#synthese .h3 { text-align: center; }
+/* La légende à côté du titre empêche un centrage correct du texte seul :
+   on empile titre et légende, tous deux centrés. */
+#synthese .chart-head { flex-direction: column; align-items: center; }
 .version-tag { margin-top: 16px; font-size: 12px; color: var(--muted); text-align: center; }
 
 /* ---------- Tables ---------- */
@@ -362,7 +378,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .res--r10 { --key: var(--series-2); }
 .res__title { font-size: 13px; font-weight: 650; color: var(--ink-2); }
 .res__big { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin: 4px 0 10px; }
-.res dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; }
+/* minmax(0, 1fr) plutôt que 1fr : sans ça, une colonne fr ne peut pas rétrécir
+   sous son contenu (min-content), donc dès que la colonne « valeur » a besoin
+   de plus de place (ex. rendement à 7 % avec des montants plus larges), la
+   grille déborde du padding et colle au bord droit de la carte. */
+.res dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
 .res dt { color: var(--ink-2); }
 .res dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .res dd.good { color: var(--good); }
@@ -418,6 +438,40 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   text-decoration: underline; cursor: pointer;
 }
 .link-btn:hover { color: var(--accent); filter: brightness(1.15); }
+
+/* ---------- Pop-up de confirmation (suppression) ---------- */
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.45); padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: 100%; max-width: 380px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3); padding: 20px;
+}
+.modal__title { font-size: 16px; font-weight: 650; }
+.modal__details {
+  display: grid; grid-template-columns: auto 1fr; gap: 6px 14px;
+  font-size: 14px; margin: 16px 0 20px;
+}
+.modal__details dt { color: var(--ink-2); }
+.modal__details dd { text-align: right; font-weight: 600; }
+.modal__text { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 12px 0 20px; text-align: justify; }
+.modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
+#infoOverlay .modal__actions { justify-content: center; }
+.btn--danger { background: var(--bad); color: #fff; }
+.btn--danger:hover { filter: brightness(1.08); }
+
+.btn-with-info { display: inline-flex; align-items: center; gap: 8px; }
+.info-btn {
+  flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 50%; background: transparent; color: var(--ink-2);
+  cursor: pointer;
+}
+.info-btn:hover { background: var(--wash); color: var(--ink); }
 
 /* ---------- Synthèse ---------- */
 
@@ -499,7 +553,6 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .wrap { padding: 0 14px; }
   .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
-  .kpis { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
 }
 
 /* Mobile */
@@ -531,6 +584,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
   .card { padding: 16px 14px; border-radius: 14px; }
   .card__head { gap: 10px; }
+  /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
+     plus haute voisine), plutôt que juste après le texte, pour rester aligné avec
+     celui des tuiles voisines même si leur contenu fait plus ou moins de lignes. */
+  .tile { flex-direction: column; align-items: stretch; }
+  .tile__edit { align-self: flex-end; }
   .tile__value { font-size: 22px; }
   .form-row { gap: 10px; }
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
@@ -541,18 +599,19 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .tile { padding: 12px 14px; }
+  .back-link { text-align: center; }
   .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .plegend li { grid-template-columns: 12px minmax(0, 1fr) auto; }
   .plegend .pl-pct { display: none; }
   .pie-wrap { flex: 1 1 100%; display: flex; justify-content: center; }
   .split { gap: 16px; }
+  .actions { flex-basis: 100%; justify-content: center; }
   .results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .res { padding: 12px 14px; }
   .res__big { font-size: 22px; }
   .chart-head, .syn-tools { gap: 10px 16px; }
 
-  /* Camembert : titre centré, donut centré dans sa largeur, bascule mois/an centrée. */
-  .pie-col .h3 { text-align: center; }
+  /* Camembert : donut centré dans sa largeur, bascule mois/an centrée. */
   #synMsg { text-align: center; }
   .seg { margin: 0 auto; }
 }

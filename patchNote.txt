@@ -8,5 +8,8 @@ v0.00.7 = balise Open Graph
 v1.00.0 = Page A propos
 v1.00.1 = polish page a propos
 v1.00.2 = polish + page a propos
+v1.00.3 = rework UX + polish UI mobile / tablette
 
 ** Next idea **
+exporter les donnée en PDF où excel
+feature impression

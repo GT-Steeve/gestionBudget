@@ -71,6 +71,58 @@
     return el;
   }
 
+  /** Pop-up de confirmation avant suppression (détails de la ligne + Annuler/Confirmer). */
+  function confirmDelete(title, details, onConfirm) {
+    const overlay = $('#confirmOverlay');
+    if (!overlay) { onConfirm(); return; }
+    $('#confirmTitle').textContent = title;
+    $('#confirmDetails').replaceChildren(
+      ...details.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)])
+    );
+
+    const okBtn = $('#confirmOk');
+    const cancelBtn = $('#confirmCancel');
+    const close = () => {
+      overlay.hidden = true;
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onKey);
+    };
+    const onOk = () => { close(); onConfirm(); };
+    const onCancel = () => close();
+    const onOverlayClick = (e) => { if (e.target === overlay) onCancel(); };
+    const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+    document.addEventListener('keydown', onKey);
+
+    overlay.hidden = false;
+    okBtn.focus();
+  }
+
+  /** Relie un bouton « i » à une pop-up d'information (texte statique + Fermer). */
+  function bindInfoModal(triggerSel, overlaySel, closeSel) {
+    const trigger = $(triggerSel);
+    const overlay = $(overlaySel);
+    if (!trigger || !overlay) return;
+    const closeBtn = $(closeSel);
+    const close = () => {
+      overlay.hidden = true;
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    trigger.addEventListener('click', () => {
+      overlay.hidden = false;
+      document.addEventListener('keydown', onKey);
+      closeBtn.focus();
+    });
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  }
+
   /* ---------- Stockage local (avec repli en mémoire) ---------- */
 
   const store = {
@@ -209,8 +261,8 @@
   };
 
   function renderLineForms() {
-    $('#rCat').replaceChildren(...sortAlpha(REV_CATEGORIES).map((c) => h('option', { value: c }, c)));
-    $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
+    if ($('#rCat')) $('#rCat').replaceChildren(...sortAlpha(REV_CATEGORIES).map((c) => h('option', { value: c }, c)));
+    if ($('#cCat')) $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
   }
 
   const TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7.5v4M9.5 7.5v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
@@ -218,6 +270,7 @@
   function renderLines(type) {
     const cfg = LINE_TYPES[type];
     const body = $(cfg.body);
+    if (!body) return;
     body.replaceChildren();
 
     if (!state[type].length) {
@@ -258,17 +311,23 @@
       const del = h('button', {
         class: 'icon-btn', type: 'button', 'aria-label': `Effacer ${c.nom}`, title: 'Effacer',
         onclick: () => {
-          state[type] = state[type].filter((x) => x.id !== c.id);
-          if (type === 'charges') state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
-          renderLines(type);
-          refresh();
+          confirmDelete(`Supprimer ${type === 'revenus' ? 'ce revenu' : 'cette charge'} ?`, [
+            ['Catégorie', c.categorie],
+            ['Libellé', c.nom],
+            ['Valeur', `${eur2.format(c.mensuel)} / mois`]
+          ], () => {
+            state[type] = state[type].filter((x) => x.id !== c.id);
+            if (type === 'charges') state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
+            renderLines(type);
+            refresh();
+          });
         }
       });
       del.innerHTML = TRASH_ICON;
 
       body.append(h('tr', {},
-        h('td', {}, nameInput),
         h('td', {}, catSelect),
+        h('td', {}, nameInput),
         h('td', { class: 'num' }, amountInput),
         annualCell,
         h('td', { class: 'num' }, del)
@@ -285,6 +344,7 @@
   }
 
   function renderRevenusTotals() {
+    if (!$('#totRevMensuel')) return;
     const rev = totalRevenus();
     const ch = totalMonthly();
     const solde = rev - ch;
@@ -304,6 +364,7 @@
   }
 
   function renderChargeTotals() {
+    if (!$('#totMensuel')) return;
     const m = totalMonthly();
     $('#totMensuel').textContent = eur2.format(m);
     $('#totAnnuel').textContent = eur2.format(annual(m));
@@ -334,7 +395,9 @@
 
   function bindLines() {
     const bindForm = (type, ids) => {
-      $(ids.form).addEventListener('submit', (e) => {
+      const form = $(ids.form);
+      if (!form) return;
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
         const nom = $(ids.nom).value.trim();
         if (!nom) return;
@@ -350,7 +413,8 @@
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
 
     for (const cfg of Object.values(LINE_TYPES)) {
-      bindScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
+      const wrap = $(cfg.wrap);
+      if (wrap) bindScrollArrows(wrap, $(cfg.left), $(cfg.right));
     }
 
     const clearAll = () => {
@@ -362,8 +426,10 @@
       renderLines('charges');
       refresh();
     };
-    $('#btnClear').addEventListener('click', clearAll);
-    $('#btnClearFooter').addEventListener('click', clearAll);
+    const btnClear = $('#btnClear');
+    if (btnClear) btnClear.addEventListener('click', clearAll);
+    const btnClearFooter = $('#btnClearFooter');
+    if (btnClearFooter) btnClearFooter.addEventListener('click', clearAll);
   }
 
   /* ==========================================================================
@@ -373,6 +439,7 @@
   let lineSignature = '';
 
   function renderScenarioForm() {
+    if (!$('#scForm')) return;
     const sel = $('#sLigne');
     const sig = state.charges.map((c) => `${c.id}|${c.nom}|${c.mensuel}`).join(';');
     if (sig !== lineSignature) {
@@ -393,6 +460,7 @@
 
   function renderPreview() {
     const box = $('#sPreview');
+    if (!box) return;
     const charge = state.charges.find((c) => c.id === $('#sLigne').value);
     const raw = $('#sMontant').value;
     if (!charge || raw === '') { box.textContent = ' '; return; }
@@ -408,6 +476,7 @@
   }
 
   function renderScenarios() {
+    if (!$('#ecoMois')) return;
     const { rows, best, monthly, annual: yearly } = computeSavings();
     const m = totalMonthly();
 
@@ -448,7 +517,18 @@
 
       const del = h('button', {
         class: 'icon-btn', type: 'button', 'aria-label': `Effacer la comparaison ${sc.option}`, title: 'Effacer',
-        onclick: () => { state.scenarios = state.scenarios.filter((x) => x.id !== sc.id); refresh(); }
+        onclick: () => {
+          confirmDelete('Supprimer cette comparaison ?', [
+            ['Ligne', charge.nom],
+            ['Option alternative', sc.option || '–'],
+            ['Actuel / mois', eur2.format(charge.mensuel)],
+            ['Nouveau / mois', eur2.format(sc.nouveau)],
+            ['Écart / mois', `${sign}${eur2.format(Math.abs(eco))}`]
+          ], () => {
+            state.scenarios = state.scenarios.filter((x) => x.id !== sc.id);
+            refresh();
+          });
+        }
       });
       del.innerHTML = TRASH_ICON;
 
@@ -466,6 +546,7 @@
   }
 
   function bindScenarios() {
+    if (!$('#scForm')) return;
     bindScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
     $('#scForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -487,6 +568,7 @@
      ========================================================================== */
 
   function syncYieldInputs() {
+    if (!$('#yCapital')) return;
     $('#yCapital').value = state.yield.capital;
     $('#yVersement').value = state.yield.versement;
     $('#yAnnees').value = state.yield.annees;
@@ -516,6 +598,7 @@
   const gainYearLabel = (n) => (n === 1 ? 'Gain la 1ʳᵉ année' : `Gain de l'année ${n}`);
 
   function renderYield() {
+    if (!$('#h-rend')) return;
     const { years, results, gainYear } = computeYield();
     const [low, high] = results;
     const deposited = low.pts[years].deposited;
@@ -716,6 +799,7 @@
   }
 
   function bindYield() {
+    if (!$('#yCapital')) return;
     const read = () => {
       state.yield.capital = num($('#yCapital').value);
       state.yield.versement = num($('#yVersement').value);
@@ -812,6 +896,7 @@
   }
 
   function renderSynthese() {
+    if (!$('#viewMois')) return;
     synModel = buildSynModel();
     $('#viewMois').setAttribute('aria-pressed', String(state.view === 'mois'));
     $('#viewAn').setAttribute('aria-pressed', String(state.view === 'an'));
@@ -1113,6 +1198,7 @@
   }
 
   function bindSynthese() {
+    if (!$('#viewMois')) return;
     const setView = (v) => { state.view = v; renderSynthese(); save(); };
     $('#viewMois').addEventListener('click', () => setView('mois'));
     $('#viewAn').addEventListener('click', () => setView('an'));
@@ -1134,6 +1220,7 @@
      ========================================================================== */
 
   function renderSummary() {
+    if (!$('#kpiRevenus')) return;
     const m = totalMonthly();
     const rev = totalRevenus();
     $('#kpiRevenus').textContent = eur2.format(rev);
@@ -1178,6 +1265,7 @@
     bindLines();
     bindScenarios();
     bindYield();
+    bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
     bindSynthese();
     syncYieldInputs();
     renderLines('revenus');

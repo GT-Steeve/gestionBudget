@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rendement · Gestion budget</title>
+  <meta name="description" content="Simulez le gain de votre épargne selon deux rendements annuels que vous choisissez, avec intérêts composés.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gt-steeve.github.io/gestionBudget/rendement.html">
+  <meta property="og:site_name" content="Gestion budget">
+  <meta property="og:title" content="Rendement · Gestion budget">
+  <meta property="og:description" content="Simulez le gain de votre épargne selon deux rendements annuels que vous choisissez, avec intérêts composés.">
+  <meta property="og:image" content="https://gt-steeve.github.io/gestionBudget/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rendement · Gestion budget">
+  <meta name="twitter:description" content="Simulez le gain de votre épargne selon deux rendements annuels que vous choisissez, avec intérêts composés.">
+  <meta name="twitter:image" content="https://gt-steeve.github.io/gestionBudget/og-image.png">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css?v=1.00.3">
+</head>
+<body data-app="true">
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <h1 class="brand"><a href="index.html">Gestion budget</a></h1>
+    <button id="menuBtn" class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="siteMenu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+        <path class="menu-icon menu-icon--bars" d="M3 5.5h14M3 10h14M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="menu-icon menu-icon--close" d="M4.5 4.5l11 11M15.5 4.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div id="siteMenu" class="site-menu">
+      <nav class="nav" aria-label="Sections">
+        <a href="revenus.html">Revenus</a>
+        <a href="charges.html">Charges</a>
+        <a href="economies.html">Économies</a>
+        <a href="rendement.html" aria-current="page">Rendement</a>
+        <a href="index.html">Synthèse</a>
+        <a href="apropos.html">À propos</a>
+      </nav>
+      <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
+        <span>Thème</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- Rendement -->
+  <section id="rendement" class="card" aria-labelledby="h-rend">
+    <div class="card__head">
+      <div>
+        <h2 id="h-rend">Gain par rendement : 2 % ou 10 %</h2>
+        <p class="lead">Simulez ce que rapporte votre épargne selon deux rendements annuels que vous choisissez (2 % et 10 % par défaut), et consultez le gain de l'année de votre choix.</p>
+      </div>
+    </div>
+
+    <div class="form-row" id="yieldForm">
+      <label>Capital de départ (€)
+        <input id="yCapital" type="number" min="0" step="1" inputmode="decimal">
+      </label>
+      <label>Épargne mensuelle (€)
+        <input id="yVersement" type="number" min="0" step="1" inputmode="decimal">
+      </label>
+      <label>Durée (années)
+        <input id="yAnnees" type="number" min="1" max="50" step="1" inputmode="numeric">
+      </label>
+      <label>Rendement 1 (% par an)
+        <input id="yTaux1" type="number" min="0" max="100" step="0.1" inputmode="decimal">
+      </label>
+      <label>Rendement 2 (% par an)
+        <input id="yTaux2" type="number" min="0" max="100" step="0.1" inputmode="decimal">
+      </label>
+      <label>Année du gain affiché
+        <input id="yAnneeGain" type="number" min="1" max="50" step="1" inputmode="numeric">
+      </label>
+      <div class="btn-with-info">
+        <button id="btnUseEco" class="btn btn--ghost" type="button">Utiliser mon économie mensuelle</button>
+        <button type="button" id="rendementInfoBtn" class="info-btn" aria-label="En savoir plus sur les limites de cette simulation" title="En savoir plus">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 2.3 14.6 13.7 1.4 13.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
+            <line x1="8" y1="6.4" x2="8" y2="9.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="8" cy="11.7" r="0.85" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="results" id="yieldCards"></div>
+
+    <div class="chart-head">
+      <h3 class="h3">Évolution du capital</h3>
+      <ul class="legend" id="legend" aria-label="Légende"></ul>
+    </div>
+    <div class="chart-wrap">
+      <div id="chart"></div>
+      <div id="chartTip" class="tip" hidden></div>
+    </div>
+
+    <details class="details">
+      <summary>Voir le détail année par année</summary>
+      <div class="table-wrap">
+        <table class="table table--compact" id="yearTable">
+          <caption class="sr-only">Capital année par année</caption>
+          <thead>
+            <tr>
+              <th scope="col">Année</th>
+              <th scope="col" class="num">Total versé</th>
+              <th scope="col" class="num" id="thCapLow">Capital à 2 %</th>
+              <th scope="col" class="num" id="thGainLow">Gain à 2 %</th>
+              <th scope="col" class="num" id="thCapHigh">Capital à 10 %</th>
+              <th scope="col" class="num" id="thGainHigh">Gain à 10 %</th>
+            </tr>
+          </thead>
+          <tbody id="yearBody"></tbody>
+        </table>
+      </div>
+    </details>
+
+    <p class="note">Hypothèses : rendement annuel constant, intérêts composés chaque mois, versement en fin de mois. Un rendement élevé n'est pas garanti et implique un risque de perte ; le « gain de l'année » est l'intérêt gagné pendant cette seule année (le « gain » du résultat est cumulé sur toute la durée) ; ce simulateur est un outil d'illustration, pas un conseil financier.</p>
+  </section>
+
+  <p class="back-link"><a href="index.html">← Retour au tableau de bord</a></p>
+
+</main>
+
+<footer class="wrap foot">
+  <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, appuyez ici.</button></p>
+</footer>
+
+<div id="infoOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <p id="infoTitle" class="modal__title">Limites de la simulation</p>
+    <p class="modal__text">Ne tient pas compte d'autres paramètres comme l'inflation, la fiscalité ou les frais, et ne remplace pas un conseil financier. Les simulations de rendement supposent un taux annuel constant, alors qu'un placement réel varie d'une année à l'autre et peut aussi perdre de la valeur.</p>
+    <div class="modal__actions">
+      <button type="button" id="infoClose" class="btn btn--ghost">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script src="nav.js?v=1.00.3"></script>
+<script src="script.js?v=1.00.3"></script>
+</body>
+</html>

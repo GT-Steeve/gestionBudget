@@ -74,12 +74,12 @@
   }
 
   /* ---------- Bouton « Pour tout effacer » du footer ----------
-     Sur index.html, script.js gère déjà ce bouton (présence de #revenusBody) :
+     Sur les pages avec script.js (body[data-app]), c'est lui qui gère déjà ce bouton :
      on ne s'en occupe que sur les pages qui n'ont pas le tableau de bord (ex. À propos). */
 
   function initClearFooter() {
     const btn = $('#btnClearFooter');
-    if (!btn || $('#revenusBody')) return;
+    if (!btn || document.body.dataset.app === 'true') return;
     const STORAGE_KEY = 'gestion-epargne-v1';
     btn.addEventListener('click', () => {
       if (!window.confirm('Supprimer tous les revenus, charges et comparaisons ?')) return;
