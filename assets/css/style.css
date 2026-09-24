@@ -176,6 +176,22 @@ main.wrap { flex: 1 0 auto; }
 .menu-toggle[aria-expanded="true"] .menu-icon--bars { opacity: 0; transform: rotate(45deg); }
 .menu-toggle[aria-expanded="true"] .menu-icon--close { opacity: 1; transform: rotate(0deg); }
 
+/* Bouton thème : icône seule (soleil / lune), sans fond ni bordure de bouton. */
+.theme-toggle {
+  display: inline-flex; flex: none; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0;
+  color: var(--ink); background: transparent; border: none; border-radius: 8px; cursor: pointer;
+}
+.theme-toggle:hover { background: var(--wash); }
+/* Clair par défaut : lune visible, soleil masqué. */
+.theme-toggle .icon-sun { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .theme-toggle .icon-moon { display: none; }
+  :root:where(:not([data-theme="light"])) .theme-toggle .icon-sun { display: inline-flex; }
+}
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+
 /* ---------- Buttons & fields ---------- */
 
 .btn {
@@ -564,38 +580,31 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Mobile */
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
-  .topbar__in { gap: 10px; }
-  .brand { font-size: 15px; margin-right: 0; margin-left: auto; }
-
-  /* Nav + thème passent dans le menu hamburger au lieu de disparaître.
-     Le bouton passe avant le titre, qui se retrouve donc à droite. */
-  .menu-toggle { display: inline-flex; order: -1; }
-  /* Animation d'ouverture/fermeture façon « déroulé » : le menu reste dans le
-     flux (display: flex en permanence) et c'est max-height/opacity qui
-     l'escamotent, pour pouvoir les transitionner (display ne s'anime pas). */
-  .site-menu {
-    display: flex;
-    position: absolute; top: calc(100% + 1px); left: 0; right: 0;
-    flex-direction: column; align-items: stretch; gap: 4px;
-    padding: 10px 12px 14px;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
-    max-height: 0; opacity: 0; overflow: hidden; pointer-events: none;
-    transition: max-height .28s ease, opacity .2s ease;
+  /* Le bouton hamburger disparaît : le menu reste affiché en permanence, pas besoin
+     de le déplier. Le titre reste à gauche, et le bouton thème vient se placer à
+     droite sur la même ligne (grille 2 colonnes), avec le menu en pleine largeur
+     sous cette ligne-là. */
+  .topbar__in {
+    display: grid; grid-template-columns: 1fr auto; grid-template-areas: "brand theme" "nav nav";
+    gap: 8px 10px; height: auto; padding-top: 10px; padding-bottom: 10px;
   }
-  .site-menu.is-open { max-height: 420px; opacity: 1; pointer-events: auto; }
+  .menu-toggle { display: none; }
+  .brand { grid-area: brand; margin-right: 0; align-self: center; }
+  /* display: contents fait passer .nav et #themeBtn comme des enfants directs de
+     .topbar__in (comme sur desktop), pour pouvoir les placer via grid-area. */
+  .site-menu { display: contents; }
+  #themeBtn { grid-area: theme; }
   /* Grille 3 colonnes façon icônes d'appli plutôt qu'une liste 1 colonne :
-     la largeur du menu déroulant permet 3 tuiles par ligne. */
-  .nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+     la largeur du menu permet 3 tuiles par ligne. */
+  .nav { grid-area: nav; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
   .nav a {
-    flex-direction: column; justify-content: center; gap: 6px;
-    padding: 12px 6px; text-align: center;
+    flex-direction: column; justify-content: center; gap: 4px;
+    padding: 8px 6px; text-align: center;
     border: 1px solid var(--border); border-radius: 10px;
   }
-  .nav-icon { display: inline-flex; width: 20px; height: 20px; color: var(--ink-2); }
-  .nav a span { font-size: 12px; }
+  .nav-icon { display: inline-flex; width: 17px; height: 17px; color: var(--ink-2); }
+  .nav a span { font-size: 11px; }
   .nav a:hover .nav-icon { color: var(--ink); }
-  .site-menu #themeBtn { justify-content: center; margin-top: 6px; }
 
   .card { padding: 16px 14px; border-radius: 14px; }
   .card__head { gap: 10px; }

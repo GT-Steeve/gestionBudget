@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.00.4">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.00.19">
 </head>
 <body>
 
@@ -45,9 +45,23 @@
         <a href="../index.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Synthèse</span></a>
         <a href="apropos.html" aria-current="page"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="7" x2="8" y2="11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.6" r="0.9" fill="currentColor"/></svg><span>À propos</span></a>
       </nav>
-      <button id="themeBtn" class="btn btn--ghost" type="button" aria-label="Changer de thème (clair / sombre)">
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"/></svg>
-        <span>Thème</span>
+      <button id="themeBtn" class="theme-toggle" type="button" aria-label="Changer de thème (clair / sombre)">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <circle cx="9" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <line x1="9" y1="0.5" x2="9" y2="2.5"/>
+            <line x1="9" y1="15.5" x2="9" y2="17.5"/>
+            <line x1="0.5" y1="9" x2="2.5" y2="9"/>
+            <line x1="15.5" y1="9" x2="17.5" y2="9"/>
+            <line x1="3.05" y1="3.05" x2="4.46" y2="4.46"/>
+            <line x1="13.54" y1="13.54" x2="14.95" y2="14.95"/>
+            <line x1="3.05" y1="14.95" x2="4.46" y2="13.54"/>
+            <line x1="13.54" y1="4.46" x2="14.95" y2="3.05"/>
+          </g>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path d="M14.5 11.2A6.2 6.2 0 0 1 6.8 3.5a6.2 6.2 0 1 0 7.7 7.7z" fill="currentColor"/>
+        </svg>
       </button>
     </div>
   </div>
@@ -86,6 +100,6 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, appuyez ici.</button></p>
 </footer>
 
-<script src="../assets/js/nav.js?v=1.00.4"></script>
+<script src="../assets/js/nav.js?v=1.00.19"></script>
 </body>
 </html>
