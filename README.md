@@ -24,6 +24,10 @@ potentielles, simulation de rendement d'épargne et synthèse visuelle.
   l'année de votre choix et détail année par année.
 - **Synthèse graphique** — camembert de répartition des dépenses et graphique
   en barres, par mois ou par an.
+- **Export PDF & impression** — boutons « Exporter » et « Imprimer » sous la
+  synthèse : ils ouvrent la boîte de dialogue d'impression du navigateur
+  (feuille de style `@media print` dédiée), qui propose « Enregistrer en PDF »
+  comme destination.
 - **Thème clair / sombre**, au choix ou automatique selon les préférences du
   système.
 - **Interface responsive** (mobile, tablette, desktop) avec menu compact sur
@@ -46,8 +50,8 @@ HTML, CSS et JavaScript « vanilla », sans framework ni étape de build.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Charges, Économies, Rendement, À propos)
-- `assets/css/style.css` — thème (clair/sombre), mise en page, responsive
-- `assets/js/script.js` — logique de l'application (calculs, rendu, stockage local)
+- `assets/css/style.css` — thème (clair/sombre), mise en page, responsive, impression
+- `assets/js/script.js` — logique de l'application (calculs, rendu, stockage local, export/impression)
 - `assets/js/nav.js` — menu mobile, thème, effacement des données
 - `assets/img/` — favicons et image de partage (Open Graph)
 

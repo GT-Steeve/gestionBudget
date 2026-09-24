@@ -1206,6 +1206,12 @@
     const scrollEl = $('#barScroll');
     bindScrollArrows(scrollEl, $('#barScrollLeft'), $('#barScrollRight'));
 
+    // Ni export PDF ni impression réels : on s'appuie sur la boîte de dialogue
+    // d'impression du navigateur (feuille @media print dédiée), qui propose déjà
+    // « Enregistrer en PDF » comme destination.
+    $('#btnExportPdf')?.addEventListener('click', () => window.print());
+    $('#btnPrint')?.addEventListener('click', () => window.print());
+
     if ('ResizeObserver' in window) {
       let lastW = 0;
       new ResizeObserver(() => {

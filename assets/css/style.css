@@ -533,6 +533,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .bilan dd small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
 
 .chart-head--gap { margin-top: 32px; }
+.syn-export { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 24px; }
 .chart-scroll-wrap { position: relative; }
 /* Marge basse pour laisser la place à la barre de défilement du navigateur,
    qui sinon chevauche les légendes REVENUS / CHARGES du graphique. */
@@ -575,25 +576,27 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .wrap { padding: 0 14px; }
   .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
+  /* Sur mobile et tablette, seul l'export reste : l'impression est une action bureau. */
+  #btnPrint { display: none; }
 }
 
 /* Mobile */
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
   /* Le bouton hamburger disparaît : le menu reste affiché en permanence, pas besoin
-     de le déplier. Le titre reste à gauche, et le bouton thème vient se placer à
-     droite sur la même ligne (grille 2 colonnes), avec le menu en pleine largeur
+     de le déplier. Le titre est centré sur la ligne (colonnes 1fr égales de chaque
+     côté), le bouton thème reste calé à droite, et le menu prend toute la largeur
      sous cette ligne-là. */
   .topbar__in {
-    display: grid; grid-template-columns: 1fr auto; grid-template-areas: "brand theme" "nav nav";
+    display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "spacer brand theme" "nav nav nav";
     gap: 8px 10px; height: auto; padding-top: 10px; padding-bottom: 10px;
   }
   .menu-toggle { display: none; }
-  .brand { grid-area: brand; margin-right: 0; align-self: center; }
+  .brand { grid-area: brand; margin-right: 0; justify-self: center; align-self: center; }
   /* display: contents fait passer .nav et #themeBtn comme des enfants directs de
      .topbar__in (comme sur desktop), pour pouvoir les placer via grid-area. */
   .site-menu { display: contents; }
-  #themeBtn { grid-area: theme; }
+  #themeBtn { grid-area: theme; justify-self: end; }
   /* Grille 3 colonnes façon icônes d'appli plutôt qu'une liste 1 colonne :
      la largeur du menu permet 3 tuiles par ligne. */
   .nav { grid-area: nav; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
@@ -651,7 +654,10 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 
 @media print {
-  .topbar, .form-row, .actions, .icon-btn { display: none !important; }
+  .topbar, .form-row, .actions, .icon-btn, .syn-export, .foot { display: none !important; }
+  /* À l'export/impression, seule la Synthèse (camembert + bilan) est utile :
+     les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
+  .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }
   body { background: #fff; }
   .card { break-inside: avoid; box-shadow: none; }
 }
