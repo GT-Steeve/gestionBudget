@@ -145,10 +145,15 @@ main.wrap { flex: 1 0 auto; }
 
 .nav { display: flex; gap: 4px; }
 .nav a {
+  display: flex; align-items: center; gap: 10px;
   color: var(--ink-2); text-decoration: none; font-size: 14px;
   padding: 6px 10px; border-radius: 8px;
 }
 .nav a:hover { background: var(--wash); color: var(--ink); }
+
+/* L'icône n'apparaît que dans le menu déroulant mobile (voir media query) :
+   sur desktop le nav reste un texte seul, plus compact. */
+.nav-icon { display: none; flex: none; }
 
 /* Bouton hamburger : masqué sur desktop, activé en media query mobile. */
 .menu-toggle {
@@ -219,8 +224,9 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 }
 .tile__body { flex: 1 1 0%; min-width: 0; }
 .tile__label { font-size: 13px; color: var(--ink-2); }
-.tile__value { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; margin-top: 4px; }
+.tile__value { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; margin-top: 4px; white-space: nowrap; }
 .tile__value--good { color: var(--good); }
+.tile__unit { font-size: 14px; font-weight: 500; letter-spacing: normal; }
 .tile__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .tile__edit {
   flex: 0 0 auto; display: inline-flex; align-items: center; margin-left: auto;
@@ -578,9 +584,18 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
     transition: max-height .28s ease, opacity .2s ease;
   }
   .site-menu.is-open { max-height: 420px; opacity: 1; pointer-events: auto; }
-  .nav { flex-direction: column; gap: 2px; }
-  .nav a { padding: 10px 12px; }
-  .site-menu #themeBtn { align-self: flex-start; margin-top: 6px; }
+  /* Grille 3 colonnes façon icônes d'appli plutôt qu'une liste 1 colonne :
+     la largeur du menu déroulant permet 3 tuiles par ligne. */
+  .nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .nav a {
+    flex-direction: column; justify-content: center; gap: 6px;
+    padding: 12px 6px; text-align: center;
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .nav-icon { display: inline-flex; width: 20px; height: 20px; color: var(--ink-2); }
+  .nav a span { font-size: 12px; }
+  .nav a:hover .nav-icon { color: var(--ink); }
+  .site-menu #themeBtn { justify-content: center; margin-top: 6px; }
 
   .card { padding: 16px 14px; border-radius: 14px; }
   .card__head { gap: 10px; }
@@ -589,7 +604,8 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      celui des tuiles voisines même si leur contenu fait plus ou moins de lignes. */
   .tile { flex-direction: column; align-items: stretch; }
   .tile__edit { align-self: flex-end; }
-  .tile__value { font-size: 22px; }
+  .tile__value { font-size: 20px; }
+  .tile__unit { font-size: 12px; }
   .form-row { gap: 10px; }
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
   .form-row .btn { width: 100%; }

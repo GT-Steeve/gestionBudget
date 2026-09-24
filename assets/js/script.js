@@ -1224,24 +1224,25 @@
     const m = totalMonthly();
     const rev = totalRevenus();
     $('#kpiRevenus').textContent = eur2.format(rev);
-    $('#kpiRevenusSub').textContent = `${eur2.format(annual(rev))} par an (× 12)`;
+    $('#kpiRevenusSub').textContent = `${eur2.format(annual(rev))} par an`;
     setSigned($('#kpiSolde'), rev - m);
     $('#kpiSoldeSub').textContent = `${eur2.format(annual(rev - m))} par an`;
     $('#kpiMensuel').textContent = eur2.format(m);
-    $('#kpiNbLignes').textContent = `${state.charges.length} ligne${state.charges.length > 1 ? 's' : ''}`;
+    $('#kpiNbLignes').textContent = `${state.charges.length} poste${state.charges.length > 1 ? 's' : ''}`;
     $('#kpiAnnuel').textContent = eur2.format(annual(m));
 
     const eco = computeSavings();
-    $('#kpiEco').textContent = eur2.format(eco.annual);
+    $('#kpiEco').textContent = eur2.format(eco.monthly);
     $('#kpiEcoSub').textContent = m > 0 && eco.monthly > 0
-      ? `${eur2.format(eco.monthly)} / mois · ${pct1.format(eco.monthly / m)} de vos charges`
+      ? `${eur2.format(eco.annual)} /an`
       : 'Ajoutez des comparaisons (partie 3)';
 
     const { years, results } = computeYield();
     const [low, high] = results;
-    $('#kpiCapLabel').textContent = `Capital dans ${years} an${years > 1 ? 's' : ''} (${fmtRate(high.rate)})`;
-    $('#kpiCap').textContent = eur0.format(high.pts[years].balance);
-    $('#kpiCapSub').textContent = `à ${fmtRate(low.rate)} : ${eur0.format(low.pts[years].balance)}`;
+    $('#kpiCapLabel').textContent = `Capital dans ${years} an${years > 1 ? 's' : ''}`;
+    const kpiCap = $('#kpiCap');
+    kpiCap.replaceChildren(eur0.format(high.pts[years].balance) + ' ', h('span', { class: 'tile__unit' }, `(${fmtRate(high.rate)})`));
+    $('#kpiCapSub').textContent = `${eur0.format(low.pts[years].balance)} (${fmtRate(low.rate)})`;
   }
 
   /* ==========================================================================

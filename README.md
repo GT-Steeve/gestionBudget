@@ -44,9 +44,12 @@ python3 -m http.server
 
 HTML, CSS et JavaScript « vanilla », sans framework ni étape de build.
 
-- `index.html` — structure de la page
-- `style.css` — thème (clair/sombre), mise en page, responsive
-- `script.js` — logique de l'application (calculs, rendu, stockage local)
+- `index.html` — tableau de bord (page d'accueil)
+- `pages/` — pages dédiées (Revenus, Charges, Économies, Rendement, À propos)
+- `assets/css/style.css` — thème (clair/sombre), mise en page, responsive
+- `assets/js/script.js` — logique de l'application (calculs, rendu, stockage local)
+- `assets/js/nav.js` — menu mobile, thème, effacement des données
+- `assets/img/` — favicons et image de partage (Open Graph)
 
 ## Licence
 

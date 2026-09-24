@@ -37,8 +37,10 @@
     btn.addEventListener('click', () => {
       if (menu.classList.contains('is-open')) close(); else open();
     });
-    // Referme le menu une fois un lien de section (ou le bouton thème) activé.
+    // Referme le menu une fois un lien de section activé, mais pas pour le bouton
+    // thème : changer d'apparence ne doit pas couper la navigation dans le menu.
     menu.addEventListener('click', (e) => {
+      if (e.target.closest('#themeBtn')) return;
       if (e.target.closest('a, button')) close();
     });
     document.addEventListener('click', (e) => {

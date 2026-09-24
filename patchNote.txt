@@ -9,6 +9,7 @@ v1.00.0 = Page A propos
 v1.00.1 = polish page a propos
 v1.00.2 = polish + page a propos
 v1.00.3 = rework UX + polish UI mobile / tablette
+v1.00.4 = rework architecture du projet + polish menu sur mobile
 
 ** Next idea **
 exporter les donnée en PDF où excel
