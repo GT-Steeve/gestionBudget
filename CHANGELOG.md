@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.0.1...v1.1.0) (2026-09-26)
+
+
+### Features
+
+* **epargne:** ajoute un pop-up d'exemples de simulation et renomme les pages ([468c3d7](https://github.com/GT-Steeve/gestionBudget/commit/468c3d784f8d8f2ec8eef878ae6a14223e75c813))
+
 ## [1.0.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.0.0...v1.0.1) (2026-09-26)
 
 

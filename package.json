@@ -1,6 +1,6 @@
 {
   "name": "gestionbudget",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Petite application web pour suivre son budget : revenus, charges, économies potentielles, simulation de rendement d'épargne et synthèse visuelle.",
   "main": "index.js",
   "scripts": {
