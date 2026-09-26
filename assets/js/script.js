@@ -25,7 +25,7 @@
   };
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
   const MAX_RATE = 100;          // plafond des rendements saisis, en %
-  const MONTHS = 12;
+  const MONTHS = Calc.MONTHS;
 
   /* ---------- Utilitaires ---------- */
 
@@ -201,46 +201,13 @@
 
   const save = () => store.set(STORAGE_KEY, state);
 
-  /* ---------- Calculs ---------- */
+  /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
 
-  const annual = (monthly) => monthly * MONTHS;
+  const annual = Calc.annual;
+  const project = Calc.project;
   const totalMonthly = () => state.charges.reduce((sum, c) => sum + c.mensuel, 0);
   const totalRevenus = () => state.revenus.reduce((sum, r) => sum + r.mensuel, 0);
-
-  /** Économies : pour chaque ligne, seule l'option la plus économique est retenue. */
-  function computeSavings() {
-    const rows = state.scenarios
-      .map((sc) => {
-        const charge = state.charges.find((c) => c.id === sc.chargeId);
-        return charge ? { sc, charge, eco: charge.mensuel - sc.nouveau } : null;
-      })
-      .filter(Boolean);
-
-    const best = new Map();
-    for (const r of rows) {
-      if (r.eco <= 0) continue;
-      const cur = best.get(r.charge.id);
-      if (!cur || r.eco > cur.eco) best.set(r.charge.id, r);
-    }
-    const monthly = [...best.values()].reduce((sum, r) => sum + r.eco, 0);
-    return { rows, best, monthly, annual: annual(monthly) };
-  }
-
-  /**
-   * Projection d'épargne. Le taux annuel r est converti en taux mensuel équivalent
-   * i = (1 + r)^(1/12) - 1, de sorte qu'un capital seul gagne exactement r sur 12 mois.
-   * Les versements sont faits en fin de mois.
-   */
-  function project(ratePercent, capital, monthly, years) {
-    const i = Math.pow(1 + ratePercent / 100, 1 / MONTHS) - 1;
-    let balance = capital;
-    const pts = [{ year: 0, balance, deposited: capital }];
-    for (let y = 1; y <= years; y++) {
-      for (let m = 0; m < MONTHS; m++) balance = balance * (1 + i) + monthly;
-      pts.push({ year: y, balance, deposited: capital + monthly * MONTHS * y });
-    }
-    return pts;
-  }
+  const computeSavings = () => Calc.computeSavings(state.charges, state.scenarios);
 
   /* ==========================================================================
      1. Charges

@@ -1,0 +1,36 @@
+{
+  "name": "gestionbudget",
+  "version": "1.0.0",
+  "description": "Petite application web pour suivre son budget : revenus, charges, économies potentielles, simulation de rendement d'épargne et synthèse visuelle.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint assets/js",
+    "test": "vitest run",
+    "build": "node scripts/check-build.mjs",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GT-Steeve/gestion-budget.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/GT-Steeve/gestion-budget/issues"
+  },
+  "homepage": "https://github.com/GT-Steeve/gestion-budget#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "semantic-release": "^25.0.9",
+    "vitest": "^5.0.2"
+  }
+}

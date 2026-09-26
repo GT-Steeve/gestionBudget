@@ -46,14 +46,37 @@ python3 -m http.server
 
 ## Stack technique
 
-HTML, CSS et JavaScript « vanilla », sans framework ni étape de build.
+HTML, CSS et JavaScript « vanilla » côté application : aucun framework, aucun
+bundler, aucune étape de build pour faire tourner le site (ouvrir `index.html`
+suffit). Un outillage Node existe en parallèle uniquement pour la qualité et
+les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Charges, Économies, Rendement, À propos)
 - `assets/css/style.css` — thème (clair/sombre), mise en page, responsive, impression
-- `assets/js/script.js` — logique de l'application (calculs, rendu, stockage local, export/impression)
+- `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression)
+- `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/nav.js` — menu mobile, thème, effacement des données
 - `assets/img/` — favicons et image de partage (Open Graph)
+
+## Contribuer
+
+Le dépôt utilise [Conventional Commits](https://www.conventionalcommits.org/fr/)
+et une release automatisée :
+
+```bash
+npm install       # installe l'outillage (lint, tests, hooks Git)
+npm run lint      # ESLint sur assets/js
+npm test          # Vitest sur assets/js/calc.js
+npm run build     # vérifie que les pages ne référencent pas de fichier manquant
+```
+
+Les hooks Git (Husky) vérifient localement le message de commit et le lint
+avant chaque commit. Toute PR passe par la CI (lint, tests, build) ; une fois
+mergée sur `main`, si tout est vert, **semantic-release** détermine la
+prochaine version à partir des commits (`fix` → patch, `feat` → minor,
+`BREAKING CHANGE` → major), génère le tag, le `CHANGELOG.md` et la GitHub
+Release, puis le site est déployé sur GitHub Pages.
 
 ## Licence
 
