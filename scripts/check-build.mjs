@@ -5,13 +5,16 @@
  * référence des fichiers locaux (css/js/img) qui existent bien sur disque,
  * pour attraper un lien cassé avant le déploiement.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { globSync } from 'node:fs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const htmlFiles = globSync('{*.html,pages/*.html}', { cwd: root });
+/** Liste manuelle (pas de fs.globSync, absent avant Node 22) des pages HTML du site. */
+const htmlFiles = [
+  ...readdirSync(root).filter((f) => f.endsWith('.html')),
+  ...readdirSync(join(root, 'pages')).filter((f) => f.endsWith('.html')).map((f) => join('pages', f)),
+];
 
 if (htmlFiles.length === 0) {
   console.error('Aucune page HTML trouvée.');
