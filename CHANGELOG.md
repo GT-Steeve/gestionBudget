@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.0.0...v1.0.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **release:** ajoute @semantic-release/npm pour synchroniser package.json ([655ddca](https://github.com/GT-Steeve/gestionBudget/commit/655ddcaca0ce335f0d0c09c92b9f81ad0f700028))
+
 # 1.0.0 (2026-09-26)
 
 
