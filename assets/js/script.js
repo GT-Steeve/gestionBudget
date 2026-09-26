@@ -800,6 +800,23 @@
       save();
     });
 
+    // Pop-up d'exemples : chaque bouton préremplit épargne/durée/taux depuis ses data-attributes.
+    document.querySelectorAll('.example-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.yield.versement = num(btn.dataset.mensuel);
+        state.yield.annees = clamp(Math.round(num(btn.dataset.annees)) || 1, 1, 50);
+        state.yield.taux1 = clamp(num(btn.dataset.taux1), 0, MAX_RATE);
+        state.yield.taux2 = clamp(num(btn.dataset.taux2), 0, MAX_RATE);
+        state.yield.anneeGain = clamp(state.yield.anneeGain, 1, state.yield.annees);
+        syncYieldInputs();
+        renderYield();
+        renderSummary();
+        renderSynthese();
+        save();
+        $('#exampleClose').click();
+      });
+    });
+
     if ('ResizeObserver' in window) {
       let lastW = 0;
       new ResizeObserver(() => {
@@ -1240,6 +1257,7 @@
     bindScenarios();
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
+    bindInfoModal('#btnExemple', '#exampleOverlay', '#exampleClose');
     bindSynthese();
     syncYieldInputs();
     renderLines('revenus');

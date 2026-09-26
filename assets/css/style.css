@@ -227,6 +227,16 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .form-row label { flex: 0 1 190px; }
 .form-row label.grow { flex: 1 1 220px; }
 
+.input-with-btn { position: relative; display: block; }
+.input-with-btn input { width: 100%; padding-right: 84px; }
+.input-with-btn input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent); }
+.input-with-btn__btn {
+  position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
+  flex: none; height: 26px; padding: 0 10px; gap: 5px;
+  border-radius: 999px; font-size: 12px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.input-with-btn__btn:hover { transform: translateY(-50%) scale(1.04); }
+
 /* ---------- KPI tiles ---------- */
 
 .kpis {
@@ -482,8 +492,21 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .modal__details dt { color: var(--ink-2); }
 .modal__details dd { text-align: right; font-weight: 600; }
 .modal__text { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 12px 0 20px; text-align: justify; }
+.modal__text--tight { margin-bottom: 16px; }
 .modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
 #infoOverlay .modal__actions { justify-content: center; }
+.modal--wide { max-width: 460px; }
+
+.example-list { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
+.example-item {
+  width: 100%; display: flex; flex-direction: column; gap: 4px;
+  text-align: left; padding: 10px 12px;
+  background: transparent; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  font: inherit; color: var(--ink);
+}
+.example-item:hover { background: var(--wash); border-color: var(--axis); }
+.example-item__name { font-size: 14px; font-weight: 650; }
+.example-item__desc { font-size: 12px; color: var(--ink-2); }
 .btn--danger { background: var(--bad); color: #fff; }
 .btn--danger:hover { filter: brightness(1.08); }
 
@@ -621,8 +644,14 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .form-row { gap: 10px; }
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
   .form-row .btn { width: 100%; }
-  /* Formulaire Rendement : des champs assez courts pour tenir 2 par ligne. */
-  #yieldForm label { flex: 1 1 calc(50% - 5px); }
+  .form-row .input-with-btn__btn { width: auto; }
+  /* Formulaire Rendement : grille 2 colonnes plutôt que flex-wrap, pour un
+     appariement fiable (flex-wrap cassait l'appariement à cause du bouton
+     Exemple incrusté, qui décalait le calcul des retours à la ligne). */
+  #yieldForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+  #yieldForm label { flex: unset; min-width: 0; }
+  #yieldForm .btn-with-info { grid-column: 1 / -1; }
+  #yieldForm label.field--full { grid-column: 1 / -1; }
   .breakdown { grid-template-columns: 90px 1fr auto; }
   .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
