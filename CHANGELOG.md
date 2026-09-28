@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.1.0...v1.2.0) (2026-09-28)
+
+
+### Features
+
+* **charges:** scinde la suppression totale entre charges et reset global ([347135e](https://github.com/GT-Steeve/gestionBudget/commit/347135ea4411d5ffcc4fba0e0496707ee67d37bf))
+
 # [1.1.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.0.1...v1.1.0) (2026-09-26)
 
 
