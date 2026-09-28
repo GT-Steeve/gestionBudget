@@ -72,13 +72,17 @@
   }
 
   /** Pop-up de confirmation avant suppression (détails de la ligne + Annuler/Confirmer). */
-  function confirmDelete(title, details, onConfirm) {
+  function confirmDelete(title, details, onConfirm, opts = {}) {
     const overlay = $('#confirmOverlay');
     if (!overlay) { onConfirm(); return; }
-    $('#confirmTitle').textContent = title;
+    const titleEl = $('#confirmTitle');
+    titleEl.textContent = title;
+    titleEl.classList.toggle('modal__title--center', !!opts.center);
     $('#confirmDetails').replaceChildren(
       ...details.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)])
     );
+    $('#confirmOverlay .modal__actions').classList.toggle('modal__actions--center', !!opts.center);
+    $('#confirmOverlay .modal').classList.toggle('modal--narrow', !!opts.center);
 
     const okBtn = $('#confirmOk');
     const cancelBtn = $('#confirmCancel');
@@ -384,17 +388,31 @@
       if (wrap) bindScrollArrows(wrap, $(cfg.left), $(cfg.right));
     }
 
+    const clearCharges = () => {
+      confirmDelete('Effacer TOUTES les charges ?', [], () => {
+        const ids = new Set(state.charges.map((c) => c.id));
+        state.charges = [];
+        state.scenarios = state.scenarios.filter((x) => !ids.has(x.chargeId));
+        renderLines('charges');
+        refresh();
+      }, { center: true });
+    };
     const clearAll = () => {
-      if (!window.confirm('Supprimer tous les revenus, charges et comparaisons ?')) return;
-      state.revenus = [];
-      state.charges = [];
-      state.scenarios = [];
-      renderLines('revenus');
-      renderLines('charges');
-      refresh();
+      confirmDelete('Êtes-vous sûr de tout effacer ?', [
+        ['Revenus', `${state.revenus.length}`],
+        ['Charges', `${state.charges.length}`],
+        ['Comparaisons', `${state.scenarios.length}`]
+      ], () => {
+        state.revenus = [];
+        state.charges = [];
+        state.scenarios = [];
+        renderLines('revenus');
+        renderLines('charges');
+        refresh();
+      });
     };
     const btnClear = $('#btnClear');
-    if (btnClear) btnClear.addEventListener('click', clearAll);
+    if (btnClear) btnClear.addEventListener('click', clearCharges);
     const btnClearFooter = $('#btnClearFooter');
     if (btnClearFooter) btnClearFooter.addEventListener('click', clearAll);
   }
