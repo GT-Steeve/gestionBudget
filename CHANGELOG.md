@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.3.0...v1.4.0) (2026-09-29)
+
+
+### Features
+
+* **nav:** ajoute une page Annexe et renomme Réduction/Épargne ([7f1dfe7](https://github.com/GT-Steeve/gestionBudget/commit/7f1dfe7f344ba2fce9ecf07dc6859cbb5ab180bb))
+
 # [1.3.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.2.0...v1.3.0) (2026-09-29)
 
 
