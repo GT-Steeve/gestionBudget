@@ -284,16 +284,34 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .lead { color: var(--ink-2); font-size: 14px; margin-top: 2px; max-width: 62ch; }
 .h3 { font-size: 14px; font-weight: 650; color: var(--ink); }
 .h3--gap { margin-top: 24px; }
+.h3--center { text-align: center; font-size: 16px; }
 .back-link { margin: 20px 0 4px; }
 .back-link a { color: var(--ink-2); font-size: 14px; text-decoration: none; }
 .back-link a:hover { color: var(--ink); text-decoration: underline; }
 .note { font-size: 13px; color: var(--muted); margin-top: 14px; max-width: 80ch; }
 .about-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 8px auto 0; max-width: 70ch; text-align: justify; }
+/* Page Annexe : chaque terme est présenté comme une petite fiche, en grille
+   qui passe naturellement à plusieurs colonnes sur les écrans larges (auto-fit,
+   pas besoin de media query) et reste en une seule colonne sur mobile. */
+.glossary { margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.glossary__item {
+  background: var(--wash); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px;
+}
+.glossary dt { font-size: 14.5px; font-weight: 650; color: var(--ink); }
+.glossary dd { margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); text-align: justify; }
 /* .card__head ne fait pas grandir ses enfants (flex sans grow) : sans width:100%,
    ce bloc reste large comme son contenu et le centrage du titre paraît décalé
    à gauche sur les écrans larges, où la carte est bien plus large que le texte. */
 .about-head { width: 100%; }
 .about-head .lead { font-size: 15px; line-height: 1.6; max-width: 70ch; margin: 8px auto 0; text-align: justify; }
+/* Page Annexe (desktop) : l'intro tient sur une ligne, la justification la
+   fait paraître collée à gauche dans le bloc large de 70ch ; centrée à la
+   place. Repasse en justifié sur mobile (voir media query), où le bloc fait
+   la largeur de l'écran et la justification reste pertinente. */
+/* Spécificité égale à .about-head .lead (2 classes) pour gagner sur la
+   règle de base malgré l'ordre dans le fichier. */
+.about-head .lead--center { text-align: center; }
 .about-title { text-align: center; text-transform: uppercase; }
 .about-subtitle { text-align: center; }
 /* Même besoin que .about-head ci-dessus : sans width:100%, le titre centré
@@ -619,6 +637,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Mobile */
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
+  .about-head .lead--center { text-align: justify; }
   /* Le bouton hamburger disparaît : le menu reste affiché en permanence, pas besoin
      de le déplier. Le lien Synthèse (icône + texte) est plus large que le
      bouton thème : centrer le titre dans la seule colonne du milieu le
