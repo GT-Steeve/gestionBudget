@@ -143,6 +143,9 @@ main.wrap { flex: 1 0 auto; }
    .nav et #themeBtn restent des enfants flex directs de .topbar__in, comme avant. */
 .site-menu { display: contents; }
 
+/* Ancre les flèches de défilement mobiles (voir media query), sans effet sur
+   le desktop où le nav ne défile jamais. */
+.nav-scroll-wrap { position: relative; }
 .nav { display: flex; gap: 4px; }
 .nav a {
   display: flex; align-items: center; gap: 10px;
@@ -176,13 +179,19 @@ main.wrap { flex: 1 0 auto; }
 .menu-toggle[aria-expanded="true"] .menu-icon--bars { opacity: 0; transform: rotate(45deg); }
 .menu-toggle[aria-expanded="true"] .menu-icon--close { opacity: 1; transform: rotate(0deg); }
 
-/* Bouton thème : icône seule (soleil / lune), sans fond ni bordure de bouton. */
-.theme-toggle {
+/* Bouton thème : icône seule (soleil / lune), sans fond ni bordure de bouton.
+   Le bouton Accueil (icône maison, à gauche du titre) partage exactement le
+   même traitement visuel, mais n'apparaît que sur mobile (voir media query)
+   où il remplace l'onglet Synthèse du menu déroulant ; sur desktop, Synthèse
+   reste un onglet du menu comme avant (voir .nav-home plus bas). */
+.theme-toggle, .home-link {
   display: inline-flex; flex: none; align-items: center; justify-content: center;
   width: 36px; height: 36px; padding: 0;
   color: var(--ink); background: transparent; border: none; border-radius: 8px; cursor: pointer;
+  text-decoration: none;
 }
-.theme-toggle:hover { background: var(--wash); }
+.home-link { display: none; }
+.theme-toggle:hover, .home-link:hover { background: var(--wash); }
 /* Clair par défaut : lune visible, soleil masqué. */
 .theme-toggle .icon-sun { display: none; }
 @media (prefers-color-scheme: dark) {
@@ -611,32 +620,65 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
   /* Le bouton hamburger disparaît : le menu reste affiché en permanence, pas besoin
-     de le déplier. Le titre est centré sur la ligne (colonnes 1fr égales de chaque
-     côté), le bouton thème reste calé à droite, et le menu prend toute la largeur
-     sous cette ligne-là. */
+     de le déplier. Le lien Synthèse (icône + texte) est plus large que le
+     bouton thème : centrer le titre dans la seule colonne du milieu le
+     décale donc visiblement vers la droite. Il est à la place étalé sur
+     toute la largeur de la ligne (grid-column 1/-1, superposé aux colonnes
+     home/theme) et centré par rapport à l'écran, pas à l'espace restant. */
   .topbar__in {
-    display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "spacer brand theme" "nav nav nav";
-    gap: 8px 10px; height: auto; padding-top: 10px; padding-bottom: 10px;
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "home . theme" "nav nav nav";
+    gap: 0 10px; height: auto; padding-top: 4px; padding-bottom: 2px;
   }
   .menu-toggle { display: none; }
-  .brand { grid-area: brand; margin-right: 0; justify-self: center; align-self: center; }
+  #homeBtn { display: inline-flex; grid-area: home; align-self: center; }
+  .brand {
+    grid-row: 1; grid-column: 1 / -1; margin-right: 0;
+    justify-self: center; align-self: center;
+  }
+  /* Synthèse disparaît des onglets mobiles pour éviter le doublon avec
+     #homeBtn (visible uniquement ici, voir .home-link plus haut) ; sur
+     desktop c'est l'inverse : #homeBtn reste masqué et Synthèse garde sa
+     place habituelle dans le menu. */
+  .nav a.nav-home { display: none; }
   /* display: contents fait passer .nav et #themeBtn comme des enfants directs de
      .topbar__in (comme sur desktop), pour pouvoir les placer via grid-area. */
   .site-menu { display: contents; }
-  #themeBtn { grid-area: theme; justify-self: end; }
-  /* Grille 3 colonnes façon icônes d'appli plutôt qu'une liste 1 colonne :
-     la largeur du menu permet 3 tuiles par ligne. */
-  .nav { grid-area: nav; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-  .nav a {
-    flex-direction: column; justify-content: center; gap: 4px;
-    padding: 8px 6px; text-align: center;
-    border: 1px solid var(--border); border-radius: 10px;
+  #themeBtn { grid-area: theme; justify-self: end; align-self: center; }
+  /* Onglets plats : pas de fond ni de bordure, seul un soulignement de 2px
+     distingue l'onglet actif (couleur d'accent). Défilement horizontal en
+     secours si les 6 onglets ne tiennent pas sur un petit écran, signalé par
+     des flèches (voir .scroll-arrow) qui n'apparaissent que si la bordure
+     correspondante n'est pas encore atteinte. Contrairement aux flèches des
+     tableaux (superposées en overlay), celles-ci ont leur propre colonne dans
+     la ligne (flex + order) pour ne jamais recouvrir le texte des onglets ;
+     l'espace reste réservé même flèche masquée (visibility, pas display) pour
+     éviter que les onglets ne sautent de largeur pendant le défilement. */
+  .nav-scroll-wrap { grid-area: nav; display: flex; align-items: center; }
+  .nav {
+    order: 2; flex: 1 1 auto; min-width: 0; display: flex; gap: 2px;
+    overflow-x: auto; scrollbar-width: none;
   }
-  .nav-icon { display: inline-flex; width: 17px; height: 17px; color: var(--ink-2); }
-  .nav a span { font-size: 11px; }
-  .nav a:hover .nav-icon { color: var(--ink); }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-scroll-wrap .scroll-arrow {
+    position: static; flex: none; width: 22px; justify-content: center;
+  }
+  .nav-scroll-wrap .scroll-arrow[hidden] { display: flex; visibility: hidden; }
+  #navScrollLeft { order: 1; }
+  #navScrollRight { order: 3; }
+  .nav a {
+    flex: none; flex-direction: row; align-items: center; justify-content: center; gap: 5px;
+    padding: 2px 10px 4px; text-align: center;
+    color: var(--ink-2); background: transparent;
+    border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  .nav a[aria-current="page"] {
+    color: var(--accent); font-weight: 650; border-bottom-color: var(--accent);
+  }
+  .nav-icon { display: inline-flex; width: 15px; height: 15px; color: inherit; }
+  .nav a span { font-size: 12.5px; }
 
-  .card { padding: 16px 14px; border-radius: 14px; }
+  .card { padding: 16px 14px; border-radius: 14px; margin-top: 8px; }
   .card__head { gap: 10px; }
   /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
      plus haute voisine), plutôt que juste après le texte, pour rester aligné avec
@@ -658,7 +700,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #yieldForm label.field--full { grid-column: 1 / -1; }
   .breakdown { grid-template-columns: 90px 1fr auto; }
   .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
-  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
   .tile { padding: 12px 14px; }
   .back-link { text-align: center; }
   .mini-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

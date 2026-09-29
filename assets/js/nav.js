@@ -94,7 +94,43 @@
     });
   }
 
+  /* ---------- Flèches de défilement du menu d'onglets (mobile) ----------
+     Affiche une flèche gauche/droite seulement quand le menu peut encore
+     défiler dans ce sens (masquée dès que la bordure correspondante est
+     atteinte). Vit ici plutôt que dans script.js car le menu est présent
+     sur toutes les pages, y compris celles sans tableau de bord (À propos). */
+
+  function initNavScrollArrows() {
+    const scrollEl = $('.nav');
+    const leftBtn = $('#navScrollLeft');
+    const rightBtn = $('#navScrollRight');
+    if (!scrollEl || !leftBtn || !rightBtn) return;
+
+    const update = () => {
+      const canScroll = scrollEl.scrollWidth > scrollEl.clientWidth + 1;
+      leftBtn.hidden = !canScroll || scrollEl.scrollLeft <= 0;
+      rightBtn.hidden = !canScroll || scrollEl.scrollLeft >= scrollEl.scrollWidth - scrollEl.clientWidth - 1;
+    };
+
+    // Amène l'onglet de la page courante dans la zone visible dès le
+    // chargement, au cas où il serait hors champ (ex. « À propos », en bout
+    // de liste) : sans ça, rien ne signale qu'il faut défiler pour le voir.
+    const active = scrollEl.querySelector('a[aria-current="page"]');
+    if (active) active.scrollIntoView({ inline: 'center', block: 'nearest' });
+
+    update();
+    scrollEl.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    leftBtn.addEventListener('click', () => {
+      scrollEl.scrollBy({ left: -scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
+    rightBtn.addEventListener('click', () => {
+      scrollEl.scrollBy({ left: scrollEl.clientWidth * 0.8, behavior: 'smooth' });
+    });
+  }
+
   initMenu();
   initTheme();
   initClearFooter();
+  initNavScrollArrows();
 })();
