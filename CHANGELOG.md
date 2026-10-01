@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.6.0...v1.7.0) (2026-10-01)
+
+
+### Features
+
+* **mobile:** aligne les tableaux Revenus/Charges sur Dépenses en mobile ([ef7ed9c](https://github.com/GT-Steeve/gestionBudget/commit/ef7ed9cbbdf2c40cb80a2b4863462e22b904cf0c))
+
 # [1.6.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.5.0...v1.6.0) (2026-10-01)
 
 
