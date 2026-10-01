@@ -280,8 +280,14 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
   box-shadow: var(--shadow);
 }
 .card__head { display: flex; gap: 14px; align-items: flex-start; }
-.card__head h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
+/* flex + min-width:0 : le titre prend toute la place disponible pour qu'un
+   bouton éventuel (ex. Mois antérieur sur Dépenses) reste calé à sa droite,
+   sans réduire la largeur du <p class="lead"> qui suit (hors de .card__head,
+   donc sur toute la largeur de la carte, y compris en mobile). */
+.card__head h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; flex: 1 1 auto; min-width: 0; }
+.card__head .btn { flex: none; }
 .lead { color: var(--ink-2); font-size: 14px; margin-top: 2px; max-width: 62ch; }
+.lead--full { max-width: none; text-align: justify; }
 .h3 { font-size: 14px; font-weight: 650; color: var(--ink); }
 .h3--gap { margin-top: 24px; }
 .h3--center { text-align: center; font-size: 16px; }
@@ -348,6 +354,10 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .table tfoot th, .table tfoot td { font-weight: 700; border-top: 1px solid var(--axis); padding-top: 12px; }
 .table tfoot th { font-size: 14px; }
 .table .empty { text-align: center; color: var(--muted); padding: 24px 10px; }
+
+/* Dépenses : ordre de colonnes Catégorie/Libellé/Montant en tablette et
+   bureau (voir la ligne mobile ci-dessous, activée à sa place sous 640px). */
+#depensesHeadMobile, #depensesFootMobile { display: none; }
 .table--compact { font-size: 14px; min-width: 640px; }
 .table--compact th, .table--compact td { padding: 6px 10px; }
 
@@ -403,6 +413,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
 }
 .bd__pct { color: var(--muted); min-width: 56px; }
+/* Message « Ajoutez des… » : évite qu'il hérite de la 1re colonne (110px) de
+   la grille et se retrouve comprimé sur plusieurs lignes au lieu de s'étaler. */
+.breakdown > .note { grid-column: 1 / -1; margin-top: 0; }
 
 /* ---------- Économies ---------- */
 
@@ -527,6 +540,16 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .modal__actions--center { justify-content: center; }
 #infoOverlay .modal__actions { justify-content: center; }
 .modal--wide { max-width: 460px; }
+
+/* Pop-up Historique (dépenses) : un bloc scrollable par mois archivé, chacun
+   avec son propre petit tableau (mêmes styles que .table). */
+.historique-list { max-height: 60vh; overflow-y: auto; margin-bottom: 16px; }
+.historique-month { margin-top: 20px; }
+.historique-month:first-child { margin-top: 0; }
+/* .table impose min-width:560px pour les tableaux principaux (pensés pour des
+   champs éditables) ; bien trop large pour ce petit récapitulatif en lecture
+   seule dans une modale de 460px, où ça masquait la colonne Montant. */
+.historique-month .table { margin-top: 8px; font-size: 13px; min-width: 0; }
 
 .example-list { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
 .example-item {
@@ -736,6 +759,17 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   /* Camembert : donut centré dans sa largeur, bascule mois/an centrée. */
   #synMsg { text-align: center; }
   .seg { margin: 0 auto; }
+
+  /* Dépenses : bascule vers l'ordre Libellé, Montant, Catégorie — largeurs
+     fixes pour que Montant reste visible sans défilement (au lieu d'être
+     repoussé au bord par la colonne Libellé, qui n'a pas de largeur max). */
+  #depensesHeadDesktop, #depensesFootDesktop { display: none; }
+  #depensesHeadMobile, #depensesFootMobile { display: table-row; }
+  #depensesTable { table-layout: fixed; }
+  #depensesTable th:nth-child(1), #depensesTable td:nth-child(1) { width: 33%; }
+  #depensesTable th:nth-child(2), #depensesTable td:nth-child(2) { width: 27%; }
+  #depensesTable th:nth-child(3), #depensesTable td:nth-child(3) { width: 28%; }
+  #depensesTable th:nth-child(4), #depensesTable td:nth-child(4) { width: 12%; }
 }
 
 @media (max-width: 380px) {
@@ -754,4 +788,20 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }
   body { background: #fff; }
   .card { break-inside: avoid; box-shadow: none; }
+
+  /* Pop-up Historique (dépenses) ouvert : n'imprime que son contenu, pas le
+     reste de la page derrière (déjà masqué ci-dessus par les règles
+     génériques, sauf la carte Dépenses elle-même qu'on masque ici en plus). */
+  body:has(#historiqueOverlay:not([hidden])) #depenses,
+  body:has(#historiqueOverlay:not([hidden])) .back-link {
+    display: none !important;
+  }
+  body:has(#historiqueOverlay:not([hidden])) #historiqueOverlay {
+    position: static; background: none; padding: 0; display: block;
+  }
+  body:has(#historiqueOverlay:not([hidden])) .modal {
+    max-width: none; width: 100%; box-shadow: none; border: none; padding: 0;
+  }
+  body:has(#historiqueOverlay:not([hidden])) .historique-list { max-height: none; overflow: visible; }
+  body:has(#historiqueOverlay:not([hidden])) .modal__actions { display: none !important; }
 }

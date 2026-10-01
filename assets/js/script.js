@@ -13,6 +13,7 @@
   const STORAGE_KEY = 'gestion-epargne-v1';
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide'];
+  const DEP_CATEGORIES = ['Course', 'Restauration', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Imprévu', 'Autre'];
   const HINTS = {
     Loyer: 'Ex. Colocation, logement plus petit, renégociation',
     Factures: 'Ex. Fournisseur moins cher, forfait plus économique',
@@ -38,6 +39,15 @@
   const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
   /** Copie triée par ordre alphabétique (accents pris en compte) pour les listes déroulantes. */
   const sortAlpha = (list) => [...list].sort((a, b) => a.localeCompare(b, 'fr'));
+  /** Clé « AAAA-MM » du mois d'une date, pour comparer/archiver par mois. */
+  const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  /** Libellé lisible d'une clé « AAAA-MM », ex. « septembre 2026 ». */
+  const monthLabel = (key) => {
+    const [y, m] = key.split('-').map(Number);
+    return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1));
+  };
+  /** Nom du mois courant seul (sans année), ex. « septembre ». */
+  const currentMonthName = () => new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date());
 
   const eur2 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   const eur0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -152,6 +162,9 @@
         { id: uid(), categorie: 'Aide', nom: 'Aide enfant', mensuel: 150 }
       ],
       charges: [loyer, elec, inter, courses, transport],
+      depenses: [],
+      depensesHistorique: [],
+      depensesMoisCourant: monthKey(new Date()),
       scenarios: [
         { id: uid(), chargeId: elec.id, option: 'Fournisseur moins cher', nouveau: 52 },
         { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 }
@@ -179,6 +192,23 @@
         nom: String(r.nom || 'Sans nom').slice(0, 60),
         mensuel: num(r.mensuel)
       })),
+      depenses: (Array.isArray(saved.depenses) ? saved.depenses : []).map((d) => ({
+        id: String(d.id || uid()),
+        categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
+        nom: String(d.nom || 'Sans nom').slice(0, 60),
+        montant: num(d.montant)
+      })),
+      depensesHistorique: (Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : []).map((m) => ({
+        mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
+        total: num(m.total),
+        items: (Array.isArray(m.items) ? m.items : []).map((d) => ({
+          id: String(d.id || uid()),
+          categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
+          nom: String(d.nom || 'Sans nom').slice(0, 60),
+          montant: num(d.montant)
+        }))
+      })).slice(0, 12),
+      depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
       scenarios: saved.scenarios.map((x) => ({
         id: String(x.id || uid()),
         chargeId: String(x.chargeId),
@@ -204,6 +234,24 @@
   state.scenarios = state.scenarios.filter((x) => state.charges.some((c) => c.id === x.chargeId));
 
   const save = () => store.set(STORAGE_KEY, state);
+
+  /* Archive les dépenses du mois précédent dès qu'on change de mois (ex. premier
+     chargement de l'app en un nouveau mois) : la liste en cours repart à zéro,
+     l'ancienne reste consultable dans l'historique (12 mois glissants max). */
+  (() => {
+    const nowKey = monthKey(new Date());
+    if (state.depensesMoisCourant !== nowKey) {
+      if (state.depenses.length) {
+        state.depensesHistorique = [
+          { mois: state.depensesMoisCourant, total: state.depenses.reduce((sum, d) => sum + d.montant, 0), items: state.depenses },
+          ...state.depensesHistorique
+        ].slice(0, 12);
+      }
+      state.depenses = [];
+      state.depensesMoisCourant = nowKey;
+      save();
+    }
+  })();
 
   /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
 
@@ -234,6 +282,7 @@
   function renderLineForms() {
     if ($('#rCat')) $('#rCat').replaceChildren(...sortAlpha(REV_CATEGORIES).map((c) => h('option', { value: c }, c)));
     if ($('#cCat')) $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
+    if ($('#dCat')) $('#dCat').replaceChildren(...sortAlpha(DEP_CATEGORIES).map((c) => h('option', { value: c }, c)));
   }
 
   const TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7.5v4M9.5 7.5v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
@@ -401,13 +450,18 @@
       confirmDelete('Êtes-vous sûr de tout effacer ?', [
         ['Revenus', `${state.revenus.length}`],
         ['Charges', `${state.charges.length}`],
-        ['Comparaisons', `${state.scenarios.length}`]
+        ['Comparaisons', `${state.scenarios.length}`],
+        ['Dépenses', `${state.depenses.length}`],
+        ['Mois archivés', `${state.depensesHistorique.length}`]
       ], () => {
         state.revenus = [];
         state.charges = [];
         state.scenarios = [];
+        state.depenses = [];
+        state.depensesHistorique = [];
         renderLines('revenus');
         renderLines('charges');
+        renderDepenses();
         refresh();
       });
     };
@@ -415,6 +469,195 @@
     if (btnClear) btnClear.addEventListener('click', clearCharges);
     const btnClearFooter = $('#btnClearFooter');
     if (btnClearFooter) btnClearFooter.addEventListener('click', clearAll);
+  }
+
+  /* ==========================================================================
+     1bis. Dépenses (achats du quotidien, indépendant des charges/revenus :
+     seule la tuile « Solde restant » lit leurs totaux, en lecture seule,
+     pour donner un repère — rien n'est réécrit dans le calcul du Solde
+     affiché sur Charges/Revenus/Synthèse.)
+     ========================================================================== */
+
+  // En dessous de 640px, la colonne Montant passe juste après Libellé (au lieu
+  // de Catégorie, Libellé, Montant) pour rester visible sans défilement horizontal.
+  const DEP_MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
+
+  function renderDepenses() {
+    const body = $('#depensesBody');
+    if (!body) return;
+    body.replaceChildren();
+
+    if (!state.depenses.length) {
+      body.append(h('tr', {}, h('td', { colspan: 4, class: 'empty' }, 'Aucune dépense pour le moment. Ajoutez votre premier achat ci-dessus.')));
+      updateScrollArrows($('#depensesTableWrap'), $('#depensesScrollLeft'), $('#depensesScrollRight'));
+      return;
+    }
+
+    // Triées par catégorie (puis par libellé) pour regrouper les dépenses
+    // d'un même poste, plutôt que l'ordre d'ajout.
+    const sorted = [...state.depenses].sort((a, b) =>
+      a.categorie.localeCompare(b.categorie, 'fr') || a.nom.localeCompare(b.nom, 'fr'));
+
+    for (const d of sorted) {
+      const nameInput = h('input', {
+        class: 'cell', type: 'text', maxlength: 60, value: d.nom, 'aria-label': 'Libellé',
+        onchange: (e) => {
+          d.nom = e.target.value.trim() || d.nom;
+          e.target.value = d.nom;
+          refresh();
+        }
+      });
+
+      const catSelect = h('select', {
+        class: 'cell', 'aria-label': 'Catégorie',
+        onchange: (e) => { d.categorie = e.target.value; refresh(); }
+      }, sortAlpha(DEP_CATEGORIES).map((cat) => h('option', { value: cat }, cat)));
+      catSelect.value = d.categorie;
+
+      const amountInput = h('input', {
+        class: 'cell num', type: 'number', min: 0, step: '0.01', inputmode: 'decimal',
+        value: d.montant.toFixed(2), 'aria-label': `Montant de ${d.nom}`,
+        oninput: (e) => { d.montant = num(e.target.value); refresh(); },
+        onblur: (e) => { e.target.value = d.montant.toFixed(2); }
+      });
+
+      const del = h('button', {
+        class: 'icon-btn', type: 'button', 'aria-label': `Effacer ${d.nom}`, title: 'Effacer',
+        onclick: () => {
+          confirmDelete('Supprimer cette dépense ?', [
+            ['Catégorie', d.categorie],
+            ['Libellé', d.nom],
+            ['Montant', eur2.format(d.montant)]
+          ], () => {
+            state.depenses = state.depenses.filter((x) => x.id !== d.id);
+            renderDepenses();
+            refresh();
+          });
+        }
+      });
+      del.innerHTML = TRASH_ICON;
+
+      body.append(DEP_MOBILE_QUERY.matches
+        ? h('tr', {},
+          h('td', {}, nameInput),
+          h('td', { class: 'num' }, amountInput),
+          h('td', {}, catSelect),
+          h('td', { class: 'num' }, del)
+        )
+        : h('tr', {},
+          h('td', {}, catSelect),
+          h('td', {}, nameInput),
+          h('td', { class: 'num' }, amountInput),
+          h('td', { class: 'num' }, del)
+        ));
+    }
+    updateScrollArrows($('#depensesTableWrap'), $('#depensesScrollLeft'), $('#depensesScrollRight'));
+  }
+
+  function renderDepenseTotals() {
+    const totalCells = document.querySelectorAll('.dep-total-cell');
+    if (!totalCells.length) return;
+    const total = state.depenses.reduce((sum, d) => sum + d.montant, 0);
+    totalCells.forEach((cell) => { cell.textContent = eur2.format(total); });
+    $('#kpiDepensesMois').textContent = eur2.format(total);
+    setSigned($('#kpiSoldeDispo'), totalRevenus() - totalMonthly() - total);
+
+    const moisNom = currentMonthName();
+    if ($('#depMoisTitre')) $('#depMoisTitre').textContent = moisNom;
+
+    const box = $('#depBreakdown');
+    box.replaceChildren();
+    const byCat = DEP_CATEGORIES
+      .map((cat) => ({ cat, total: state.depenses.filter((d) => d.categorie === cat).reduce((a, d) => a + d.montant, 0) }))
+      .filter((x) => x.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    if (!byCat.length) {
+      box.append(h('p', { class: 'note' }, 'Ajoutez des dépenses pour voir leur répartition.'));
+      return;
+    }
+    const max = byCat[0].total;
+    for (const { cat, total: catTotal } of byCat) {
+      box.append(h('div', { class: 'bd' },
+        h('span', { class: 'bd__name' }, cat),
+        h('div', { class: 'bd__track', role: 'presentation' },
+          h('div', { class: 'bd__bar', style: `width:${(catTotal / max) * 100}%` })),
+        h('span', { class: 'bd__amt' }, eur2.format(catTotal)),
+        h('span', { class: 'bd__pct' }, pct1.format(catTotal / total))
+      ));
+    }
+  }
+
+  function bindDepenses() {
+    const form = $('#depenseForm');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nom = $('#dNom').value.trim();
+        if (!nom) return;
+        state.depenses.push({ id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value) });
+        $('#dNom').value = '';
+        $('#dMontant').value = '';
+        $('#dNom').focus();
+        renderDepenses();
+        refresh();
+      });
+    }
+    const wrap = $('#depensesTableWrap');
+    if (wrap) bindScrollArrows(wrap, $('#depensesScrollLeft'), $('#depensesScrollRight'));
+    if ($('#depensesTable')) DEP_MOBILE_QUERY.addEventListener('change', renderDepenses);
+
+    const btnClearDepenses = $('#btnClearDepenses');
+    if (btnClearDepenses) {
+      btnClearDepenses.addEventListener('click', () => {
+        confirmDelete('Effacer TOUTES les dépenses ?', [], () => {
+          state.depenses = [];
+          renderDepenses();
+          refresh();
+        }, { center: true });
+      });
+    }
+  }
+
+  /** Contenu du pop-up Historique : un bloc par mois archivé, le plus récent en premier. */
+  function renderHistorique() {
+    const box = $('#historiqueList');
+    if (!box) return;
+    box.replaceChildren();
+
+    if (!state.depensesHistorique.length) {
+      box.append(h('p', { class: 'note' }, 'Aucun mois précédent enregistré pour le moment.'));
+      return;
+    }
+
+    for (const m of state.depensesHistorique) {
+      const section = h('div', { class: 'historique-month' },
+        h('h3', { class: 'h3' }, `${monthLabel(m.mois)} — ${eur2.format(m.total)}`)
+      );
+      if (m.items.length) {
+        section.append(h('table', { class: 'table' },
+          h('thead', {}, h('tr', {},
+            h('th', { scope: 'col' }, 'Catégorie'),
+            h('th', { scope: 'col' }, 'Libellé'),
+            h('th', { scope: 'col', class: 'num' }, 'Montant (€)')
+          )),
+          h('tbody', {}, ...m.items.map((d) => h('tr', {},
+            h('td', {}, d.categorie),
+            h('td', {}, d.nom),
+            h('td', { class: 'num' }, eur2.format(d.montant))
+          )))
+        ));
+      }
+      box.append(section);
+    }
+  }
+
+  function bindHistorique() {
+    const btn = $('#btnHistorique');
+    if (!btn) return;
+    bindInfoModal('#btnHistorique', '#historiqueOverlay', '#historiqueClose');
+    btn.addEventListener('click', renderHistorique);
+    $('#historiqueExportPdf')?.addEventListener('click', () => window.print());
   }
 
   /* ==========================================================================
@@ -1261,6 +1504,7 @@
   function refresh() {
     renderRevenusTotals();
     renderChargeTotals();
+    renderDepenseTotals();
     renderScenarioForm();
     renderScenarios();
     renderYield();
@@ -1272,6 +1516,8 @@
   function init() {
     renderLineForms();
     bindLines();
+    bindDepenses();
+    bindHistorique();
     bindScenarios();
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
@@ -1280,6 +1526,7 @@
     syncYieldInputs();
     renderLines('revenus');
     renderLines('charges');
+    renderDepenses();
     refresh();
   }
 
