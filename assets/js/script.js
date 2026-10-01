@@ -11,9 +11,9 @@
   /* ---------- Constantes ---------- */
 
   const STORAGE_KEY = 'gestion-epargne-v1';
-  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Autre'];
+  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide'];
-  const DEP_CATEGORIES = ['Course', 'Restauration', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Cadeau', 'Imprévu', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Restauration', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Cadeau', 'Santé', 'Imprévu', 'Autre'];
   const HINTS = {
     Loyer: 'Ex. Colocation, logement plus petit, renégociation',
     Factures: 'Ex. Fournisseur moins cher, forfait plus économique',
@@ -22,6 +22,7 @@
     Abonnements: 'Ex. Offre étudiante, partage de compte',
     'Activité': 'Ex. Club moins cher, licence annuelle, activité gratuite',
     Plaisir: 'Ex. Sortie moins chère, moins de restaurants, offre découverte',
+    Assurance: 'Ex. Comparateur, changement de formule, regroupement de contrats',
     Autre: 'Ex. Option moins chère'
   };
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
@@ -48,6 +49,10 @@
   };
   /** Nom du mois courant seul (sans année), ex. « septembre ». */
   const currentMonthName = () => new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date());
+  /** En dessous de 640px, Dépenses/Revenus/Charges basculent vers un ordre de
+      colonnes différent (Libellé/Montant en premier) pour rester visibles
+      sans défilement horizontal — voir renderDepenses/renderLines. */
+  const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
 
   const eur2 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   const eur0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -345,13 +350,21 @@
       });
       del.innerHTML = TRASH_ICON;
 
-      body.append(h('tr', {},
-        h('td', {}, catSelect),
-        h('td', {}, nameInput),
-        h('td', { class: 'num' }, amountInput),
-        annualCell,
-        h('td', { class: 'num' }, del)
-      ));
+      body.append(MOBILE_QUERY.matches
+        ? h('tr', {},
+          h('td', {}, nameInput),
+          h('td', { class: 'num' }, amountInput),
+          h('td', {}, catSelect),
+          annualCell,
+          h('td', { class: 'num' }, del)
+        )
+        : h('tr', {},
+          h('td', {}, catSelect),
+          h('td', {}, nameInput),
+          h('td', { class: 'num' }, amountInput),
+          annualCell,
+          h('td', { class: 'num' }, del)
+        ));
     }
     updateScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
   }
@@ -363,13 +376,19 @@
     el.classList.toggle('bad', value < -0.004);
   }
 
+  /** Affecte le même texte à tous les éléments correspondants (ex. un total
+      répété dans la ligne de pied desktop et sa variante mobile). */
+  function setAllText(selector, text) {
+    document.querySelectorAll(selector).forEach((el) => { el.textContent = text; });
+  }
+
   function renderRevenusTotals() {
-    if (!$('#totRevMensuel')) return;
+    if (!$('.rev-tot-mensuel')) return;
     const rev = totalRevenus();
     const ch = totalMonthly();
     const solde = rev - ch;
-    $('#totRevMensuel').textContent = eur2.format(rev);
-    $('#totRevAnnuel').textContent = eur2.format(annual(rev));
+    setAllText('.rev-tot-mensuel', eur2.format(rev));
+    setAllText('.rev-tot-annuel', eur2.format(annual(rev)));
     $('#soldeRev').textContent = eur2.format(rev);
     $('#soldeCharges').textContent = eur2.format(ch);
     setSigned($('#soldeMois'), solde);
@@ -384,10 +403,10 @@
   }
 
   function renderChargeTotals() {
-    if (!$('#totMensuel')) return;
+    if (!$('.chg-tot-mensuel')) return;
     const m = totalMonthly();
-    $('#totMensuel').textContent = eur2.format(m);
-    $('#totAnnuel').textContent = eur2.format(annual(m));
+    setAllText('.chg-tot-mensuel', eur2.format(m));
+    setAllText('.chg-tot-annuel', eur2.format(annual(m)));
 
     // Répartition par catégorie
     const box = $('#breakdown');
@@ -432,9 +451,10 @@
     bindForm('revenus', { form: '#revenuForm', cat: '#rCat', nom: '#rNom', montant: '#rMontant' });
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
 
-    for (const cfg of Object.values(LINE_TYPES)) {
+    for (const [type, cfg] of Object.entries(LINE_TYPES)) {
       const wrap = $(cfg.wrap);
       if (wrap) bindScrollArrows(wrap, $(cfg.left), $(cfg.right));
+      if ($(cfg.body)) MOBILE_QUERY.addEventListener('change', () => renderLines(type));
     }
 
     const clearCharges = () => {
@@ -477,10 +497,6 @@
      pour donner un repère — rien n'est réécrit dans le calcul du Solde
      affiché sur Charges/Revenus/Synthèse.)
      ========================================================================== */
-
-  // En dessous de 640px, la colonne Montant passe juste après Libellé (au lieu
-  // de Catégorie, Libellé, Montant) pour rester visible sans défilement horizontal.
-  const DEP_MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
 
   function renderDepenses() {
     const body = $('#depensesBody');
@@ -537,7 +553,7 @@
       });
       del.innerHTML = TRASH_ICON;
 
-      body.append(DEP_MOBILE_QUERY.matches
+      body.append(MOBILE_QUERY.matches
         ? h('tr', {},
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
@@ -555,10 +571,9 @@
   }
 
   function renderDepenseTotals() {
-    const totalCells = document.querySelectorAll('.dep-total-cell');
-    if (!totalCells.length) return;
+    if (!$('.dep-total-cell')) return;
     const total = state.depenses.reduce((sum, d) => sum + d.montant, 0);
-    totalCells.forEach((cell) => { cell.textContent = eur2.format(total); });
+    setAllText('.dep-total-cell', eur2.format(total));
     $('#kpiDepensesMois').textContent = eur2.format(total);
     setSigned($('#kpiSoldeDispo'), totalRevenus() - totalMonthly() - total);
 
@@ -605,7 +620,7 @@
     }
     const wrap = $('#depensesTableWrap');
     if (wrap) bindScrollArrows(wrap, $('#depensesScrollLeft'), $('#depensesScrollRight'));
-    if ($('#depensesTable')) DEP_MOBILE_QUERY.addEventListener('change', renderDepenses);
+    if ($('#depensesTable')) MOBILE_QUERY.addEventListener('change', renderDepenses);
 
     const btnClearDepenses = $('#btnClearDepenses');
     if (btnClearDepenses) {

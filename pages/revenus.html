@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.00.99">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.01">
 </head>
 <body data-app="true">
 
@@ -112,20 +112,34 @@
         <table class="table" id="revenusTable">
           <caption class="sr-only">Liste des revenus</caption>
           <thead>
-            <tr>
+            <tr class="row-desktop">
               <th scope="col">Catégorie</th>
               <th scope="col">Libellé</th>
               <th scope="col" class="num">Mensuel (€)</th>
               <th scope="col" class="num">Annuel (× 12)</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
+            <tr class="row-mobile">
+              <th scope="col">Libellé</th>
+              <th scope="col" class="num">Mensuel (€)</th>
+              <th scope="col">Catégorie</th>
+              <th scope="col" class="num">Annuel (× 12)</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
           </thead>
           <tbody id="revenusBody"></tbody>
           <tfoot>
-            <tr>
+            <tr class="row-desktop">
               <th scope="row" colspan="2">Total</th>
-              <td class="num" id="totRevMensuel">–</td>
-              <td class="num" id="totRevAnnuel">–</td>
+              <td class="num rev-tot-mensuel">–</td>
+              <td class="num rev-tot-annuel">–</td>
+              <td></td>
+            </tr>
+            <tr class="row-mobile">
+              <th scope="row">Total</th>
+              <td class="num rev-tot-mensuel">–</td>
+              <td></td>
+              <td class="num rev-tot-annuel">–</td>
               <td></td>
             </tr>
           </tfoot>
@@ -168,8 +182,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.00.99"></script>
-<script src="../assets/js/calc.js?v=1.00.99"></script>
-<script src="../assets/js/script.js?v=1.00.99"></script>
+<script src="../assets/js/nav.js?v=1.01.01"></script>
+<script src="../assets/js/calc.js?v=1.01.01"></script>
+<script src="../assets/js/script.js?v=1.01.01"></script>
 </body>
 </html>

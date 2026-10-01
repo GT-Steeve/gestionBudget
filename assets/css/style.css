@@ -355,9 +355,10 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .table tfoot th { font-size: 14px; }
 .table .empty { text-align: center; color: var(--muted); padding: 24px 10px; }
 
-/* Dépenses : ordre de colonnes Catégorie/Libellé/Montant en tablette et
-   bureau (voir la ligne mobile ci-dessous, activée à sa place sous 640px). */
-#depensesHeadMobile, #depensesFootMobile { display: none; }
+/* Tableaux avec un ordre de colonnes différent en mobile (Dépenses, Revenus,
+   Charges) : deux lignes d'en-tête/pied prêtes dans le HTML, une seule
+   affichée selon le format (voir .row-desktop ci-dessous sous 640px). */
+.row-mobile { display: none; }
 .table--compact { font-size: 14px; min-width: 640px; }
 .table--compact th, .table--compact td { padding: 6px 10px; }
 
@@ -763,13 +764,29 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   /* Dépenses : bascule vers l'ordre Libellé, Montant, Catégorie — largeurs
      fixes pour que Montant reste visible sans défilement (au lieu d'être
      repoussé au bord par la colonne Libellé, qui n'a pas de largeur max). */
-  #depensesHeadDesktop, #depensesFootDesktop { display: none; }
-  #depensesHeadMobile, #depensesFootMobile { display: table-row; }
+  .row-desktop { display: none; }
+  .row-mobile { display: table-row; }
   #depensesTable { table-layout: fixed; }
   #depensesTable th:nth-child(1), #depensesTable td:nth-child(1) { width: 33%; }
   #depensesTable th:nth-child(2), #depensesTable td:nth-child(2) { width: 27%; }
   #depensesTable th:nth-child(3), #depensesTable td:nth-child(3) { width: 28%; }
   #depensesTable th:nth-child(4), #depensesTable td:nth-child(4) { width: 12%; }
+
+  /* Revenus/Charges : bascule vers l'ordre Libellé, Mensuel, Catégorie, Annuel
+     — Libellé et Mensuel passent en premier pour rester visibles sans
+     défilement, Libellé reçoit nettement plus de place qu'avant (pour les
+     libellés longs) ; Catégorie/Annuel restent accessibles en défilant. */
+  #revenusTable, #chargesTable { table-layout: fixed; }
+  #revenusTable th:nth-child(1), #revenusTable td:nth-child(1),
+  #chargesTable th:nth-child(1), #chargesTable td:nth-child(1) { width: 38%; }
+  #revenusTable th:nth-child(2), #revenusTable td:nth-child(2),
+  #chargesTable th:nth-child(2), #chargesTable td:nth-child(2) { width: 22%; }
+  #revenusTable th:nth-child(3), #revenusTable td:nth-child(3),
+  #chargesTable th:nth-child(3), #chargesTable td:nth-child(3) { width: 18%; }
+  #revenusTable th:nth-child(4), #revenusTable td:nth-child(4),
+  #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 14%; }
+  #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
+  #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 8%; }
 }
 
 @media (max-width: 380px) {

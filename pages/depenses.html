@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.00.99">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.01">
 </head>
 <body data-app="true">
 
@@ -129,13 +129,13 @@
         <table class="table" id="depensesTable">
           <caption class="sr-only">Liste des dépenses</caption>
           <thead>
-            <tr id="depensesHeadDesktop">
+            <tr class="row-desktop">
               <th scope="col">Catégorie</th>
               <th scope="col">Libellé</th>
               <th scope="col" class="num">Montant (€)</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
-            <tr id="depensesHeadMobile">
+            <tr class="row-mobile">
               <th scope="col">Libellé</th>
               <th scope="col" class="num">Montant (€)</th>
               <th scope="col">Catégorie</th>
@@ -144,12 +144,12 @@
           </thead>
           <tbody id="depensesBody"></tbody>
           <tfoot>
-            <tr id="depensesFootDesktop">
+            <tr class="row-desktop">
               <th scope="row" colspan="2">Total</th>
               <td class="num dep-total-cell">–</td>
               <td></td>
             </tr>
-            <tr id="depensesFootMobile">
+            <tr class="row-mobile">
               <th scope="row">Total</th>
               <td class="num dep-total-cell">–</td>
               <td></td>
@@ -207,8 +207,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.00.99"></script>
-<script src="../assets/js/calc.js?v=1.00.99"></script>
-<script src="../assets/js/script.js?v=1.00.99"></script>
+<script src="../assets/js/nav.js?v=1.01.01"></script>
+<script src="../assets/js/calc.js?v=1.01.01"></script>
+<script src="../assets/js/script.js?v=1.01.01"></script>
 </body>
 </html>
