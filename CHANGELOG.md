@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.5.0...v1.6.0) (2026-10-01)
+
+
+### Features
+
+* **depenses:** ajoute la catégorie Cadeau ([5e75843](https://github.com/GT-Steeve/gestionBudget/commit/5e758437723addcfdefa1850cc3011ed5d24a9aa))
+
 # [1.5.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.4.0...v1.5.0) (2026-10-01)
 
 
