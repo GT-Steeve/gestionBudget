@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.4.0...v1.5.0) (2026-10-01)
+
+
+### Features
+
+* **depenses:** ajoute la page Dépenses avec historique mensuel et export PDF ([62a9c08](https://github.com/GT-Steeve/gestionBudget/commit/62a9c08be3a68e117a9e211b7d5bfe04ff817dab))
+
 # [1.4.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.3.0...v1.4.0) (2026-09-29)
 
 
