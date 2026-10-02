@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.8.0...v1.9.0) (2026-10-02)
+
+
+### Features
+
+* **cashback:** ajoute l'onglet CashBack ([cfe1a7f](https://github.com/GT-Steeve/gestionBudget/commit/cfe1a7fc3ec057159ff60feb97d09531f402ef5b))
+
 # [1.8.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.7.0...v1.8.0) (2026-10-02)
 
 
