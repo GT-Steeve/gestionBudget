@@ -391,6 +391,37 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 .sub { display: block; font-size: 12px; color: var(--muted); }
 
+/* ---------- Interrupteur (CashBack) ---------- */
+
+.switch { position: relative; display: inline-flex; align-items: center; flex: none; cursor: pointer; }
+.switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.switch__track {
+  width: 36px; height: 20px; border-radius: 999px; background: var(--border);
+  position: relative; transition: background .25s ease;
+}
+/* Easing avec léger dépassement (cubic-bezier > 1) : le curseur « rebondit »
+   légèrement en fin de course plutôt qu'un simple glissement linéaire. */
+.switch__thumb {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+.switch input:checked + .switch__track { background: var(--accent); }
+.switch input:checked + .switch__track .switch__thumb { transform: translateX(16px); }
+.switch input:focus-visible + .switch__track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.cb-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--grid);
+}
+.cb-row:last-child { border-bottom: 0; }
+.cb-row__text { display: flex; flex-direction: column; min-width: 0; }
+.cb-row__name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-row__amount { font-size: 12px; color: var(--muted); }
+#cashbackSettingsTitle { margin-bottom: 4px; }
+#cashbackSettingsOverlay .note { text-align: justify; margin-top: 0; }
+.cb-rate-field { max-width: 140px; margin: 12px auto 16px; text-align: center; }
+
 /* ---------- Breakdown ---------- */
 
 .split {
@@ -542,9 +573,15 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 #infoOverlay .modal__actions { justify-content: center; }
 .modal--wide { max-width: 460px; }
 
-/* Pop-up Historique (dépenses) : un bloc scrollable par mois archivé, chacun
-   avec son propre petit tableau (mêmes styles que .table). */
-.historique-list { max-height: 60vh; overflow-y: auto; margin-bottom: 16px; }
+/* Liste scrollable générique pour le contenu d'une modale qui grandit avec les
+   données (Historique des dépenses, paramétrage CashBack…). */
+/* padding-right : laisse la place à la barre de défilement native du
+   navigateur, qui sinon chevauche le contenu collé au bord (ex. interrupteurs
+   CashBack). */
+.modal-list { max-height: 60vh; overflow-y: auto; overflow-x: hidden; margin-bottom: 16px; padding-right: 14px; }
+
+/* Pop-up Historique (dépenses) : un bloc par mois archivé, chacun avec son
+   propre petit tableau (mêmes styles que .table). */
 .historique-month { margin-top: 20px; }
 .historique-month:first-child { margin-top: 0; }
 /* .table impose min-width:560px pour les tableaux principaux (pensés pour des
@@ -787,6 +824,17 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 14%; }
   #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
   #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 8%; }
+
+  /* CashBack : bascule vers l'ordre Libellé, Cashback, Mensuel/Montant — les
+     deux premières colonnes (ce qui compte le plus ici) restent visibles sans
+     défilement ; Mensuel/Montant reste accessible en défilant. */
+  #cashbackChargesTable, #cashbackDepensesTable { table-layout: fixed; }
+  #cashbackChargesTable th:nth-child(1), #cashbackChargesTable td:nth-child(1),
+  #cashbackDepensesTable th:nth-child(1), #cashbackDepensesTable td:nth-child(1) { width: 35%; }
+  #cashbackChargesTable th:nth-child(2), #cashbackChargesTable td:nth-child(2),
+  #cashbackDepensesTable th:nth-child(2), #cashbackDepensesTable td:nth-child(2) { width: 25%; }
+  #cashbackChargesTable th:nth-child(3), #cashbackChargesTable td:nth-child(3),
+  #cashbackDepensesTable th:nth-child(3), #cashbackDepensesTable td:nth-child(3) { width: 40%; }
 }
 
 @media (max-width: 380px) {
@@ -819,6 +867,6 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   body:has(#historiqueOverlay:not([hidden])) .modal {
     max-width: none; width: 100%; box-shadow: none; border: none; padding: 0;
   }
-  body:has(#historiqueOverlay:not([hidden])) .historique-list { max-height: none; overflow: visible; }
+  body:has(#historiqueOverlay:not([hidden])) .modal-list { max-height: none; overflow: visible; }
   body:has(#historiqueOverlay:not([hidden])) .modal__actions { display: none !important; }
 }

@@ -50,6 +50,11 @@
   };
   /** Nom du mois courant seul (sans année), ex. « septembre ». */
   const currentMonthName = () => new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date());
+  /** « d'octobre », « de mars » : élision devant une voyelle (avril, août, octobre). */
+  const currentMonthWithPreposition = () => {
+    const name = currentMonthName();
+    return /^[aeiouh]/i.test(name) ? `d'${name}` : `de ${name}`;
+  };
   /** En dessous de 640px, Dépenses/Revenus/Charges basculent vers un ordre de
       colonnes différent (Libellé/Montant en premier) pour rester visibles
       sans défilement horizontal — voir renderDepenses/renderLines. */
@@ -171,6 +176,7 @@
       depenses: [],
       depensesHistorique: [],
       depensesMoisCourant: monthKey(new Date()),
+      cashbackRate: 1,
       scenarios: [
         { id: uid(), chargeId: elec.id, option: 'Fournisseur moins cher', nouveau: 52 },
         { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 }
@@ -190,7 +196,8 @@
         id: String(c.id || uid()),
         categorie: CATEGORIES.includes(c.categorie) ? c.categorie : 'Autre',
         nom: String(c.nom || 'Sans nom').slice(0, 60),
-        mensuel: num(c.mensuel)
+        mensuel: num(c.mensuel),
+        cashbackOn: c.cashbackOn !== false
       })),
       revenus: (Array.isArray(saved.revenus) ? saved.revenus : []).map((r) => ({
         id: String(r.id || uid()),
@@ -202,7 +209,8 @@
         id: String(d.id || uid()),
         categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
         nom: String(d.nom || 'Sans nom').slice(0, 60),
-        montant: num(d.montant)
+        montant: num(d.montant),
+        cashbackOn: d.cashbackOn !== false
       })),
       depensesHistorique: (Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : []).map((m) => ({
         mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
@@ -215,6 +223,7 @@
         }))
       })).slice(0, 12),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
+      cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       scenarios: saved.scenarios.map((x) => ({
         id: String(x.id || uid()),
         chargeId: String(x.chargeId),
@@ -262,6 +271,8 @@
   /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
 
   const annual = Calc.annual;
+  /** Taux de cashback configurable (state.cashbackRate, en %), en fraction (0.01 = 1 %). */
+  const cashbackFraction = () => state.cashbackRate / 100;
   const project = Calc.project;
   const totalMonthly = () => state.charges.reduce((sum, c) => sum + c.mensuel, 0);
   const totalRevenus = () => state.revenus.reduce((sum, r) => sum + r.mensuel, 0);
@@ -580,6 +591,7 @@
 
     const moisNom = currentMonthName();
     if ($('#depMoisTitre')) $('#depMoisTitre').textContent = moisNom;
+    if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = `Achats ${currentMonthWithPreposition()}`;
 
     const box = $('#depBreakdown');
     box.replaceChildren();
@@ -674,6 +686,113 @@
     bindInfoModal('#btnHistorique', '#historiqueOverlay', '#historiqueClose');
     btn.addEventListener('click', renderHistorique);
     $('#historiqueExportPdf')?.addEventListener('click', () => window.print());
+  }
+
+  /* ==========================================================================
+     1ter. CashBack (estimation à 1 % des charges et dépenses ; dépend de la
+     banque — ex. Trade Republic, Revolut — d'où le réglage ligne par ligne.)
+     ========================================================================== */
+
+  function renderCashback() {
+    if (!$('#cashbackChargesBody')) return;
+
+    /** N'affiche que les lignes soumises au cashback (voir Paramétrer) : une
+        ligne désactivée n'a rien à montrer dans ce tableau. */
+    const buildRows = (body, items, amountKey, wrap, leftBtn, rightBtn) => {
+      const visible = items.filter((item) => item.cashbackOn !== false);
+      body.replaceChildren();
+      if (!visible.length) {
+        body.append(h('tr', {}, h('td', { colspan: 3, class: 'empty' }, 'Aucune ligne soumise au cashback pour le moment.')));
+        updateScrollArrows(wrap, leftBtn, rightBtn);
+        return;
+      }
+      for (const item of visible) {
+        const montant = item[amountKey];
+        const cashback = montant * cashbackFraction();
+        const nameCell = h('td', {}, item.nom);
+        const montantCell = h('td', { class: 'num' }, eur2.format(montant));
+        const cashbackCell = h('td', { class: 'num' }, eur2.format(cashback));
+        body.append(MOBILE_QUERY.matches
+          ? h('tr', {}, nameCell, cashbackCell, montantCell)
+          : h('tr', {}, nameCell, montantCell, cashbackCell));
+      }
+      updateScrollArrows(wrap, leftBtn, rightBtn);
+    };
+
+    buildRows($('#cashbackChargesBody'), state.charges, 'mensuel',
+      $('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
+    buildRows($('#cashbackDepensesBody'), state.depenses, 'montant',
+      $('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
+
+    const chargesCashback = state.charges.reduce((sum, c) => sum + (c.cashbackOn !== false ? c.mensuel * cashbackFraction() : 0), 0);
+    const depensesCashback = state.depenses.reduce((sum, d) => sum + (d.cashbackOn !== false ? d.montant * cashbackFraction() : 0), 0);
+    $('#kpiCashbackCharges').textContent = eur2.format(chargesCashback);
+    $('#kpiCashbackChargesSub').textContent = `${eur2.format(annual(chargesCashback))} par an`;
+    $('#kpiCashbackDepenses').textContent = eur2.format(depensesCashback);
+    if ($('#cashbackAchatsMoisSub')) $('#cashbackAchatsMoisSub').textContent = `Achats ${currentMonthWithPreposition()}`;
+    syncCashbackRateUI();
+  }
+
+  /** Synchronise l'affichage du taux (titre de page, titre du pop-up, champ)
+      sur state.cashbackRate. */
+  function syncCashbackRateUI() {
+    if ($('#cashbackPageRate')) $('#cashbackPageRate').textContent = fmtRate(state.cashbackRate);
+    if ($('#cashbackSettingsRate')) $('#cashbackSettingsRate').textContent = fmtRate(state.cashbackRate);
+    const input = $('#cashbackRateInput');
+    if (input) input.value = rateNf.format(state.cashbackRate);
+  }
+
+  /** Liste du pop-up de paramétrage : une section Charges puis Dépenses, chaque
+      ligne avec son interrupteur pour inclure ou non le cashback. */
+  function renderCashbackSettings() {
+    const box = $('#cashbackSettingsList');
+    if (!box) return;
+    syncCashbackRateUI();
+    box.replaceChildren();
+
+    const buildGroup = (title, items, amountKey, first) => {
+      box.append(h('h3', { class: first ? 'h3' : 'h3 h3--gap' }, title));
+      if (!items.length) {
+        box.append(h('p', { class: 'note' }, 'Aucune ligne pour le moment.'));
+        return;
+      }
+      for (const item of items) {
+        // Ne pas rappeler renderCashbackSettings() ici : ça recrée l'interrupteur
+        // avant que la transition CSS du curseur ait pu jouer. refresh() suffit,
+        // la case à cocher reflète déjà son propre état via :checked.
+        const input = h('input', {
+          type: 'checkbox', checked: item.cashbackOn !== false,
+          onchange: (e) => { item.cashbackOn = e.target.checked; refresh(); }
+        });
+        const toggle = h('label', { class: 'switch' },
+          input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' })));
+        box.append(h('div', { class: 'cb-row' },
+          h('div', { class: 'cb-row__text' },
+            h('span', { class: 'cb-row__name' }, item.nom),
+            h('span', { class: 'cb-row__amount' }, eur2.format(item[amountKey]))
+          ),
+          toggle
+        ));
+      }
+    };
+
+    buildGroup('Charges', state.charges, 'mensuel', true);
+    buildGroup('Dépenses', state.depenses, 'montant', false);
+  }
+
+  function bindCashback() {
+    const btn = $('#btnCashbackSettings');
+    if (!btn) return;
+    bindInfoModal('#btnCashbackSettings', '#cashbackSettingsOverlay', '#cashbackSettingsClose');
+    btn.addEventListener('click', renderCashbackSettings);
+    $('#cashbackRateInput').addEventListener('change', (e) => {
+      state.cashbackRate = readRate(e.target.value, 1);
+      syncCashbackRateUI();
+      refresh();
+    });
+    bindScrollArrows($('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
+    bindScrollArrows($('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
+    MOBILE_QUERY.addEventListener('change', renderCashback);
   }
 
   /* ==========================================================================
@@ -1528,6 +1647,7 @@
     renderYield();
     renderSummary();
     renderSynthese();
+    renderCashback();
     save();
   }
 
@@ -1536,6 +1656,7 @@
     bindLines();
     bindDepenses();
     bindHistorique();
+    bindCashback();
     bindScenarios();
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
