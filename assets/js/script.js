@@ -11,9 +11,9 @@
   /* ---------- Constantes ---------- */
 
   const STORAGE_KEY = 'gestion-epargne-v1';
-  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Autre'];
-  const REV_CATEGORIES = ['Salaire', 'Aide'];
-  const DEP_CATEGORIES = ['Course', 'Restauration', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Cadeau', 'Santé', 'Imprévu', 'Autre'];
+  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Autre'];
+  const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Autre'];
   const HINTS = {
     Loyer: 'Ex. Colocation, logement plus petit, renégociation',
     Factures: 'Ex. Fournisseur moins cher, forfait plus économique',
@@ -23,6 +23,7 @@
     'Activité': 'Ex. Club moins cher, licence annuelle, activité gratuite',
     Plaisir: 'Ex. Sortie moins chère, moins de restaurants, offre découverte',
     Assurance: 'Ex. Comparateur, changement de formule, regroupement de contrats',
+    'Épargne': 'Ex. Virement automatique, livret, arrondi à l\'achat',
     Autre: 'Ex. Option moins chère'
   };
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
@@ -775,15 +776,16 @@
       });
       del.innerHTML = TRASH_ICON;
 
-      body.append(h('tr', {},
-        h('td', {}, charge.nom, h('span', { class: 'sub' }, charge.categorie)),
-        optionCell,
-        h('td', { class: 'num' }, eur2.format(charge.mensuel)),
-        h('td', { class: 'num' }, eur2.format(sc.nouveau)),
-        h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(eco))}`, h('small', {}, label)),
-        h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(annual(eco)))}`, h('small', {}, label)),
-        h('td', { class: 'num' }, eco > 0 ? apply : null, del)
-      ));
+      const ligneCell = h('td', {}, charge.nom, h('span', { class: 'sub' }, charge.categorie));
+      const actuelCell = h('td', { class: 'num' }, eur2.format(charge.mensuel));
+      const nouveauCell = h('td', { class: 'num' }, eur2.format(sc.nouveau));
+      const ecartMoisCell = h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(eco))}`, h('small', {}, label));
+      const ecartAnCell = h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(annual(eco)))}`, h('small', {}, label));
+      const actionsCell = h('td', { class: 'num' }, eco > 0 ? apply : null, del);
+
+      body.append(MOBILE_QUERY.matches
+        ? h('tr', {}, ligneCell, optionCell, ecartMoisCell, actuelCell, nouveauCell, ecartAnCell, actionsCell)
+        : h('tr', {}, ligneCell, optionCell, actuelCell, nouveauCell, ecartMoisCell, ecartAnCell, actionsCell));
     }
     updateScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
   }
@@ -791,6 +793,7 @@
   function bindScenarios() {
     if (!$('#scForm')) return;
     bindScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
+    MOBILE_QUERY.addEventListener('change', renderScenarios);
     $('#scForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const chargeId = $('#sLigne').value;

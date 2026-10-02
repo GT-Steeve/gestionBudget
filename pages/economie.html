@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.01">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.06">
 </head>
 <body data-app="true">
 
@@ -120,12 +120,21 @@
         <table class="table" id="scTable">
           <caption class="sr-only">Comparaisons d'options</caption>
           <thead>
-            <tr>
+            <tr class="row-desktop">
               <th scope="col">Ligne</th>
               <th scope="col">Option alternative</th>
               <th scope="col" class="num">Actuel / mois</th>
               <th scope="col" class="num">Nouveau / mois</th>
               <th scope="col" class="num">Écart / mois</th>
+              <th scope="col" class="num">Écart / an (× 12)</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+            <tr class="row-mobile">
+              <th scope="col">Ligne</th>
+              <th scope="col">Option alternative</th>
+              <th scope="col" class="num">Écart / mois</th>
+              <th scope="col" class="num">Actuel / mois</th>
+              <th scope="col" class="num">Nouveau / mois</th>
               <th scope="col" class="num">Écart / an (× 12)</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
@@ -162,8 +171,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.01"></script>
-<script src="../assets/js/calc.js?v=1.01.01"></script>
-<script src="../assets/js/script.js?v=1.01.01"></script>
+<script src="../assets/js/nav.js?v=1.01.06"></script>
+<script src="../assets/js/calc.js?v=1.01.06"></script>
+<script src="../assets/js/script.js?v=1.01.06"></script>
 </body>
 </html>

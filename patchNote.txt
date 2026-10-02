@@ -18,6 +18,7 @@ v1.05.1 = nouvelle page dépenses + historique mensuel + export PDF + polish UI
 v1.05.2 = ajoute la catégorie Cadeau aux dépenses
 v1.05.2 = ajout catégorie Cadeau dans la page dépense
 v1.05.3 = ajout catégorie dépense et charge + polish UI
+v1.05.4 = ajout catégorie revenue, charge et polish UI économie
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
