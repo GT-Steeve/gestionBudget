@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.7.0...v1.8.0) (2026-10-02)
+
+
+### Features
+
+* **categories:** ajoute Alimentaire/Amende, Autre et Épargne ([788e322](https://github.com/GT-Steeve/gestionBudget/commit/788e322b15cc8858b271089dc4bb69ca7f9c0880))
+
 # [1.7.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.6.0...v1.7.0) (2026-10-01)
 
 
