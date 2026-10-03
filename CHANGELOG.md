@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.2...v1.11.0) (2026-10-03)
+
+
+### Features
+
+* **revenus:** répartition par catégorie et boutons Tout effacer ([#9](https://github.com/GT-Steeve/gestionBudget/issues/9)) ([358004a](https://github.com/GT-Steeve/gestionBudget/commit/358004a2dab18b89930c3d351b1e8a38fa4951c4))
+
 ## [1.10.2](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.1...v1.10.2) (2026-10-03)
 
 
