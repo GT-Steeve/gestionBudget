@@ -21,6 +21,7 @@ v1.05.3 = ajout catégorie dépense et charge + polish UI
 v1.05.4 = ajout catégorie revenue, charge et polish UI économie
 v1.06.0 = Onglet Cashback
 v1.06.1 = polish UI charge + depense + économie
+v1.06.2 = polish placement UI economie
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
