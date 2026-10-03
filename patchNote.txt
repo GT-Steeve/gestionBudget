@@ -20,7 +20,7 @@ v1.05.2 = ajout catégorie Cadeau dans la page dépense
 v1.05.3 = ajout catégorie dépense et charge + polish UI
 v1.05.4 = ajout catégorie revenue, charge et polish UI économie
 v1.06.0 = Onglet Cashback
-v1.06.1 = polish UI charge + depense
+v1.06.1 = polish UI charge + depense + économie
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
