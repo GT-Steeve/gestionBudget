@@ -394,6 +394,30 @@
     document.querySelectorAll(selector).forEach((el) => { el.textContent = text; });
   }
 
+  /** Répartition par catégorie (barres proportionnelles + montant + part du total). */
+  function renderBreakdown(box, cats, items, amountOf, total, emptyMsg) {
+    box.replaceChildren();
+    const byCat = cats
+      .map((cat) => ({ cat, total: items.filter((x) => x.categorie === cat).reduce((a, x) => a + amountOf(x), 0) }))
+      .filter((x) => x.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    if (!byCat.length) {
+      box.append(h('p', { class: 'note' }, emptyMsg));
+      return;
+    }
+    const max = byCat[0].total;
+    for (const { cat, total: catTotal } of byCat) {
+      box.append(h('div', { class: 'bd' },
+        h('span', { class: 'bd__name' }, cat),
+        h('div', { class: 'bd__track', role: 'presentation' },
+          h('div', { class: 'bd__bar', style: `width:${(catTotal / max) * 100}%` })),
+        h('span', { class: 'bd__amt' }, eur2.format(catTotal)),
+        h('span', { class: 'bd__pct' }, pct1.format(catTotal / total))
+      ));
+    }
+  }
+
   function renderRevenusTotals() {
     if (!$('.rev-tot-mensuel')) return;
     const rev = totalRevenus();
@@ -412,6 +436,9 @@
     else if (solde > 0.004) msg.append('Il vous reste ', h('span', { class: 'good' }, `${eur2.format(solde)} par mois`), ' après vos charges : de quoi épargner.');
     else if (solde < -0.004) msg.append('Vos charges dépassent vos revenus de ', h('span', { class: 'bad' }, `${eur2.format(-solde)} par mois`), '.');
     else msg.append('Vos revenus couvrent exactement vos charges.');
+
+    renderBreakdown($('#revBreakdown'), REV_CATEGORIES, state.revenus, (r) => r.mensuel, rev,
+      'Ajoutez des revenus pour voir leur répartition.');
   }
 
   function renderChargeTotals() {
@@ -420,28 +447,8 @@
     setAllText('.chg-tot-mensuel', eur2.format(m));
     setAllText('.chg-tot-annuel', eur2.format(annual(m)));
 
-    // Répartition par catégorie
-    const box = $('#breakdown');
-    box.replaceChildren();
-    const byCat = CATEGORIES
-      .map((cat) => ({ cat, total: state.charges.filter((c) => c.categorie === cat).reduce((a, c) => a + c.mensuel, 0) }))
-      .filter((x) => x.total > 0)
-      .sort((a, b) => b.total - a.total);
-
-    if (!byCat.length) {
-      box.append(h('p', { class: 'note' }, 'Ajoutez des charges pour voir leur répartition.'));
-      return;
-    }
-    const max = byCat[0].total;
-    for (const { cat, total } of byCat) {
-      box.append(h('div', { class: 'bd' },
-        h('span', { class: 'bd__name' }, cat),
-        h('div', { class: 'bd__track', role: 'presentation' },
-          h('div', { class: 'bd__bar', style: `width:${(total / max) * 100}%` })),
-        h('span', { class: 'bd__amt' }, eur2.format(total)),
-        h('span', { class: 'bd__pct' }, pct1.format(total / m))
-      ));
-    }
+    renderBreakdown($('#breakdown'), CATEGORIES, state.charges, (c) => c.mensuel, m,
+      'Ajoutez des charges pour voir leur répartition.');
   }
 
   function bindLines() {
@@ -497,8 +504,17 @@
         refresh();
       });
     };
+    const clearRevenus = () => {
+      confirmDelete('Effacer TOUS les revenus ?', [], () => {
+        state.revenus = [];
+        renderLines('revenus');
+        refresh();
+      }, { center: true });
+    };
     const btnClear = $('#btnClear');
     if (btnClear) btnClear.addEventListener('click', clearCharges);
+    const btnClearRevenus = $('#btnClearRevenus');
+    if (btnClearRevenus) btnClearRevenus.addEventListener('click', clearRevenus);
     const btnClearFooter = $('#btnClearFooter');
     if (btnClearFooter) btnClearFooter.addEventListener('click', clearAll);
   }
@@ -593,27 +609,8 @@
     if ($('#depMoisTitre')) $('#depMoisTitre').textContent = moisNom;
     if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = `Achats ${currentMonthWithPreposition()}`;
 
-    const box = $('#depBreakdown');
-    box.replaceChildren();
-    const byCat = DEP_CATEGORIES
-      .map((cat) => ({ cat, total: state.depenses.filter((d) => d.categorie === cat).reduce((a, d) => a + d.montant, 0) }))
-      .filter((x) => x.total > 0)
-      .sort((a, b) => b.total - a.total);
-
-    if (!byCat.length) {
-      box.append(h('p', { class: 'note' }, 'Ajoutez des dépenses pour voir leur répartition.'));
-      return;
-    }
-    const max = byCat[0].total;
-    for (const { cat, total: catTotal } of byCat) {
-      box.append(h('div', { class: 'bd' },
-        h('span', { class: 'bd__name' }, cat),
-        h('div', { class: 'bd__track', role: 'presentation' },
-          h('div', { class: 'bd__bar', style: `width:${(catTotal / max) * 100}%` })),
-        h('span', { class: 'bd__amt' }, eur2.format(catTotal)),
-        h('span', { class: 'bd__pct' }, pct1.format(catTotal / total))
-      ));
-    }
+    renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
+      'Ajoutez des dépenses pour voir leur répartition.');
   }
 
   function bindDepenses() {
@@ -926,6 +923,12 @@
     });
     $('#sLigne').addEventListener('change', renderScenarioForm);
     $('#sMontant').addEventListener('input', renderPreview);
+    $('#btnClearScenarios').addEventListener('click', () => {
+      confirmDelete('Effacer TOUTES les économies ?', [], () => {
+        state.scenarios = [];
+        refresh();
+      }, { center: true });
+    });
   }
 
   /* ==========================================================================
