@@ -3,18 +3,14 @@
 /**
  * "Build" pour un site statique sans bundler : vérifie que chaque page HTML
  * référence des fichiers locaux (css/js/img) qui existent bien sur disque,
- * pour attraper un lien cassé avant le déploiement.
+ * pour attraper un lien cassé avant le déploiement, et que le numéro de
+ * cache ?v= des CSS/JS a bien été augmenté quand ces fichiers ont changé.
  */
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { root, listHtmlFiles, computeAssetsHash, readManifest, versionPattern } from './asset-version.mjs';
 
-const root = dirname(dirname(fileURLToPath(import.meta.url)));
-/** Liste manuelle (pas de fs.globSync, absent avant Node 22) des pages HTML du site. */
-const htmlFiles = [
-  ...readdirSync(root).filter((f) => f.endsWith('.html')),
-  ...readdirSync(join(root, 'pages')).filter((f) => f.endsWith('.html')).map((f) => join('pages', f)),
-];
+const htmlFiles = listHtmlFiles();
 
 if (htmlFiles.length === 0) {
   console.error('Aucune page HTML trouvée.');
@@ -23,6 +19,8 @@ if (htmlFiles.length === 0) {
 
 const attrPattern = /(?:src|href)="([^"]+)"/g;
 let missing = 0;
+let versionErrors = 0;
+const manifest = readManifest();
 
 for (const rel of htmlFiles) {
   const fullPath = join(root, rel);
@@ -38,6 +36,21 @@ for (const rel of htmlFiles) {
       missing++;
     }
   }
+
+  for (const [, v] of html.matchAll(versionPattern)) {
+    if (v !== manifest.version) {
+      console.error(`✖ ${rel} charge un CSS/JS avec ?v=${v} au lieu de ?v=${manifest.version} (scripts/asset-version.json).`);
+      versionErrors++;
+    }
+  }
+}
+
+if (computeAssetsHash() !== manifest.hash) {
+  console.error(
+    `✖ Les fichiers CSS/JS ont changé, mais le numéro de cache ?v=${manifest.version} n'a pas été augmenté :\n` +
+    '  les navigateurs garderaient l\'ancienne version en cache. Lancez `npm run bump-assets`.'
+  );
+  versionErrors++;
 }
 
 if (missing > 0) {
@@ -45,4 +58,10 @@ if (missing > 0) {
   process.exit(1);
 }
 
+if (versionErrors > 0) {
+  console.error(`\n${versionErrors} problème(s) de version de cache des CSS/JS.`);
+  process.exit(1);
+}
+
 console.log(`✓ ${htmlFiles.length} page(s) HTML vérifiée(s), toutes les références locales existent.`);
+console.log(`✓ Version de cache des CSS/JS à jour (?v=${manifest.version}).`);
