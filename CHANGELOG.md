@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.11.1...v1.12.0) (2026-10-03)
+
+
+### Features
+
+* **depenses:** ajoute la catégorie Entretien ménager ([#14](https://github.com/GT-Steeve/gestionBudget/issues/14)) ([3ad1406](https://github.com/GT-Steeve/gestionBudget/commit/3ad140604aff8e1bc20b5ba5ef0eb8778e81e4bd))
+
 ## [1.11.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.11.0...v1.11.1) (2026-10-03)
 
 
