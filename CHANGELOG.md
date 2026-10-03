@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.11.0...v1.11.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **cache:** incrémente la version des CSS/JS pour charger le nouveau script ([#10](https://github.com/GT-Steeve/gestionBudget/issues/10)) ([719953f](https://github.com/GT-Steeve/gestionBudget/commit/719953f04d68dd5284a882ada06a257abbd6490b))
+
 # [1.11.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.2...v1.11.0) (2026-10-03)
 
 
