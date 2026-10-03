@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.9.0...v1.10.0) (2026-10-03)
+
+
+### Features
+
+* résumé en tuiles en haut des pages Revenus, Charges et Économie ([#6](https://github.com/GT-Steeve/gestionBudget/issues/6)) ([c44a459](https://github.com/GT-Steeve/gestionBudget/commit/c44a459598c7f6f1c40cb5cc7cc87ec30fb72889))
+
 # [1.9.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.8.0...v1.9.0) (2026-10-02)
 
 
