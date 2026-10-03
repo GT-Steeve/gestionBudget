@@ -13,7 +13,7 @@
   const STORAGE_KEY = 'gestion-epargne-v1';
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
-  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Autre'];
   const HINTS = {
     Loyer: 'Ex. Colocation, logement plus petit, renégociation',
     Factures: 'Ex. Fournisseur moins cher, forfait plus économique',
