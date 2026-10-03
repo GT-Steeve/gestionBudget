@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.0...v1.10.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ui:** libellés des tuiles Charges/Économie et textes de la page Placement ([#7](https://github.com/GT-Steeve/gestionBudget/issues/7)) ([7f2db7a](https://github.com/GT-Steeve/gestionBudget/commit/7f2db7af4543c1a0e9bf51e5c6abac4f1eca5d44))
+
 # [1.10.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.9.0...v1.10.0) (2026-10-03)
 
 
