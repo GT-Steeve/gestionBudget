@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.1...v1.10.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ui:** centre le titre Solde, inverse Dépenses/Charges dans le menu ([#8](https://github.com/GT-Steeve/gestionBudget/issues/8)) ([48fda73](https://github.com/GT-Steeve/gestionBudget/commit/48fda7385f3a2d71cfc92dff21a651327c28f686))
+
 ## [1.10.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.10.0...v1.10.1) (2026-10-03)
 
 
