@@ -22,6 +22,7 @@ v1.05.4 = ajout catégorie revenue, charge et polish UI économie
 v1.06.0 = Onglet Cashback
 v1.06.1 = polish UI charge + depense + économie
 v1.06.2 = polish placement UI economie
+v1.06.3 = ajout polish UX économie revenu
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
