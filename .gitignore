@@ -1,2 +1,17 @@
 .claude
 node_modules/
+
+# Dossier créé si on reproduit le déploiement en local
+_site/
+# Rapport de couverture des tests
+coverage/
+# Logs npm
+*.log
+# Fichiers système
+.DS_Store
+Thumbs.db
+# Réglages d'éditeur
+.vscode/
+.idea/
+# Variables secrètes éventuelles
+.env
