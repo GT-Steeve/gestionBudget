@@ -2,7 +2,7 @@
    Gestion budget
    1. Charges mensuelles / annuelles (annuel = mensuel × 12)
    2. Économie potentielle en remplaçant une ligne par une autre option
-   3. Gain par rendement (deux taux annuels modifiables, 2 % et 10 % par défaut,
+   3. Simuler un placement (deux taux annuels modifiables, 2 % et 10 % par défaut,
       intérêts composés ; gain affiché pour l'année de votre choix)
    ========================================================================== */
 'use strict';
@@ -971,7 +971,7 @@
     const rHigh = fmtRate(high.rate);
 
     // Titre et en-têtes qui suivent les taux choisis
-    $('#h-rend').textContent = `Gain par rendement : ${rLow} ou ${rHigh}`;
+    $('#h-rend').textContent = `Simuler un placement à ${rLow} ou ${rHigh}`;
     $('#thCapLow').textContent = `Capital à ${rLow}`;
     $('#thGainLow').textContent = `Gain à ${rLow}`;
     $('#thCapHigh').textContent = `Capital à ${rHigh}`;
