@@ -252,6 +252,9 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
   display: grid; gap: 12px; margin: 24px 0 8px;
   grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
 }
+/* 4 tuiles sur une seule ligne en desktop (Revenus) ; 2 × 2 en mobile. */
+.kpis--4 { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.kpis__caption { color: var(--ink-2); font-weight: 600; }
 .tile {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow);

@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.21">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.23">
 </head>
 <body data-app="true">
 
@@ -85,6 +85,35 @@
 </header>
 
 <main class="wrap">
+
+  <!-- Résumé -->
+  <section class="kpis kpis--4" aria-label="Résumé" aria-live="polite">
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Revenus par mois</p>
+        <p class="tile__value" id="soldeRev">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Charges par mois</p>
+        <p class="tile__value" id="soldeCharges">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Solde par mois</p>
+        <p class="tile__value" id="soldeMois">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Solde par an (× 12)</p>
+        <p class="tile__value" id="soldeAn">–</p>
+      </div>
+    </article>
+  </section>
+  <h2 class="h3 kpis__caption">Solde : ce qu'il vous reste après vos charges</h2>
 
   <!-- Revenus -->
   <section id="revenus" class="card" aria-labelledby="h-rev">
@@ -154,13 +183,6 @@
       </button>
     </div>
 
-    <h3 class="h3 h3--gap">Solde : ce qu'il vous reste après vos charges</h3>
-    <div class="mini-kpis" aria-live="polite">
-      <div class="mini"><span class="mini__label">Revenus par mois</span><strong id="soldeRev">–</strong></div>
-      <div class="mini"><span class="mini__label">Charges par mois</span><strong id="soldeCharges">–</strong></div>
-      <div class="mini"><span class="mini__label">Solde par mois</span><strong id="soldeMois">–</strong></div>
-      <div class="mini"><span class="mini__label">Solde par an (× 12)</span><strong id="soldeAn">–</strong></div>
-    </div>
     <p class="preview" id="soldeMsg" aria-live="polite">&nbsp;</p>
   </section>
 
@@ -183,8 +205,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.21"></script>
-<script src="../assets/js/calc.js?v=1.01.21"></script>
-<script src="../assets/js/script.js?v=1.01.21"></script>
+<script src="../assets/js/nav.js?v=1.01.23"></script>
+<script src="../assets/js/calc.js?v=1.01.23"></script>
+<script src="../assets/js/script.js?v=1.01.23"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.21">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.23">
 </head>
 <body data-app="true">
 
@@ -86,6 +86,34 @@
 
 <main class="wrap">
 
+  <!-- Résumé -->
+  <section class="kpis kpis--4" aria-label="Résumé" aria-live="polite">
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Économie par mois</p>
+        <p class="tile__value" id="ecoMois">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Économie par an (× 12)</p>
+        <p class="tile__value tile__value--good" id="ecoAn">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Part de vos charges</p>
+        <p class="tile__value" id="ecoPart">–</p>
+      </div>
+    </article>
+    <article class="tile">
+      <div class="tile__body">
+        <p class="tile__label">Nouveau total mensuel</p>
+        <p class="tile__value" id="ecoNouveau">–</p>
+      </div>
+    </article>
+  </section>
+
   <!-- Économies potentielles -->
   <section id="economies" class="card" aria-labelledby="h-eco">
     <div class="card__head">
@@ -108,13 +136,6 @@
       <button class="btn" type="submit">Ajouter la comparaison</button>
     </form>
     <p class="preview" id="sPreview" aria-live="polite">&nbsp;</p>
-
-    <div class="mini-kpis" aria-live="polite">
-      <div class="mini"><span class="mini__label">Économie par mois</span><strong id="ecoMois">–</strong></div>
-      <div class="mini"><span class="mini__label">Économie par an (× 12)</span><strong id="ecoAn" class="good">–</strong></div>
-      <div class="mini"><span class="mini__label">Part de vos charges</span><strong id="ecoPart">–</strong></div>
-      <div class="mini"><span class="mini__label">Nouveau total mensuel</span><strong id="ecoNouveau">–</strong></div>
-    </div>
 
     <div class="table-scroll-wrap">
       <div class="table-wrap" id="scTableWrap">
@@ -172,8 +193,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.21"></script>
-<script src="../assets/js/calc.js?v=1.01.21"></script>
-<script src="../assets/js/script.js?v=1.01.21"></script>
+<script src="../assets/js/nav.js?v=1.01.23"></script>
+<script src="../assets/js/calc.js?v=1.01.23"></script>
+<script src="../assets/js/script.js?v=1.01.23"></script>
 </body>
 </html>
