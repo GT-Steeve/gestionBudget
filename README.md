@@ -68,11 +68,19 @@ et une release automatisée :
 npm install       # installe l'outillage (lint, tests, hooks Git)
 npm run lint      # ESLint sur assets/js
 npm test          # Vitest sur assets/js/calc.js
-npm run build     # vérifie que les pages ne référencent pas de fichier manquant
+npm run build     # vérifie les références des pages et la version de cache des CSS/JS
+npm run bump-assets  # augmente le ?v= des CSS/JS après les avoir modifiés
 ```
 
-Les hooks Git (Husky) vérifient localement le message de commit et le lint
-avant chaque commit. Toute PR passe par la CI (lint, tests, build) ; une fois
+Les hooks Git (Husky) vérifient localement le message de commit, le lint,
+les tests et le build avant chaque commit.
+
+Les pages chargent les CSS/JS avec un numéro de cache (`style.css?v=1.01.25`).
+Après toute modification d'un fichier de `assets/css` ou `assets/js`, lancez
+`npm run bump-assets` : sinon le build échoue, car les navigateurs garderaient
+l'ancienne version en cache.
+
+Toute PR passe par la CI (lint, tests, build) ; une fois
 mergée sur `main`, si tout est vert, **semantic-release** détermine la
 prochaine version à partir des commits (`fix` → patch, `feat` → minor,
 `BREAKING CHANGE` → major), génère le tag, le `CHANGELOG.md` et la GitHub
