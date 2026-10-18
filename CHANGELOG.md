@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.13.0...v1.14.0) (2026-10-18)
+
+
+### Features
+
+* **saisie:** affiche les ajouts récents en premier + placeholders par catégorie ([f59c812](https://github.com/GT-Steeve/gestionBudget/commit/f59c8124f198b79cc0db5c0950c006adc15cb4cb))
+
 # [1.13.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.12.0...v1.13.0) (2026-10-18)
 
 
