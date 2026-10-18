@@ -186,6 +186,83 @@
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   }
 
+  /** Pop-up d'ajout guidé, un champ à la fois (Retour/Suivant), plus
+      pratique qu'une ligne de formulaire à plusieurs champs côte à côte au
+      clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape. */
+  function bindAddWizard(cfg) {
+    const overlay = $(cfg.overlay);
+    const openBtn = $(cfg.openBtn);
+    const form = $(cfg.form);
+    if (!overlay || !openBtn || !form) return;
+
+    const closeBtn = $(cfg.closeBtn);
+    const backBtn = $(cfg.backBtn);
+    const nextBtn = $(cfg.nextBtn);
+    const finishBtn = $(cfg.finishBtn);
+    const stepLabel = $(cfg.stepLabel);
+    const steps = cfg.steps.map((sel) => $(sel, overlay));
+    const total = steps.length;
+    let current = 0;
+
+    const showStep = (i) => {
+      current = i;
+      steps.forEach((el, idx) => { el.hidden = idx !== i; });
+      backBtn.hidden = i === 0;
+      nextBtn.hidden = i === total - 1;
+      finishBtn.hidden = i !== total - 1;
+      if (stepLabel) stepLabel.textContent = `Étape ${i + 1} / ${total}`;
+      $(cfg.fields[i])?.focus();
+    };
+
+    const close = () => {
+      overlay.hidden = true;
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const open = () => {
+      showStep(0);
+      overlay.hidden = false;
+      document.addEventListener('keydown', onKey);
+    };
+    const goNext = () => {
+      const field = $(cfg.fields[current]);
+      if (field && !field.reportValidity()) return;
+      showStep(Math.min(current + 1, total - 1));
+    };
+
+    openBtn.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    nextBtn.addEventListener('click', goNext);
+    backBtn.addEventListener('click', () => showStep(Math.max(current - 1, 0)));
+    // Entrée dans un champ texte/nombre = Suivant (ou Terminer sur la
+    // dernière étape), comme la touche "suivant" d'un clavier mobile.
+    form.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.target.tagName === 'SELECT') return;
+      e.preventDefault();
+      (current === total - 1 ? finishBtn : nextBtn).click();
+    });
+    // La validation du formulaire (bindForm) gère déjà preventDefault + ajout
+    // + reset ; ce listener, ajouté après, ferme juste la pop-up une fois
+    // l'ajout effectué.
+    form.addEventListener('submit', close);
+  }
+
+  /** Déplace un bouton d'ajout entre deux emplacements selon la largeur
+      d'écran : conteneur mobile (au-dessus de la carte) en dessous de
+      MOBILE_QUERY, sinon dans l'en-tête de carte donné (à droite du titre,
+      via .card__head .btn). Le conteneur mobile se masque tout seul une
+      fois vidé (voir .add-trigger--center:empty). */
+  function bindResponsiveTrigger(btnSel, mobileSlotSel, headSel) {
+    const btn = $(btnSel);
+    const mobileSlot = $(mobileSlotSel);
+    const head = $(headSel);
+    if (!btn || !mobileSlot || !head) return;
+    const place = () => (MOBILE_QUERY.matches ? mobileSlot : head).append(btn);
+    place();
+    MOBILE_QUERY.addEventListener('change', place);
+  }
+
   /* ---------- Stockage local (avec repli en mémoire) ---------- */
 
   const store = {
@@ -335,7 +412,8 @@
     revenus: {
       body: '#revenusBody', cats: sortAlpha(REV_CATEGORIES),
       empty: 'Aucun revenu pour le moment. Ajoutez votre première ligne ci-dessus.',
-      wrap: '#revenusTableWrap', left: '#revenusScrollLeft', right: '#revenusScrollRight'
+      wrap: '#revenusTableWrap', left: '#revenusScrollLeft', right: '#revenusScrollRight',
+      newestFirst: true
     },
     charges: {
       body: '#chargesBody', cats: sortAlpha(CATEGORIES),
@@ -535,6 +613,22 @@
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
     bindNomPlaceholder('#rCat', '#rNom', NOM_PLACEHOLDERS.revenus);
     bindNomPlaceholder('#cCat', '#cNom', NOM_PLACEHOLDERS.charges);
+    bindAddWizard({
+      openBtn: '#btnOpenRevenuWizard', overlay: '#revenuWizardOverlay', form: '#revenuForm',
+      closeBtn: '#revenuWizardClose', backBtn: '#revenuWizardBack',
+      nextBtn: '#revenuWizardNext', finishBtn: '#revenuWizardFinish', stepLabel: '#revenuWizardStepLabel',
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
+      fields: ['#rCat', '#rMontant', '#rNom']
+    });
+    bindResponsiveTrigger('#btnOpenRevenuWizard', '#addRevenuMobileSlot', '#revenus .card__head');
+    bindAddWizard({
+      openBtn: '#btnOpenChargeWizard', overlay: '#chargeWizardOverlay', form: '#chargeForm',
+      closeBtn: '#chargeWizardClose', backBtn: '#chargeWizardBack',
+      nextBtn: '#chargeWizardNext', finishBtn: '#chargeWizardFinish', stepLabel: '#chargeWizardStepLabel',
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
+      fields: ['#cCat', '#cMontant', '#cNom']
+    });
+    bindResponsiveTrigger('#btnOpenChargeWizard', '#addChargeMobileSlot', '#charges .card__head');
 
     for (const [type, cfg] of Object.entries(LINE_TYPES)) {
       const wrap = $(cfg.wrap);
@@ -680,6 +774,14 @@
 
   function bindDepenses() {
     bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
+    bindAddWizard({
+      openBtn: '#btnOpenDepenseWizard', overlay: '#depenseWizardOverlay', form: '#depenseForm',
+      closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
+      nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
+      fields: ['#dCat', '#dMontant', '#dNom']
+    });
+    bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
     const form = $('#depenseForm');
     if (form) {
       form.addEventListener('submit', (e) => {
@@ -749,6 +851,9 @@
     bindInfoModal('#btnHistorique', '#historiqueOverlay', '#historiqueClose');
     btn.addEventListener('click', renderHistorique);
     $('#historiqueExportPdf')?.addEventListener('click', () => window.print());
+    // Mobile : reprend sa position d'origine, à côté du titre. Tablette/bureau :
+    // reste dans la tuile « Dépenses de ce mois », en haut à droite.
+    bindResponsiveTrigger('#btnHistorique', '#depenses .card__head', '#depMoisTile');
   }
 
   /* ==========================================================================
@@ -1848,6 +1953,7 @@
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
     bindInfoModal('#btnExemple', '#exampleOverlay', '#exampleClose');
+    bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
     syncYieldInputs();
     renderLines('revenus');

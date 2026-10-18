@@ -26,6 +26,7 @@ v1.06.3 = ajout polish UX économie revenu
 v1.06.4 = ajout catégorie Entretien ménager dans dépenses
 v1.06.5 = ajout roundUp
 v1.06.6 = rework place holder par catégorie
+v1.07.0 = rework UI ajout revenu / dépense / charge
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page

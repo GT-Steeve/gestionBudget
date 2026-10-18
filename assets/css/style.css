@@ -254,7 +254,6 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 }
 /* 4 tuiles sur une seule ligne en desktop (Revenus) ; 2 × 2 en mobile. */
 .kpis--4 { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
-.kpis__caption { color: var(--ink-2); font-weight: 600; text-align: center; }
 .tile {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow);
@@ -585,8 +584,28 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .modal__text--tight { margin-bottom: 16px; }
 .modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
 .modal__actions--center { justify-content: center; }
+/* .btn impose display:inline-flex, qui l'emporte sinon sur l'attribut
+   hidden natif (même piège que .modal-overlay[hidden] ci-dessus) : utile
+   ici pour Retour/Terminer, masqués ou montrés selon l'étape du wizard. */
+.modal__actions [hidden] { display: none; }
 #infoOverlay .modal__actions { justify-content: center; }
 .modal--wide { max-width: 460px; }
+
+/* Pop-up d'ajout guidé (étapes) : remplace une ligne de formulaire à
+   plusieurs champs côte à côte — pénible à remplir au clavier mobile — par
+   un champ à la fois, avec Retour/Suivant et une croix pour annuler. */
+.add-trigger { margin: 20px 0 8px; }
+.add-trigger--center { text-align: center; margin: 24px 0 8px; }
+/* Sur tablette/bureau, le JS vide ce conteneur (bouton déplacé dans
+   .card__head) : :empty le masque pour ne pas laisser un espace vide. */
+.add-trigger:empty { display: none; }
+.modal--wizard { max-width: 360px; }
+.wizard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.wizard__head .modal__title { margin-bottom: 0; }
+.wizard__close { flex: none; margin: -6px -6px 0 0; }
+.wizard__step { margin-top: 20px; }
+.wizard__progress { font-size: 12px; color: var(--muted); text-align: center; margin: 18px 0 0; }
+.modal--wizard .modal__actions { margin-top: 16px; }
 
 /* Liste scrollable générique pour le contenu d'une modale qui grandit avec les
    données (Historique des dépenses, paramétrage CashBack…). */
@@ -624,6 +643,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   cursor: pointer;
 }
 .info-btn:hover { background: var(--wash); color: var(--ink); }
+.info-btn--sm { width: 18px; height: 18px; }
+
+.tile__label--with-info { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---------- Synthèse ---------- */
 
@@ -775,11 +797,25 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
   .card { padding: 16px 14px; border-radius: 14px; margin-top: 8px; }
   .card__head { gap: 10px; }
+  /* .card ne garde que 8px de marge haute en mobile (contre 20px en
+     desktop) : les 24px/8px du bouton Ajouter un revenu devenaient très
+     asymétriques (gros espace au-dessus, presque rien en dessous). */
+  .add-trigger--center { margin: 12px 0; }
+  /* Bouton Ajouter une charge centré en mobile (desktop : déplacé dans
+     .card__head par le JS, donc ce conteneur est vide et masqué). */
+  #addChargeMobileSlot { text-align: center; }
+  /* Bouton Nouvelle dépense centré en mobile, comme Ajouter une charge
+     (desktop : déplacé dans .card__head par le JS, conteneur vide/masqué). */
+  #addDepenseMobileSlot { text-align: center; }
   /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
      plus haute voisine), plutôt que juste après le texte, pour rester aligné avec
      celui des tuiles voisines même si leur contenu fait plus ou moins de lignes. */
   .tile { flex-direction: column; align-items: stretch; }
   .tile__edit { align-self: flex-end; }
+  /* Historique n'est jamais dans la tuile en mobile (voir bindResponsiveTrigger) :
+     neutralise l'align-self:flex-end de .tile__edit ci-dessus, qui le
+     pousserait en bas de .card__head (rangée, pas colonne) une fois déplacé. */
+  #btnHistorique { align-self: flex-start; }
   .tile__value { font-size: 20px; }
   .tile__unit { font-size: 12px; }
   .form-row { gap: 10px; }
@@ -862,7 +898,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 
 @media print {
-  .topbar, .form-row, .actions, .icon-btn, .syn-export, .foot { display: none !important; }
+  .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot { display: none !important; }
   /* À l'export/impression, seule la Synthèse (camembert + bilan) est utile :
      les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
   .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }

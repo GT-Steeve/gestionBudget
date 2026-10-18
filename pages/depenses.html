@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.28">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.37">
 </head>
 <body data-app="true">
 
@@ -48,8 +48,8 @@
         <a href="revenus.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><polyline points="1.5 11 6 6.5 9 9.5 14.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="9.5 3.5 14.5 3.5 14.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Revenus</span></a>
         <a href="depenses.html" aria-current="page"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 5.5h8l-.6 7.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8L4 5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Dépenses</span></a>
         <a href="charges.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><polyline points="1.5 5 6 9.5 9 6.5 14.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14.5 7.5 14.5 12.5 9.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Charges</span></a>
-        <a href="economie.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="11" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Économie</span></a>
         <a href="backOrRound.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="8.7" rx="1.3" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/><circle cx="11.3" cy="9.7" r="0.9" fill="currentColor"/></svg><span>CashBack</span></a>
+        <a href="economie.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="11" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Économie</span></a>
         <a href="placement.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="4" rx="6" ry="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 4v3.5c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 7.5V11c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V7.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Placement</span></a>
         <a class="nav-home" href="../index.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Synthèse</span></a>
         <a href="annexe.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.3c1.7-.8 3.3-.8 6 0v9.4c-2.7-.8-4.3-.8-6 0z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M14 3.3c-1.7-.8-3.3-.8-6 0v9.4c2.7-.8 4.3-.8 6 0z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Annexe</span></a>
@@ -95,12 +95,16 @@
         <p class="tile__sub">Dépenses incluses</p>
       </div>
     </article>
-    <article class="tile">
+    <article id="depMoisTile" class="tile">
       <div class="tile__body">
         <p class="tile__label">Dépenses de ce mois</p>
         <p class="tile__value" id="kpiDepensesMois">–</p>
         <p class="tile__sub" id="depAchatsMoisSub">Dépenses de ce mois</p>
       </div>
+      <!-- Sur mobile, le JS replace ce bouton dans .card__head (à côté du
+           titre, sa position d'origine). À partir de la tablette, il reste
+           ici, en haut à droite de la tuile. -->
+      <button id="btnHistorique" class="tile__edit" type="button">Historique</button>
     </article>
   </section>
 
@@ -108,22 +112,16 @@
   <section id="depenses" class="card" aria-labelledby="h-depenses">
     <div class="card__head">
       <h2 id="h-depenses">Dépenses de <span id="depMoisTitre">ce mois</span></h2>
-      <button id="btnHistorique" class="btn btn--ghost btn--sm" type="button">Historique</button>
     </div>
-    <p class="lead lead--full">Suivez vos dépenses du quotidien (courses, sorties, petits plaisirs…) par catégorie. La liste est réinitialisée à la fin de chaque mois.</p>
+    <p class="lead lead--full">Suivez vos dépenses du quotidien. La liste est réinitialisée à la fin de chaque mois, sauvegardée dans l'historique.</p>
 
-    <form id="depenseForm" class="form-row" autocomplete="off">
-      <label>Catégorie
-        <select id="dCat"></select>
-      </label>
-      <label class="grow">Libellé
-        <input id="dNom" type="text" maxlength="60" placeholder="Ex. Restaurant japonais" required>
-      </label>
-      <label>Montant (€)
-        <input id="dMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
-      </label>
-      <button class="btn" type="submit">Ajouter</button>
-    </form>
+    <!-- Sur mobile, le bouton reste ici, sous le texte ci-dessus. À partir de
+         la tablette, le JS le déplace dans .card__head (à droite du titre, à
+         la place de l'ancien bouton Historique) ; ce conteneur se masque
+         alors tout seul (:empty) via le CSS. -->
+    <div id="addDepenseMobileSlot" class="add-trigger">
+      <button type="button" id="btnOpenDepenseWizard" class="btn">Nouvelle dépense</button>
+    </div>
 
     <div class="table-scroll-wrap">
       <div class="table-wrap" id="depensesTableWrap">
@@ -208,8 +206,45 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.28"></script>
-<script src="../assets/js/calc.js?v=1.01.28"></script>
-<script src="../assets/js/script.js?v=1.01.28"></script>
+<!-- Ajout d'une dépense, guidé étape par étape (un champ à la fois) : plus
+     pratique à remplir au clavier mobile qu'une ligne avec plusieurs champs
+     côte à côte. -->
+<div id="depenseWizardOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="depenseWizardTitle">
+    <div class="wizard__head">
+      <p id="depenseWizardTitle" class="modal__title">Nouvelle dépense</p>
+      <button type="button" id="depenseWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="depenseForm" autocomplete="off">
+      <div class="wizard__step" data-step="1">
+        <label for="dCat">Désignez la catégorie
+          <select id="dCat"></select>
+        </label>
+      </div>
+      <div class="wizard__step" data-step="2" hidden>
+        <label for="dMontant">Montant (€)
+          <input id="dMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+        </label>
+      </div>
+      <div class="wizard__step" data-step="3" hidden>
+        <label for="dNom">Quelle dépense ?
+          <input id="dNom" type="text" maxlength="60" placeholder="Ex. Restaurant japonais" required>
+        </label>
+      </div>
+      <p id="depenseWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 3</p>
+      <div class="modal__actions">
+        <button type="button" id="depenseWizardBack" class="btn btn--ghost" hidden>Retour</button>
+        <button type="button" id="depenseWizardNext" class="btn">Suivant</button>
+        <button type="submit" id="depenseWizardFinish" class="btn" hidden>Terminer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/js/nav.js?v=1.01.37"></script>
+<script src="../assets/js/calc.js?v=1.01.37"></script>
+<script src="../assets/js/script.js?v=1.01.37"></script>
 </body>
 </html>
