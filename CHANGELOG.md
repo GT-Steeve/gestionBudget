@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.12.0...v1.13.0) (2026-10-18)
+
+
+### Features
+
+* **roundup:** ajoute la fonctionnalité RoundUp et sa page de résumé ([58e8b6c](https://github.com/GT-Steeve/gestionBudget/commit/58e8b6cca1785b7b262f69760d811517b27fb88f))
+
 # [1.12.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.11.1...v1.12.0) (2026-10-03)
 
 
