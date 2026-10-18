@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.14.0...v1.15.0) (2026-10-18)
+
+
+### Features
+
+* **saisie:** pop-up guidé pour ajouter revenus/charges/dépenses + réordonne la nav ([5350e25](https://github.com/GT-Steeve/gestionBudget/commit/5350e25398f032dacf5df0565e62eb297b447936))
+
 # [1.14.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.13.0...v1.14.0) (2026-10-18)
 
 
