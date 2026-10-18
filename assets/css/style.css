@@ -422,8 +422,20 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .cb-row__name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cb-row__amount { font-size: 12px; color: var(--muted); }
 #cashbackSettingsTitle { margin-bottom: 4px; }
-#cashbackSettingsOverlay .note { text-align: justify; margin-top: 0; }
+#cashbackSettingsOverlay .note, #roundUpSettingsOverlay .note { text-align: justify; margin-top: 0; }
 .cb-rate-field { max-width: 140px; margin: 12px auto 16px; text-align: center; }
+
+/* backOrRound.html : tuile enrichie (titre + 2 stats + bouton) au lieu du
+   simple label/valeur/sous-texte habituel — toujours 2 tuiles à 50 % côte à
+   côte (voir .kpis), y compris en mobile. */
+.tile--summary { flex-direction: column; align-items: stretch; }
+.tile--summary .tile__body { width: 100%; }
+.tile--summary h2 { margin: 0 0 14px; font-size: 18px; font-weight: 700; text-align: center; }
+.tile-stat { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 8px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 14px; }
+.tile-stat:last-of-type { border-bottom: 0; }
+.tile-stat__label { color: var(--ink-2); }
+.tile-stat__value { font-weight: 650; font-variant-numeric: tabular-nums; }
+.tile--summary .btn { display: block; text-align: center; margin-top: 14px; }
 
 /* ---------- Breakdown ---------- */
 

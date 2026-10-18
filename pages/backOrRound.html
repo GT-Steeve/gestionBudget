@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CashBack &amp; RoundUp · Gestion budget</title>
+  <meta name="description" content="Résumé du CashBack et du RoundUp sur vos charges et dépenses, avec accès au détail de chacun.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gt-steeve.github.io/gestionBudget/pages/backOrRound.html">
+  <meta property="og:site_name" content="Gestion budget">
+  <meta property="og:title" content="CashBack &amp; RoundUp · Gestion budget">
+  <meta property="og:description" content="Résumé du CashBack et du RoundUp sur vos charges et dépenses, avec accès au détail de chacun.">
+  <meta property="og:image" content="https://gt-steeve.github.io/gestionBudget/assets/img/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CashBack &amp; RoundUp · Gestion budget">
+  <meta name="twitter:description" content="Résumé du CashBack et du RoundUp sur vos charges et dépenses, avec accès au détail de chacun.">
+  <meta name="twitter:image" content="https://gt-steeve.github.io/gestionBudget/assets/img/og-image.jpg">
+
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="../assets/img/favicon.png">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.27">
+</head>
+<body data-app="true">
+
+<header class="topbar">
+  <div class="wrap topbar__in">
+    <a id="homeBtn" class="home-link" href="../index.html" aria-label="Accueil">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M3 15V8.3L9 3l6 5.3V15H3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M7 15v-4.5h4V15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <h1 class="brand"><a href="../index.html">Gestion budget</a></h1>
+    <button id="menuBtn" class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="siteMenu">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+        <path class="menu-icon menu-icon--bars" d="M3 5.5h14M3 10h14M3 14.5h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path class="menu-icon menu-icon--close" d="M4.5 4.5l11 11M15.5 4.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div id="siteMenu" class="site-menu">
+      <div class="nav-scroll-wrap">
+      <nav class="nav" aria-label="Sections">
+        <a href="revenus.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><polyline points="1.5 11 6 6.5 9 9.5 14.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="9.5 3.5 14.5 3.5 14.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Revenus</span></a>
+        <a href="charges.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><polyline points="1.5 5 6 9.5 9 6.5 14.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="14.5 7.5 14.5 12.5 9.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Charges</span></a>
+        <a href="depenses.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 5.5h8l-.6 7.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8L4 5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Dépenses</span></a>
+        <a href="economie.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="11" r="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Économie</span></a>
+        <a href="backOrRound.html" aria-current="page"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="4" width="12" height="8.7" rx="1.3" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" stroke-width="1.3"/><circle cx="11.3" cy="9.7" r="0.9" fill="currentColor"/></svg><span>CashBack</span></a>
+        <a href="placement.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="4" rx="6" ry="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 4v3.5c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M2 7.5V11c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V7.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Placement</span></a>
+        <a class="nav-home" href="../index.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Synthèse</span></a>
+        <a href="annexe.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.3c1.7-.8 3.3-.8 6 0v9.4c-2.7-.8-4.3-.8-6 0z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M14 3.3c-1.7-.8-3.3-.8-6 0v9.4c2.7-.8 4.3-.8 6 0z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Annexe</span></a>
+        <a href="apropos.html"><svg class="nav-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="7" x2="8" y2="11.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.6" r="0.9" fill="currentColor"/></svg><span>À propos</span></a>
+      </nav>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="navScrollLeft" aria-label="Faire défiler le menu vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="navScrollRight" aria-label="Faire défiler le menu vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      </div>
+      <button id="themeBtn" class="theme-toggle" type="button" aria-label="Changer de thème (clair / sombre)">
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <circle cx="9" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <line x1="9" y1="0.5" x2="9" y2="2.5"/>
+            <line x1="9" y1="15.5" x2="9" y2="17.5"/>
+            <line x1="0.5" y1="9" x2="2.5" y2="9"/>
+            <line x1="15.5" y1="9" x2="17.5" y2="9"/>
+            <line x1="3.05" y1="3.05" x2="4.46" y2="4.46"/>
+            <line x1="13.54" y1="13.54" x2="14.95" y2="14.95"/>
+            <line x1="3.05" y1="14.95" x2="4.46" y2="13.54"/>
+            <line x1="13.54" y1="4.46" x2="14.95" y2="3.05"/>
+          </g>
+        </svg>
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path d="M14.5 11.2A6.2 6.2 0 0 1 6.8 3.5a6.2 6.2 0 1 0 7.7 7.7z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- CashBack / RoundUp : deux tuiles côte à côte (50 % chacune), même en mobile -->
+  <section class="kpis" aria-label="CashBack et RoundUp" aria-live="polite">
+    <article class="tile tile--summary">
+      <div class="tile__body">
+        <h2>CashBack (<span id="cashbackPageRate">1 %</span>)</h2>
+        <div class="tile-stat">
+          <span class="tile-stat__label">Charges</span>
+          <span class="tile-stat__value" id="kpiCashbackChargesSub">–</span>
+        </div>
+        <div class="tile-stat">
+          <span class="tile-stat__label" id="cashbackAchatsMoisSub">Dépenses de ce mois</span>
+          <span class="tile-stat__value" id="kpiCashbackDepenses">–</span>
+        </div>
+        <a href="cashback.html" class="btn btn--ghost btn--sm">Voir plus d'infos</a>
+      </div>
+    </article>
+    <article class="tile tile--summary">
+      <div class="tile__body">
+        <h2>Round Up (<span id="roundUpPageValue">x1</span>)</h2>
+        <div class="tile-stat">
+          <span class="tile-stat__label">Charges</span>
+          <span class="tile-stat__value" id="kpiRoundUpChargesSub">–</span>
+        </div>
+        <div class="tile-stat">
+          <span class="tile-stat__label" id="roundUpAchatsMoisSub">Dépenses de ce mois</span>
+          <span class="tile-stat__value" id="kpiRoundUpDepenses">–</span>
+        </div>
+        <a href="roundUp.html" class="btn btn--ghost btn--sm">Voir plus d'infos</a>
+      </div>
+    </article>
+  </section>
+
+  <p class="back-link"><a href="../index.html">← Retour au tableau de bord</a></p>
+
+</main>
+
+<footer class="wrap foot">
+  <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
+</footer>
+
+<div id="confirmOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
+    <dl id="confirmDetails" class="modal__details"></dl>
+    <div class="modal__actions">
+      <button type="button" id="confirmCancel" class="btn btn--ghost">Annuler</button>
+      <button type="button" id="confirmOk" class="btn btn--danger">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/nav.js?v=1.01.27"></script>
+<script src="../assets/js/calc.js?v=1.01.27"></script>
+<script src="../assets/js/script.js?v=1.01.27"></script>
+</body>
+</html>

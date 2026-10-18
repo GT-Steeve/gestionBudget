@@ -28,6 +28,7 @@
   };
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
   const MAX_RATE = 100;          // plafond des rendements saisis, en %
+  const ROUND_UP_OPTIONS = [1, 2, 3, 5, 10]; // multiples disponibles pour le RoundUp, en €
   const MONTHS = Calc.MONTHS;
 
   /* ---------- Utilitaires ---------- */
@@ -177,6 +178,7 @@
       depensesHistorique: [],
       depensesMoisCourant: monthKey(new Date()),
       cashbackRate: 1,
+      roundUpTo: 1,
       scenarios: [
         { id: uid(), chargeId: elec.id, option: 'Fournisseur moins cher', nouveau: 52 },
         { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 }
@@ -197,7 +199,8 @@
         categorie: CATEGORIES.includes(c.categorie) ? c.categorie : 'Autre',
         nom: String(c.nom || 'Sans nom').slice(0, 60),
         mensuel: num(c.mensuel),
-        cashbackOn: c.cashbackOn !== false
+        cashbackOn: c.cashbackOn !== false,
+        roundUpOn: c.roundUpOn !== false
       })),
       revenus: (Array.isArray(saved.revenus) ? saved.revenus : []).map((r) => ({
         id: String(r.id || uid()),
@@ -210,7 +213,8 @@
         categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
         nom: String(d.nom || 'Sans nom').slice(0, 60),
         montant: num(d.montant),
-        cashbackOn: d.cashbackOn !== false
+        cashbackOn: d.cashbackOn !== false,
+        roundUpOn: d.roundUpOn !== false
       })),
       depensesHistorique: (Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : []).map((m) => ({
         mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
@@ -224,6 +228,7 @@
       })).slice(0, 12),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
+      roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,
       scenarios: saved.scenarios.map((x) => ({
         id: String(x.id || uid()),
         chargeId: String(x.chargeId),
@@ -273,6 +278,12 @@
   const annual = Calc.annual;
   /** Taux de cashback configurable (state.cashbackRate, en %), en fraction (0.01 = 1 %). */
   const cashbackFraction = () => state.cashbackRate / 100;
+
+  /** Différence jusqu'au multiple supérieur de state.roundUpTo (0 si déjà pile dessus). */
+  const roundUpAmount = (montant) => {
+    const n = state.roundUpTo;
+    return Math.max(0, Math.ceil(montant / n) * n - montant);
+  };
   const project = Calc.project;
   const totalMonthly = () => state.charges.reduce((sum, c) => sum + c.mensuel, 0);
   const totalRevenus = () => state.revenus.reduce((sum, r) => sum + r.mensuel, 0);
@@ -607,7 +618,7 @@
 
     const moisNom = currentMonthName();
     if ($('#depMoisTitre')) $('#depMoisTitre').textContent = moisNom;
-    if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = `Achats ${currentMonthWithPreposition()}`;
+    if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
 
     renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
       'Ajoutez des dépenses pour voir leur répartition.');
@@ -691,8 +702,6 @@
      ========================================================================== */
 
   function renderCashback() {
-    if (!$('#cashbackChargesBody')) return;
-
     /** N'affiche que les lignes soumises au cashback (voir Paramétrer) : une
         ligne désactivée n'a rien à montrer dans ce tableau. */
     const buildRows = (body, items, amountKey, wrap, leftBtn, rightBtn) => {
@@ -716,17 +725,26 @@
       updateScrollArrows(wrap, leftBtn, rightBtn);
     };
 
-    buildRows($('#cashbackChargesBody'), state.charges, 'mensuel',
-      $('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
-    buildRows($('#cashbackDepensesBody'), state.depenses, 'montant',
-      $('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
+    // Les tableaux (Dépenses/CashBack) n'existent que sur cashback.html ; les
+    // tuiles de résumé ci-dessous existent aussi sur backOrRound.html, qui
+    // n'a pas de tableaux — d'où ces deux gardes distinctes plutôt qu'une
+    // seule sortie anticipée.
+    if ($('#cashbackChargesBody')) {
+      buildRows($('#cashbackChargesBody'), state.charges, 'mensuel',
+        $('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
+      buildRows($('#cashbackDepensesBody'), state.depenses, 'montant',
+        $('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
+    }
+    if (!$('#kpiCashbackChargesSub')) return;
 
     const chargesCashback = state.charges.reduce((sum, c) => sum + (c.cashbackOn !== false ? c.mensuel * cashbackFraction() : 0), 0);
     const depensesCashback = state.depenses.reduce((sum, d) => sum + (d.cashbackOn !== false ? d.montant * cashbackFraction() : 0), 0);
-    $('#kpiCashbackCharges').textContent = eur2.format(chargesCashback);
-    $('#kpiCashbackChargesSub').textContent = `${eur2.format(annual(chargesCashback))} par an`;
+    // #kpiCashbackCharges (montant mensuel brut) n'existe que sur cashback.html ;
+    // backOrRound.html n'affiche que le total annuel (#kpiCashbackChargesSub).
+    if ($('#kpiCashbackCharges')) $('#kpiCashbackCharges').textContent = eur2.format(chargesCashback);
+    $('#kpiCashbackChargesSub').textContent = `${eur2.format(annual(chargesCashback))} par an`;
     $('#kpiCashbackDepenses').textContent = eur2.format(depensesCashback);
-    if ($('#cashbackAchatsMoisSub')) $('#cashbackAchatsMoisSub').textContent = `Achats ${currentMonthWithPreposition()}`;
+    if ($('#cashbackAchatsMoisSub')) $('#cashbackAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
     syncCashbackRateUI();
   }
 
@@ -790,6 +808,115 @@
     bindScrollArrows($('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
     bindScrollArrows($('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
     MOBILE_QUERY.addEventListener('change', renderCashback);
+  }
+
+  /* ==========================================================================
+     1quater. RoundUp (arrondit chaque charge/dépense au multiple supérieur
+     choisi — 1/2/3/5/10 € — et met la différence de côté, comme sur Trade
+     Republic ; même logique de paramétrage ligne par ligne que CashBack.)
+     ========================================================================== */
+
+  function renderRoundUp() {
+    const buildRows = (body, items, amountKey, wrap, leftBtn, rightBtn) => {
+      const visible = items.filter((item) => item.roundUpOn !== false);
+      body.replaceChildren();
+      if (!visible.length) {
+        body.append(h('tr', {}, h('td', { colspan: 3, class: 'empty' }, 'Aucune ligne soumise au round up pour le moment.')));
+        updateScrollArrows(wrap, leftBtn, rightBtn);
+        return;
+      }
+      for (const item of visible) {
+        const montant = item[amountKey];
+        const roundUp = roundUpAmount(montant);
+        const nameCell = h('td', {}, item.nom);
+        const montantCell = h('td', { class: 'num' }, eur2.format(montant));
+        const roundUpCell = h('td', { class: 'num' }, eur2.format(roundUp));
+        body.append(MOBILE_QUERY.matches
+          ? h('tr', {}, nameCell, roundUpCell, montantCell)
+          : h('tr', {}, nameCell, montantCell, roundUpCell));
+      }
+      updateScrollArrows(wrap, leftBtn, rightBtn);
+    };
+
+    if ($('#roundUpChargesBody')) {
+      buildRows($('#roundUpChargesBody'), state.charges, 'mensuel',
+        $('#roundUpChargesTableWrap'), $('#roundUpChargesScrollLeft'), $('#roundUpChargesScrollRight'));
+      buildRows($('#roundUpDepensesBody'), state.depenses, 'montant',
+        $('#roundUpDepensesTableWrap'), $('#roundUpDepensesScrollLeft'), $('#roundUpDepensesScrollRight'));
+    }
+    if (!$('#kpiRoundUpChargesSub')) return;
+
+    const chargesRoundUp = state.charges.reduce((sum, c) => sum + (c.roundUpOn !== false ? roundUpAmount(c.mensuel) : 0), 0);
+    const depensesRoundUp = state.depenses.reduce((sum, d) => sum + (d.roundUpOn !== false ? roundUpAmount(d.montant) : 0), 0);
+    // #kpiRoundUpCharges (montant mensuel brut) n'existe que sur roundUp.html ;
+    // backOrRound.html n'affiche que le total annuel (#kpiRoundUpChargesSub).
+    if ($('#kpiRoundUpCharges')) $('#kpiRoundUpCharges').textContent = eur2.format(chargesRoundUp);
+    $('#kpiRoundUpChargesSub').textContent = `${eur2.format(annual(chargesRoundUp))} par an`;
+    $('#kpiRoundUpDepenses').textContent = eur2.format(depensesRoundUp);
+    if ($('#roundUpAchatsMoisSub')) $('#roundUpAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
+    syncRoundUpValueUI();
+  }
+
+  /** Synchronise l'affichage du multiple choisi (titre de page, titre du pop-up, select). */
+  function syncRoundUpValueUI() {
+    const label = `x${state.roundUpTo}`;
+    if ($('#roundUpPageValue')) $('#roundUpPageValue').textContent = label;
+    if ($('#roundUpSettingsValue')) $('#roundUpSettingsValue').textContent = label;
+    const select = $('#roundUpSelect');
+    if (select) select.value = String(state.roundUpTo);
+  }
+
+  /** Liste du pop-up de paramétrage : une section Charges puis Dépenses, chaque
+      ligne avec son interrupteur pour inclure ou non le round up. */
+  function renderRoundUpSettings() {
+    const box = $('#roundUpSettingsList');
+    if (!box) return;
+    syncRoundUpValueUI();
+    box.replaceChildren();
+
+    const buildGroup = (title, items, amountKey, first) => {
+      box.append(h('h3', { class: first ? 'h3' : 'h3 h3--gap' }, title));
+      if (!items.length) {
+        box.append(h('p', { class: 'note' }, 'Aucune ligne pour le moment.'));
+        return;
+      }
+      for (const item of items) {
+        // Ne pas rappeler renderRoundUpSettings() ici : voir la même remarque
+        // sur l'interrupteur CashBack (refresh() suffit, :checked s'en charge).
+        const input = h('input', {
+          type: 'checkbox', checked: item.roundUpOn !== false,
+          onchange: (e) => { item.roundUpOn = e.target.checked; refresh(); }
+        });
+        const toggle = h('label', { class: 'switch' },
+          input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' })));
+        box.append(h('div', { class: 'cb-row' },
+          h('div', { class: 'cb-row__text' },
+            h('span', { class: 'cb-row__name' }, item.nom),
+            h('span', { class: 'cb-row__amount' }, eur2.format(item[amountKey]))
+          ),
+          toggle
+        ));
+      }
+    };
+
+    buildGroup('Charges', state.charges, 'mensuel', true);
+    buildGroup('Dépenses', state.depenses, 'montant', false);
+  }
+
+  function bindRoundUp() {
+    const btn = $('#btnRoundUpSettings');
+    if (!btn) return;
+    bindInfoModal('#btnRoundUpSettings', '#roundUpSettingsOverlay', '#roundUpSettingsClose');
+    btn.addEventListener('click', renderRoundUpSettings);
+    $('#roundUpSelect').addEventListener('change', (e) => {
+      const v = parseInt(e.target.value, 10);
+      state.roundUpTo = ROUND_UP_OPTIONS.includes(v) ? v : 1;
+      syncRoundUpValueUI();
+      refresh();
+    });
+    bindScrollArrows($('#roundUpChargesTableWrap'), $('#roundUpChargesScrollLeft'), $('#roundUpChargesScrollRight'));
+    bindScrollArrows($('#roundUpDepensesTableWrap'), $('#roundUpDepensesScrollLeft'), $('#roundUpDepensesScrollRight'));
+    MOBILE_QUERY.addEventListener('change', renderRoundUp);
   }
 
   /* ==========================================================================
@@ -1651,6 +1778,7 @@
     renderSummary();
     renderSynthese();
     renderCashback();
+    renderRoundUp();
     save();
   }
 
@@ -1660,6 +1788,7 @@
     bindDepenses();
     bindHistorique();
     bindCashback();
+    bindRoundUp();
     bindScenarios();
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');

@@ -24,7 +24,8 @@ v1.06.1 = polish UI charge + depense + économie
 v1.06.2 = polish placement UI economie
 v1.06.3 = ajout polish UX économie revenu
 v1.06.4 = ajout catégorie Entretien ménager dans dépenses
+v1.06.5 = ajout roundUp
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
-précisez l'effacement général en bas de page. aggrandir la portée
+personnaliser la taille des éléments 
