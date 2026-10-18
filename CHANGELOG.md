@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.15.0...v1.16.0) (2026-10-18)
+
+
+### Features
+
+* **saisie:** ajoute le CashBack/RoundUp dès l'ajout d'une charge ou dépense ([8b03de2](https://github.com/GT-Steeve/gestionBudget/commit/8b03de22c78155cab39ceeef73d9f4775610a0e4))
+
 # [1.15.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.14.0...v1.15.0) (2026-10-18)
 
 
