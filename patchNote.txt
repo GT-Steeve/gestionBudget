@@ -27,6 +27,7 @@ v1.06.4 = ajout catégorie Entretien ménager dans dépenses
 v1.06.5 = ajout roundUp
 v1.06.6 = rework place holder par catégorie
 v1.07.0 = rework UI ajout revenu / dépense / charge
+v1.07.1 = polish UX cashback / round Up dans nouvelle charge + nouvelle dépenses
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page

@@ -601,16 +601,22 @@
         e.preventDefault();
         const nom = $(ids.nom).value.trim();
         if (!nom) return;
-        state[type].push({ id: uid(), categorie: $(ids.cat).value, nom, mensuel: num($(ids.montant).value) });
+        const entry = { id: uid(), categorie: $(ids.cat).value, nom, mensuel: num($(ids.montant).value) };
+        // CashBack/RoundUp : étape 4 du wizard, absente du formulaire Revenus.
+        if (ids.cashbackOn) entry.cashbackOn = $(ids.cashbackOn).checked;
+        if (ids.roundUpOn) entry.roundUpOn = $(ids.roundUpOn).checked;
+        state[type].push(entry);
         $(ids.nom).value = '';
         $(ids.montant).value = '';
+        if (ids.cashbackOn) $(ids.cashbackOn).checked = true;
+        if (ids.roundUpOn) $(ids.roundUpOn).checked = true;
         $(ids.nom).focus();
         renderLines(type);
         refresh();
       });
     };
     bindForm('revenus', { form: '#revenuForm', cat: '#rCat', nom: '#rNom', montant: '#rMontant' });
-    bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
+    bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant', cashbackOn: '#cCashbackOn', roundUpOn: '#cRoundUpOn' });
     bindNomPlaceholder('#rCat', '#rNom', NOM_PLACEHOLDERS.revenus);
     bindNomPlaceholder('#cCat', '#cNom', NOM_PLACEHOLDERS.charges);
     bindAddWizard({
@@ -625,8 +631,8 @@
       openBtn: '#btnOpenChargeWizard', overlay: '#chargeWizardOverlay', form: '#chargeForm',
       closeBtn: '#chargeWizardClose', backBtn: '#chargeWizardBack',
       nextBtn: '#chargeWizardNext', finishBtn: '#chargeWizardFinish', stepLabel: '#chargeWizardStepLabel',
-      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
-      fields: ['#cCat', '#cMontant', '#cNom']
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
+      fields: ['#cCat', '#cMontant', '#cNom', null]
     });
     bindResponsiveTrigger('#btnOpenChargeWizard', '#addChargeMobileSlot', '#charges .card__head');
 
@@ -778,8 +784,8 @@
       openBtn: '#btnOpenDepenseWizard', overlay: '#depenseWizardOverlay', form: '#depenseForm',
       closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
       nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
-      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
-      fields: ['#dCat', '#dMontant', '#dNom']
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
+      fields: ['#dCat', '#dMontant', '#dNom', null]
     });
     bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
     const form = $('#depenseForm');
@@ -788,9 +794,14 @@
         e.preventDefault();
         const nom = $('#dNom').value.trim();
         if (!nom) return;
-        state.depenses.push({ id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value) });
+        state.depenses.push({
+          id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value),
+          cashbackOn: $('#dCashbackOn').checked, roundUpOn: $('#dRoundUpOn').checked
+        });
         $('#dNom').value = '';
         $('#dMontant').value = '';
+        $('#dCashbackOn').checked = true;
+        $('#dRoundUpOn').checked = true;
         $('#dNom').focus();
         renderDepenses();
         refresh();
