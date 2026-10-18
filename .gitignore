@@ -15,3 +15,5 @@ Thumbs.db
 .idea/
 # Variables secrètes éventuelles
 .env
+
+graphify-out/

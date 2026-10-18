@@ -13,7 +13,44 @@
   const STORAGE_KEY = 'gestion-epargne-v1';
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
-  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Autre'];
+  /** Exemples de libellés par catégorie : affichés comme placeholder du champ
+      "Libellé" selon la catégorie choisie, pour guider la saisie. */
+  const NOM_PLACEHOLDERS = {
+    revenus: {
+      'Salaire': 'Ex. Salaire net',
+      'Aide': 'Ex. Aide au logement',
+      'Autre': 'Ex. Pension alimentaire'
+    },
+    charges: {
+      'Loyer': 'Ex. Loyer habitation',
+      'Factures': 'Ex. Électricité',
+      'Courses': 'Ex. Carrefour, Monoprix, Lidl',
+      'Transport': 'Ex. Pass Navigo, essence, péage',
+      'Abonnements': 'Ex. Netflix, Amazon Prime',
+      'Activité': 'Ex. Salle de sport',
+      'Plaisir': 'Ex. Restaurant',
+      'Assurance': 'Ex. Voiture, habitation',
+      'Épargne': 'Ex. Économie, PEA',
+      'Autre': 'Ex. Pension alimentaire (enfants)'
+    },
+    depenses: {
+      'Course': 'Ex. Carrefour, Monoprix, Lidl',
+      'Alimentaire': 'Ex. Carrefour, Monoprix',
+      'Transport': 'Ex. Essence',
+      'Shopping': 'Ex. Amazon, Zara',
+      'Divertissement': 'Ex. Jeu Steam, PlayStation, film',
+      'Sortie': 'Ex. Cinéma',
+      'Équipement': 'Ex. Lave-linge, télé',
+      'Entretien ménager': 'Ex. Liquide vaisselle, Javel',
+      'Cadeau': 'Ex. Anniversaire, fleur',
+      'Santé': 'Ex. Médecin, lunettes',
+      'Amende': 'Ex. Stationnement, radar',
+      'Imprévu': 'Ex. Panne voiture, garage',
+      'Restaurant': 'Ex. Buffet, Uber, fast-food',
+      'Autre': 'Ex. Prêt, entretien voiture'
+    }
+  };
   const HINTS = {
     Loyer: 'Ex. Colocation, logement plus petit, renégociation',
     Factures: 'Ex. Fournisseur moins cher, forfait plus économique',
@@ -303,7 +340,8 @@
     charges: {
       body: '#chargesBody', cats: sortAlpha(CATEGORIES),
       empty: 'Aucune charge pour le moment. Ajoutez votre première ligne ci-dessus.',
-      wrap: '#chargesTableWrap', left: '#chargesScrollLeft', right: '#chargesScrollRight'
+      wrap: '#chargesTableWrap', left: '#chargesScrollLeft', right: '#chargesScrollRight',
+      newestFirst: true
     }
   };
 
@@ -311,6 +349,17 @@
     if ($('#rCat')) $('#rCat').replaceChildren(...sortAlpha(REV_CATEGORIES).map((c) => h('option', { value: c }, c)));
     if ($('#cCat')) $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
     if ($('#dCat')) $('#dCat').replaceChildren(...sortAlpha(DEP_CATEGORIES).map((c) => h('option', { value: c }, c)));
+  }
+
+  /** Met à jour le placeholder du champ "Libellé" selon la catégorie choisie
+      dans le select associé, et le tient à jour à chaque changement. */
+  function bindNomPlaceholder(catSel, nomSel, map) {
+    const catEl = $(catSel);
+    const nomEl = $(nomSel);
+    if (!catEl || !nomEl) return;
+    const update = () => { nomEl.placeholder = map[catEl.value] || nomEl.placeholder; };
+    catEl.addEventListener('change', update);
+    update();
   }
 
   const TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7.5v4M9.5 7.5v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
@@ -327,7 +376,11 @@
       return;
     }
 
-    for (const c of state[type]) {
+    // Pour les charges, la plus récemment ajoutée s'affiche en haut (ordre
+    // d'ajout inversé) ; les revenus gardent l'ordre d'ajout tel quel.
+    const items = cfg.newestFirst ? [...state[type]].reverse() : state[type];
+
+    for (const c of items) {
       const annualCell = h('td', { class: 'num' }, eur2.format(annual(c.mensuel)));
 
       const nameInput = h('input', {
@@ -480,6 +533,8 @@
     };
     bindForm('revenus', { form: '#revenuForm', cat: '#rCat', nom: '#rNom', montant: '#rMontant' });
     bindForm('charges', { form: '#chargeForm', cat: '#cCat', nom: '#cNom', montant: '#cMontant' });
+    bindNomPlaceholder('#rCat', '#rNom', NOM_PLACEHOLDERS.revenus);
+    bindNomPlaceholder('#cCat', '#cNom', NOM_PLACEHOLDERS.charges);
 
     for (const [type, cfg] of Object.entries(LINE_TYPES)) {
       const wrap = $(cfg.wrap);
@@ -548,12 +603,11 @@
       return;
     }
 
-    // Triées par catégorie (puis par libellé) pour regrouper les dépenses
-    // d'un même poste, plutôt que l'ordre d'ajout.
-    const sorted = [...state.depenses].sort((a, b) =>
-      a.categorie.localeCompare(b.categorie, 'fr') || a.nom.localeCompare(b.nom, 'fr'));
+    // La dépense la plus récemment ajoutée s'affiche en haut (ordre d'ajout
+    // inversé), plutôt que regroupée par catégorie.
+    const ordered = [...state.depenses].reverse();
 
-    for (const d of sorted) {
+    for (const d of ordered) {
       const nameInput = h('input', {
         class: 'cell', type: 'text', maxlength: 60, value: d.nom, 'aria-label': 'Libellé',
         onchange: (e) => {
@@ -625,6 +679,7 @@
   }
 
   function bindDepenses() {
+    bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
     const form = $('#depenseForm');
     if (form) {
       form.addEventListener('submit', (e) => {
