@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.19.0...v1.20.0) (2026-10-19)
+
+
+### Features
+
+* **produits:** page Produits financiers avec onglets et liens justETF ([611063a](https://github.com/GT-Steeve/gestionBudget/commit/611063add16c669ad1f5977361ee4a3ca9f8e1c8)), closes [#actions](https://github.com/GT-Steeve/gestionBudget/issues/actions) [#obligations](https://github.com/GT-Steeve/gestionBudget/issues/obligations) [#etf](https://github.com/GT-Steeve/gestionBudget/issues/etf)
+
 # [1.19.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.18.0...v1.19.0) (2026-10-19)
 
 
