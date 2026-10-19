@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.42">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.43">
 </head>
 <body data-app="true">
 
@@ -90,8 +90,8 @@
   <section id="rendement" class="card" aria-labelledby="h-rend">
     <div class="card__head">
       <div>
-        <h2 id="h-rend">Simuler un placement à 2 % ou 10 %</h2>
-        <p class="lead">Simulez ce que rapporte votre épargne selon deux rendements annuels que vous choisissez (2 % et 10 % par défaut), et consultez le gain de l'année de votre choix.</p>
+        <h2 id="h-rend">Préparez vos placements</h2>
+        <p class="lead">Calculez ce que vos investissements peuvent rapporter selon votre capacité d'épargne, en comparant deux produits financiers (livret, assurance-vie, ETF…) et leur rendement annuel.</p>
       </div>
     </div>
 
@@ -99,7 +99,12 @@
          la tablette, le JS le déplace dans .card__head (à droite du titre) ;
          ce conteneur se masque alors tout seul (:empty) via le CSS. -->
     <div id="addYieldMobileSlot" class="add-trigger">
-      <button type="button" id="btnOpenYieldWizard" class="btn">Simuler un placement</button>
+      <!-- Groupe déplacé d'un bloc par le JS (mobile ici / desktop dans
+           .card__head) : lien vers les exemples de produits + Simuler. -->
+      <div id="yieldActions" class="btn-group">
+        <a class="btn btn--ghost" href="produitFinance.html">Découvrir des produits</a>
+        <button type="button" id="btnOpenYieldWizard" class="btn">Simuler un placement</button>
+      </div>
     </div>
 
     <div class="form-row" id="yieldForm">
@@ -120,7 +125,7 @@
           </span>
         </label>
         <div class="btn-with-info">
-          <button id="btnUseEco" class="btn btn--ghost" type="button">Simuler mes économies mensuelles</button>
+          <button id="btnUseEco" class="btn btn--ghost" type="button">Simuler avec mes économies mensuelles</button>
           <button type="button" id="rendementInfoBtn" class="info-btn" aria-label="En savoir plus sur les limites de cette simulation" title="En savoir plus">
             <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 2.3 14.6 13.7 1.4 13.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
@@ -227,7 +232,7 @@
             </button>
           </span>
         </label>
-        <button type="button" id="wBtnUseEco" class="btn btn--ghost wizard__extra">Simuler mes économies mensuelles</button>
+        <button type="button" id="wBtnUseEco" class="btn btn--ghost wizard__extra">Simuler avec mes économies mensuelles</button>
       </div>
       <div class="wizard__step wizard__step--center" data-step="2" hidden>
         <label for="wCapital">Capital de départ (€)
@@ -299,8 +304,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.42"></script>
-<script src="../assets/js/calc.js?v=1.01.42"></script>
-<script src="../assets/js/script.js?v=1.01.42"></script>
+<script src="../assets/js/nav.js?v=1.01.43"></script>
+<script src="../assets/js/calc.js?v=1.01.43"></script>
+<script src="../assets/js/script.js?v=1.01.43"></script>
 </body>
 </html>

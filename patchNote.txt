@@ -32,6 +32,7 @@ v1.07.2 = pop-up saisie économie + textes
 v1.08.0 = polish économie
 v1.08.1 = rework UI simulation de placement
 v1.09.0 = polish UI simulation de placement
+v1.09.1 = ajout produitFinance.html + MAJ readme.md
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page

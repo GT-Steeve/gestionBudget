@@ -290,6 +290,10 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
    donc sur toute la largeur de la carte, y compris en mobile). */
 .card__head h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; flex: 1 1 auto; min-width: 0; }
 .card__head .btn { flex: none; }
+/* Boutons côte à côte (ex. Placement : Découvrir des produits + Simuler). */
+.btn-group { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.card__head .btn-group { flex: none; margin-left: auto; }
+.btn-group a.btn { text-decoration: none; }
 .lead { color: var(--ink-2); font-size: 14px; margin-top: 2px; max-width: 62ch; }
 .lead--full { max-width: none; text-align: justify; }
 .h3 { font-size: 14px; font-weight: 650; color: var(--ink); }
@@ -299,6 +303,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .back-link a { color: var(--ink-2); font-size: 14px; text-decoration: none; }
 .back-link a:hover { color: var(--ink); text-decoration: underline; }
 .note { font-size: 13px; color: var(--muted); margin-top: 14px; max-width: 80ch; }
+/* Note sur toute la largeur de la carte, texte justifié (ex. Produits financiers). */
+.note--full { max-width: none; text-align: justify; }
 .about-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 8px auto 0; max-width: 70ch; text-align: justify; }
 /* Page Annexe : chaque terme est présenté comme une petite fiche, en grille
    qui passe naturellement à plusieurs colonnes sur les écrans larges (auto-fit,
@@ -310,6 +316,38 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 }
 .glossary dt { font-size: 14.5px; font-weight: 650; color: var(--ink); }
 .glossary dd { margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); text-align: justify; }
+/* Annexe : bouton « Plus d'infos » aligné à droite du terme (Action,
+   Obligation, ETF), vers ses exemples dans la page Produits financiers. */
+.glossary__dt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.glossary__dt-row .btn { flex: none; text-decoration: none; font-weight: 600; }
+/* Lien de l'Annexe vers la page Produits financiers. */
+.glossary__more { text-align: center; margin: 14px 0 0; font-size: 14px; }
+/* Page Produits financiers : onglets Actions / Obligations / ETF. */
+.tabs {
+  display: flex; justify-content: center; gap: 4px; margin: 24px 0 0;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  font: inherit; font-size: 14.5px; font-weight: 600; color: var(--ink-2);
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 10px 16px; margin-bottom: -1px; cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px 6px 0 0; }
+.tabpanel { margin-top: 16px; }
+.tabpanel:focus-visible:not(:target) { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+/* Page Produits financiers : fiche produit (catégorie, ISIN, lien justETF). */
+.product dd { text-align: left; }
+.product dd p + p { margin-top: 6px; }
+.product__meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.product__cat {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.product__isin { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.product__link, .glossary__more a, .about-head .lead a { color: var(--accent); }
+.product__link { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 13.5px; font-weight: 600; }
 /* .card__head ne fait pas grandir ses enfants (flex sans grow) : sans width:100%,
    ce bloc reste large comme son contenu et le centrage du titre paraît décalé
    à gauche sur les écrans larges, où la carte est bien plus large que le texte. */
@@ -631,7 +669,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .wizard__step { margin-top: 20px; }
 .wizard__progress { font-size: 12px; color: var(--muted); text-align: center; margin: 18px 0 0; }
 .modal--wizard .modal__actions { margin-top: 16px; }
-/* Wizard Placement : bouton « Simuler mes économies mensuelles » sous le
+/* Wizard Placement : bouton « Simuler avec mes économies mensuelles » sous le
    champ Épargne, et les deux rendements à comparer sur la même étape. */
 .wizard__extra { width: 100%; margin-top: 12px; }
 .wizard__step--pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -867,6 +905,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #addScenarioMobileSlot { text-align: center; }
   /* Bouton Simuler un placement centré en mobile, comme Ajouter une charge. */
   #addYieldMobileSlot { text-align: center; }
+  /* Les deux boutons Placement restent côte à côte en mobile. */
+  /* (passent l'un sous l'autre seulement sur les très petits écrans). */
+  #yieldActions .btn { padding-left: 10px; padding-right: 10px; font-size: 13px; }
   /* Tableau des rendements en mobile : cellules plus serrées pour tenir les
      trois colonnes. */
   .cmp { font-size: 13px; }

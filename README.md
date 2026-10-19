@@ -1,7 +1,8 @@
 # Gestion budget
 
-Petite application web pour suivre son budget : revenus, charges, économies
-potentielles, simulation de rendement d'épargne et synthèse visuelle.
+Petite application web pour suivre son budget : revenus, charges, dépenses,
+cashback et arrondi automatique, économies potentielles, simulation de
+placement, exemples de produits financiers et synthèse visuelle.
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -13,15 +14,29 @@ potentielles, simulation de rendement d'épargne et synthèse visuelle.
 
 ## Fonctionnalités
 
-- **Revenus & charges** — saisie par catégorie, totaux mensuels et annuels
-  (× 12) calculés automatiquement, édition et suppression en ligne.
-- **Répartition par catégorie** — vue synthétique des charges avec barres de
-  proportion.
-- **Économie potentielle** — comparez une ligne existante à une alternative
+- **Revenus, charges & dépenses** — saisie par catégorie via une pop-up
+  guidée (un champ par étape), totaux mensuels et annuels (× 12) calculés
+  automatiquement, édition et suppression en ligne. Les dépenses se suivent
+  au mois, avec un historique des mois précédents.
+- **Répartition par catégorie** — vue synthétique des revenus et des charges
+  avec barres de proportion.
+- **CashBack & RoundUp** — estimation du cashback reversé par la banque et de
+  l'arrondi automatique (différence mise de côté, comme sur Trade Republic),
+  activables ligne par ligne dès l'ajout d'une charge ou d'une dépense.
+- **Économie potentielle** — comparez une charge à une alternative
   (fournisseur moins cher, autre offre…) et voyez l'économie mensuelle/annuelle.
-- **Rendement de l'épargne** — simulation à intérêts composés sur deux taux
-  annuels modifiables (2 % et 10 % par défaut), avec gain affiché pour
-  l'année de votre choix et détail année par année.
+- **Simulation de placement** — intérêts composés sur deux rendements annuels
+  modifiables (2 % et 10 % par défaut), via une pop-up guidée (épargne
+  mensuelle, capital, durée, rendements) ou directement dans le formulaire.
+  Exemples prêts à l'emploi, bouton « Simuler avec mes économies mensuelles »,
+  tableau comparatif (capital, épargné, intérêts, gain d'une année au choix),
+  graphique d'évolution et détail année par année.
+- **Produits financiers** — exemples concrets d'actions, d'obligations et
+  d'ETF (dont des ETN crypto) classés par onglets, avec ISIN et lien vers leur
+  fiche [justETF](https://www.justetf.com/fr/). Accessible depuis la page
+  Placement et l'Annexe.
+- **Annexe** — lexique des termes financiers courants (action, obligation,
+  ETF, cashback, arrondi automatique).
 - **Synthèse graphique** — camembert de répartition des dépenses et graphique
   en barres, par mois ou par an.
 - **Export PDF & impression** — boutons « Exporter » et « Imprimer » sous la
@@ -52,11 +67,13 @@ suffit). Un outillage Node existe en parallèle uniquement pour la qualité et
 les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
-- `pages/` — pages dédiées (Revenus, Charges, Économies, Rendement, À propos)
+- `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
+  Économie, Placement, Produits financiers, Annexe, À propos)
 - `assets/css/style.css` — thème (clair/sombre), mise en page, responsive, impression
 - `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression)
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/nav.js` — menu mobile, thème, effacement des données
+- `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
 - `assets/img/` — favicons et image de partage (Open Graph)
 
 ## Contribuer

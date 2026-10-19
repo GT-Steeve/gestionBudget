@@ -1354,8 +1354,7 @@
     const rLow = fmtRate(low.rate);
     const rHigh = fmtRate(high.rate);
 
-    // Titre et en-têtes qui suivent les taux choisis
-    $('#h-rend').textContent = `Simuler un placement à ${rLow} ou ${rHigh}`;
+    // En-têtes du tableau année par année qui suivent les taux choisis
     $('#thCapLow').textContent = `Capital à ${rLow}`;
     $('#thGainLow').textContent = `Gain à ${rLow}`;
     $('#thCapHigh').textContent = `Capital à ${rHigh}`;
@@ -1615,7 +1614,7 @@
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
       fields: ['#wVersement', '#wCapital', '#wAnnees', '#wTaux1']
     });
-    bindResponsiveTrigger('#btnOpenYieldWizard', '#addYieldMobileSlot', '#rendement .card__head');
+    bindResponsiveTrigger('#yieldActions', '#addYieldMobileSlot', '#rendement .card__head');
 
     // Pop-up d'exemples : chaque bouton préremplit épargne/durée/taux depuis ses data-attributes.
     document.querySelectorAll('.example-item').forEach((btn) => {
