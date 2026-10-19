@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.16.0...v1.17.0) (2026-10-19)
+
+
+### Features
+
+* **economie:** pop-up guidé pour ajouter une comparaison ([#19](https://github.com/GT-Steeve/gestionBudget/issues/19)) ([0202331](https://github.com/GT-Steeve/gestionBudget/commit/020233171a378b31274eea1e24c1b07b223d81b7))
+
 # [1.16.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.15.0...v1.16.0) (2026-10-18)
 
 
