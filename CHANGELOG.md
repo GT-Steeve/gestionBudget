@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.17.1...v1.18.0) (2026-10-19)
+
+
+### Features
+
+* **placement:** pop-up guidé pour simuler un placement + tableau comparatif ([f588861](https://github.com/GT-Steeve/gestionBudget/commit/f588861c4271cf84701d1a7144d47032b8f4d061))
+
 ## [1.17.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.17.0...v1.17.1) (2026-10-19)
 
 
