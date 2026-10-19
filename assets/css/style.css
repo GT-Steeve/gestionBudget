@@ -237,7 +237,9 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .form-row label.grow { flex: 1 1 220px; }
 
 .input-with-btn { position: relative; display: block; }
-.input-with-btn input { width: 100%; padding-right: 84px; }
+/* 92px = bouton Exemple (≈ 81px avec sa marge) + un petit espace pour que
+   les flèches haut/bas du champ nombre ne le touchent pas. */
+.input-with-btn input { width: 100%; padding-right: 92px; }
 .input-with-btn input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent); }
 .input-with-btn__btn {
   position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
@@ -632,8 +634,15 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Wizard Placement : bouton « Simuler mes économies mensuelles » sous le
    champ Épargne, et les deux rendements à comparer sur la même étape. */
 .wizard__extra { width: 100%; margin-top: 12px; }
-.wizard__step--pair { display: grid; gap: 12px; }
+.wizard__step--pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .wizard__step--pair[hidden] { display: none; }
+/* Étapes à petits champs (Durée, Rendements) : contenu centré dans la pop-up. */
+.wizard__step--center { text-align: center; }
+.wizard__step--center label { align-items: center; }
+/* Épargne (avec le bouton Exemple incrusté) et Capital : taille utile pour
+   un montant à 7 chiffres plutôt que la pleine largeur. */
+.wizard__step--center .input-with-btn { width: calc(9ch + 118px); }
+.wizard__step--center .wizard__extra { width: auto; }
 
 /* Liste scrollable générique pour le contenu d'une modale qui grandit avec les
    données (Historique des dépenses, paramétrage CashBack…). */
@@ -665,6 +674,26 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .btn--danger:hover { filter: brightness(1.08); }
 
 .btn-with-info { display: inline-flex; align-items: center; gap: 8px; }
+/* Champs nombre à leur taille utile plutôt qu'en pleine largeur : Durée
+   (jusqu'à 50) et rendements (de « 0,01 » à « 1000 », « % » juste après). */
+.input--fit { width: calc(3ch + 40px); text-align: center; }
+.input--money { width: calc(9ch + 40px); text-align: center; }
+.input-unit { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 15px; }
+.input--rate { width: calc(4ch + 28px); text-align: center; -moz-appearance: textfield; appearance: textfield; }
+.input--rate::-webkit-inner-spin-button, .input--rate::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* Formulaire Placement : Épargne mensuelle, bouton Simuler mes économies
+   juste dessous, puis Capital de départ et Durée côte à côte (50/50). */
+#yieldForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; max-width: 720px; }
+#yieldForm label { flex: unset; min-width: 0; }
+/* Libellé et champ sur la même ligne, pour gagner de la hauteur. */
+#yieldForm label { flex-direction: row; align-items: center; gap: 10px; white-space: nowrap; }
+#yieldForm label > input, #yieldForm label > .input-with-btn { flex: 1 1 auto; min-width: 0; }
+/* Ligne Épargne mensuelle + bouton économies (et sa bulle) à droite. Le
+   champ est à la taille d'un montant de « 0,001 » à « 1000000000000 »,
+   bouton Exemple incrusté compris. */
+#yieldForm .yield-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+#yieldForm .yield-line > label { flex: none; }
+#yieldForm .yield-line .input-with-btn { flex: none; width: calc(13ch + 138px); }
 .info-btn {
   flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border); border-radius: 50%; background: transparent; color: var(--ink-2);
@@ -861,13 +890,12 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
   .form-row .btn { width: 100%; }
   .form-row .input-with-btn__btn { width: auto; }
-  /* Formulaire Rendement : grille 2 colonnes plutôt que flex-wrap, pour un
-     appariement fiable (flex-wrap cassait l'appariement à cause du bouton
-     Exemple incrusté, qui décalait le calcul des retours à la ligne). */
-  #yieldForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
-  #yieldForm label { flex: unset; min-width: 0; }
-  #yieldForm .btn-with-info { grid-column: 1 / -1; }
-  #yieldForm label.field--full { grid-column: 1 / -1; }
+  /* Formulaire Rendement : la grille 2 colonnes (voir #yieldForm plus haut)
+     s'applique déjà ; le bouton économies prend juste toute la largeur. */
+  #yieldForm .btn-with-info .btn { flex: 1 1 auto; }
+  /* Mobile : Épargne sur toute la ligne, bouton économies dessous. */
+  #yieldForm .yield-line > label, #yieldForm .yield-line > .btn-with-info { flex: 1 1 100%; }
+  #yieldForm .yield-line .input-with-btn { flex: 1 1 auto; width: auto; }
   .breakdown { grid-template-columns: 90px 1fr auto; }
   .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }

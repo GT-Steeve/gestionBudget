@@ -1613,13 +1613,25 @@
       closeBtn: '#yieldWizardClose', backBtn: '#yieldWizardBack',
       nextBtn: '#yieldWizardNext', finishBtn: '#yieldWizardFinish', stepLabel: '#yieldWizardStepLabel',
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
-      fields: ['#wCapital', '#wVersement', '#wAnnees', '#wTaux1']
+      fields: ['#wVersement', '#wCapital', '#wAnnees', '#wTaux1']
     });
     bindResponsiveTrigger('#btnOpenYieldWizard', '#addYieldMobileSlot', '#rendement .card__head');
 
     // Pop-up d'exemples : chaque bouton préremplit épargne/durée/taux depuis ses data-attributes.
     document.querySelectorAll('.example-item').forEach((btn) => {
       btn.addEventListener('click', () => {
+        // Depuis la pop-up « Simuler un placement » : l'exemple préremplit
+        // seulement ses champs, l'utilisateur poursuit avec Suivant puis
+        // valide avec Terminer (rien n'est appliqué à la simulation avant).
+        if (wizardOverlay && !wizardOverlay.hidden) {
+          $('#wVersement').value = num(btn.dataset.mensuel);
+          $('#wAnnees').value = clamp(Math.round(num(btn.dataset.annees)) || 1, 1, 50);
+          $('#wTaux1').value = clamp(num(btn.dataset.taux1), 0, MAX_RATE);
+          $('#wTaux2').value = clamp(num(btn.dataset.taux2), 0, MAX_RATE);
+          $('#exampleClose').click();
+          $('#wVersement').focus();
+          return;
+        }
         state.yield.versement = num(btn.dataset.mensuel);
         state.yield.annees = clamp(Math.round(num(btn.dataset.annees)) || 1, 1, 50);
         state.yield.taux1 = clamp(num(btn.dataset.taux1), 0, MAX_RATE);
@@ -1628,9 +1640,6 @@
         syncYieldInputs();
         onYieldChange();
         $('#exampleClose').click();
-        // Exemple choisi depuis la pop-up « Simuler un placement » : ses
-        // paramètres remplacent toutes les étapes, donc on la ferme aussi.
-        if (wizardOverlay && !wizardOverlay.hidden) $('#yieldWizardClose').click();
       });
     });
 
