@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.38">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.39">
 </head>
 <body data-app="true">
 
@@ -117,25 +117,16 @@
   <!-- Économies potentielles -->
   <section id="economies" class="card" aria-labelledby="h-eco">
     <div class="card__head">
-      <div>
-        <h2 id="h-eco">Économie potentielle</h2>
-        <p class="lead">Et si vous remplaciez une ligne (facture, courses, loyer…) par une autre option ? Comparez le coût actuel au nouveau coût.</p>
-      </div>
+      <h2 id="h-eco">Économie sur les charges</h2>
     </div>
+    <p class="lead lead--full">Et si vous remplaciez un poste de charge (facture, courses, abonnement…) par une autre option ? Comparez le coût actuel au nouveau coût.</p>
 
-    <form id="scForm" class="form-row" autocomplete="off">
-      <label>Ligne à remplacer
-        <select id="sLigne"></select>
-      </label>
-      <label class="grow">Option alternative
-        <input id="sOption" type="text" maxlength="60" placeholder="Ex. Fournisseur moins cher" required>
-      </label>
-      <label>Nouveau montant mensuel (€)
-        <input id="sMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
-      </label>
-      <button class="btn" type="submit">Ajouter la comparaison</button>
-    </form>
-    <p class="preview" id="sPreview" aria-live="polite">&nbsp;</p>
+    <!-- Sur mobile, le bouton reste ici, sous le texte ci-dessus. À partir de
+         la tablette, le JS le déplace dans .card__head (à droite du titre) ;
+         ce conteneur se masque alors tout seul (:empty) via le CSS. -->
+    <div id="addScenarioMobileSlot" class="add-trigger">
+      <button type="button" id="btnOpenScenarioWizard" class="btn">Ajouter une comparaison</button>
+    </div>
 
     <div class="table-scroll-wrap">
       <div class="table-wrap" id="scTableWrap">
@@ -198,8 +189,45 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.38"></script>
-<script src="../assets/js/calc.js?v=1.01.38"></script>
-<script src="../assets/js/script.js?v=1.01.38"></script>
+<!-- Ajout d'une comparaison, guidé étape par étape (un champ à la fois) :
+     même pop-up que pour les revenus, charges et dépenses. -->
+<div id="scenarioWizardOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="scenarioWizardTitle">
+    <div class="wizard__head">
+      <p id="scenarioWizardTitle" class="modal__title">Ajouter une comparaison</p>
+      <button type="button" id="scenarioWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="scForm" autocomplete="off">
+      <div class="wizard__step" data-step="1">
+        <label for="sLigne">Quel poste de charge remplacer ?
+          <select id="sLigne"></select>
+        </label>
+      </div>
+      <div class="wizard__step" data-step="2" hidden>
+        <label for="sMontant">Nouveau montant mensuel (€)
+          <input id="sMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+        </label>
+        <p class="preview" id="sPreview" aria-live="polite">&nbsp;</p>
+      </div>
+      <div class="wizard__step" data-step="3" hidden>
+        <label for="sOption">Quelle option alternative ?
+          <input id="sOption" type="text" maxlength="60" placeholder="Ex. Fournisseur moins cher" required>
+        </label>
+      </div>
+      <p id="scenarioWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 3</p>
+      <div class="modal__actions">
+        <button type="button" id="scenarioWizardBack" class="btn btn--ghost" hidden>Retour</button>
+        <button type="button" id="scenarioWizardNext" class="btn">Suivant</button>
+        <button type="submit" id="scenarioWizardFinish" class="btn" hidden>Terminer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../assets/js/nav.js?v=1.01.39"></script>
+<script src="../assets/js/calc.js?v=1.01.39"></script>
+<script src="../assets/js/script.js?v=1.01.39"></script>
 </body>
 </html>
