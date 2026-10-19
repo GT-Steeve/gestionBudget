@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.18.0...v1.19.0) (2026-10-19)
+
+
+### Features
+
+* **placement:** formulaire compact et pop-up réordonnée ([7020ff4](https://github.com/GT-Steeve/gestionBudget/commit/7020ff41716d0914fc4c3b47ec00521749361e1c))
+
 # [1.18.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.17.1...v1.18.0) (2026-10-19)
 
 
