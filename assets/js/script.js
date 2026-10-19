@@ -1110,6 +1110,11 @@
     }
     const disabled = !state.charges.length;
     $('#scForm').querySelectorAll('input, select, button').forEach((el) => { el.disabled = disabled; });
+    const openBtn = $('#btnOpenScenarioWizard');
+    if (openBtn) {
+      openBtn.disabled = disabled;
+      openBtn.title = disabled ? 'Ajoutez d\'abord une charge' : '';
+    }
 
     const charge = state.charges.find((c) => c.id === sel.value);
     $('#sOption').placeholder = charge ? HINTS[charge.categorie] : 'Ajoutez d\'abord une charge';
@@ -1221,6 +1226,14 @@
     });
     $('#sLigne').addEventListener('change', renderScenarioForm);
     $('#sMontant').addEventListener('input', renderPreview);
+    bindAddWizard({
+      openBtn: '#btnOpenScenarioWizard', overlay: '#scenarioWizardOverlay', form: '#scForm',
+      closeBtn: '#scenarioWizardClose', backBtn: '#scenarioWizardBack',
+      nextBtn: '#scenarioWizardNext', finishBtn: '#scenarioWizardFinish', stepLabel: '#scenarioWizardStepLabel',
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
+      fields: ['#sLigne', '#sMontant', '#sOption']
+    });
+    bindResponsiveTrigger('#btnOpenScenarioWizard', '#addScenarioMobileSlot', '#economies .card__head');
     $('#btnClearScenarios').addEventListener('click', () => {
       confirmDelete('Effacer TOUTES les économies ?', [], () => {
         state.scenarios = [];
