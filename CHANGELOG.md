@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.17.0...v1.17.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **economie:** centre le bouton Ajouter une comparaison en mobile ([2da03d1](https://github.com/GT-Steeve/gestionBudget/commit/2da03d1bf7c370c5fda6702f741229853f5b2b9f))
+
 # [1.17.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.16.0...v1.17.0) (2026-10-19)
 
 
