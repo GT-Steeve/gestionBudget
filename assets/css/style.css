@@ -807,6 +807,10 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   /* Bouton Nouvelle dépense centré en mobile, comme Ajouter une charge
      (desktop : déplacé dans .card__head par le JS, conteneur vide/masqué). */
   #addDepenseMobileSlot { text-align: center; }
+  /* Bouton Ajouter une comparaison centré en mobile, comme Ajouter une charge. */
+  #addScenarioMobileSlot { text-align: center; }
+  /* Retour à la ligne réservé au desktop : en mobile, le texte coule normalement. */
+  .br-desktop { display: none; }
   /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
      plus haute voisine), plutôt que juste après le texte, pour rester aligné avec
      celui des tuiles voisines même si leur contenu fait plus ou moins de lignes. */
