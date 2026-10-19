@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.40">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.41">
 </head>
 <body data-app="true">
 
@@ -95,6 +95,13 @@
       </div>
     </div>
 
+    <!-- Sur mobile, le bouton reste ici, sous le texte ci-dessus. À partir de
+         la tablette, le JS le déplace dans .card__head (à droite du titre) ;
+         ce conteneur se masque alors tout seul (:empty) via le CSS. -->
+    <div id="addYieldMobileSlot" class="add-trigger">
+      <button type="button" id="btnOpenYieldWizard" class="btn">Simuler un placement</button>
+    </div>
+
     <div class="form-row" id="yieldForm">
       <label class="field--full">Capital de départ (€)
         <input id="yCapital" type="number" min="0" step="1" inputmode="decimal">
@@ -112,17 +119,8 @@
           </button>
         </span>
       </label>
-      <label>Durée (années)
+      <label class="field--full">Durée (années)
         <input id="yAnnees" type="number" min="1" max="50" step="1" inputmode="numeric">
-      </label>
-      <label>Année du gain affiché
-        <input id="yAnneeGain" type="number" min="1" max="50" step="1" inputmode="numeric">
-      </label>
-      <label>Rendement 1 (% par an)
-        <input id="yTaux1" type="number" min="0" max="100" step="0.1" inputmode="decimal">
-      </label>
-      <label>Rendement 2 (% par an)
-        <input id="yTaux2" type="number" min="0" max="100" step="0.1" inputmode="decimal">
       </label>
       <div class="btn-with-info">
         <button id="btnUseEco" class="btn btn--ghost" type="button">Simuler mes économies mensuelles</button>
@@ -136,7 +134,7 @@
       </div>
     </div>
 
-    <div class="results" id="yieldCards"></div>
+    <div class="cmp-wrap" id="yieldCards"></div>
 
     <div class="chart-head">
       <h3 class="h3">Évolution du capital</h3>
@@ -199,6 +197,62 @@
   </div>
 </div>
 
+<!-- Pop-up « Simuler un placement » : un champ à la fois (Retour/Suivant).
+     Choisir un exemple à l'étape 2 applique tous ses paramètres et ferme la
+     pop-up ; sinon on continue avec la durée puis les deux rendements. -->
+<div id="yieldWizardOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="yieldWizardTitle">
+    <div class="wizard__head">
+      <p id="yieldWizardTitle" class="modal__title">Simuler un placement</p>
+      <button type="button" id="yieldWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="yieldWizardForm" autocomplete="off">
+      <div class="wizard__step" data-step="1">
+        <label for="wCapital">Capital de départ (€)
+          <input id="wCapital" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
+        </label>
+      </div>
+      <div class="wizard__step" data-step="2" hidden>
+        <label for="wVersement">Épargne mensuelle (€)
+          <span class="input-with-btn">
+            <input id="wVersement" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
+            <button type="button" id="wBtnExemple" class="btn btn--sm input-with-btn__btn">
+              <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 1.5a4.5 4.5 0 0 0-2.6 8.2c.4.3.6.7.6 1.2v.6h4v-.6c0-.5.2-.9.6-1.2A4.5 4.5 0 0 0 8 1.5Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                <line x1="6.2" y1="13.5" x2="9.8" y2="13.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                <line x1="6.6" y1="15" x2="9.4" y2="15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+              Exemple
+            </button>
+          </span>
+        </label>
+        <button type="button" id="wBtnUseEco" class="btn btn--ghost wizard__extra">Simuler mes économies mensuelles</button>
+      </div>
+      <div class="wizard__step" data-step="3" hidden>
+        <label for="wAnnees">Durée (années)
+          <input id="wAnnees" type="number" min="1" max="50" step="1" inputmode="numeric" required>
+        </label>
+      </div>
+      <div class="wizard__step wizard__step--pair" data-step="4" hidden>
+        <label for="wTaux1">Rendement 1 (% par an)
+          <input id="wTaux1" type="number" min="0" max="100" step="0.01" inputmode="decimal" required>
+        </label>
+        <label for="wTaux2">Rendement 2 (% par an)
+          <input id="wTaux2" type="number" min="0" max="100" step="0.01" inputmode="decimal" required>
+        </label>
+      </div>
+      <p id="yieldWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 4</p>
+      <div class="modal__actions">
+        <button type="button" id="yieldWizardBack" class="btn btn--ghost" hidden>Retour</button>
+        <button type="button" id="yieldWizardNext" class="btn">Suivant</button>
+        <button type="submit" id="yieldWizardFinish" class="btn" hidden>Terminer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="exampleOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="exampleTitle">
     <p id="exampleTitle" class="modal__title">Exemples de simulation</p>
@@ -241,8 +295,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.40"></script>
-<script src="../assets/js/calc.js?v=1.01.40"></script>
-<script src="../assets/js/script.js?v=1.01.40"></script>
+<script src="../assets/js/nav.js?v=1.01.41"></script>
+<script src="../assets/js/calc.js?v=1.01.41"></script>
+<script src="../assets/js/script.js?v=1.01.41"></script>
 </body>
 </html>

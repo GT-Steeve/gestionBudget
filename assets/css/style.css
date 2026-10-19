@@ -484,26 +484,49 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 /* ---------- Rendement ---------- */
 
-.results {
-  display: grid; gap: 12px; margin: 16px 0 24px;
-  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+/* Tableau comparatif des deux rendements : libellés à gauche, une colonne
+   par taux (couleur de sa courbe en haut et teinte légère dessous). */
+.cmp-wrap { margin: 16px 0 24px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.cmp { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
+.cmp__labels { width: 26%; }
+.cmp--r2 { --key: var(--series-1); }
+.cmp--r10 { --key: var(--series-2); }
+.cmp col.cmp--r2, .cmp col.cmp--r10 { background: color-mix(in srgb, var(--key) 6%, transparent); }
+.cmp th, .cmp td { padding: 10px 14px; }
+.cmp thead th {
+  border-top: 3px solid var(--key, transparent); padding-top: 14px;
+  text-align: center; font-size: 13px; font-weight: 650; color: var(--ink-2);
 }
-.res {
-  border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
-  border-top: 3px solid var(--key, var(--muted));
+.cmp thead th[scope="row"] { text-align: left; font-size: 14px; font-weight: 400; }
+.cmp tbody tr { border-top: 1px solid var(--border); }
+.cmp tbody th { text-align: left; font-weight: 400; color: var(--ink-2); }
+.cmp tbody td { text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cmp td.good { color: var(--good); }
+.cmp__capital td { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink); }
+/* En-tête « [champ] % » : le taux annuel se modifie directement ici. */
+.cmp__rate-field { display: inline-flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 6px; font-size: inherit; color: inherit; }
+/* Largeur juste suffisante pour 4 caractères (de « 0,01 » à « 1000 ») ; les
+   flèches natives du champ nombre sont masquées pour ne pas manger cette place. */
+.cmp__rate {
+  width: calc(4ch + 14px); height: 30px; padding: 0 6px; text-align: center;
+  font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; border-radius: 8px;
+  -moz-appearance: textfield; appearance: textfield;
 }
-.res--r2 { --key: var(--series-1); }
-.res--r10 { --key: var(--series-2); }
-.res__title { font-size: 13px; font-weight: 650; color: var(--ink-2); }
-.res__big { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin: 4px 0 10px; }
-/* minmax(0, 1fr) plutôt que 1fr : sans ça, une colonne fr ne peut pas rétrécir
-   sous son contenu (min-content), donc dès que la colonne « valeur » a besoin
-   de plus de place (ex. rendement à 7 % avec des montants plus larges), la
-   grille déborde du padding et colle au bord droit de la carte. */
-.res dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 14px; }
-.res dt { color: var(--ink-2); }
-.res dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-.res dd.good { color: var(--good); }
+.cmp__rate::-webkit-inner-spin-button, .cmp__rate::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* Année du gain : boutons haut/bas à côté du libellé (plus de champ dédié). */
+.year-step { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.year-step__btns { display: inline-flex; flex-direction: column; gap: 2px; }
+.year-step__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 14px; padding: 0; cursor: pointer;
+  color: var(--ink-2); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px;
+}
+.year-step__btn:hover:not(:disabled) { background: var(--wash); color: var(--ink); }
+.year-step__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+/* Le bloc titre + texte de la carte Placement prend la largeur restante,
+   pour que le bouton Simuler un placement se cale à droite (desktop). */
+#rendement .card__head > div { flex: 1 1 auto; min-width: 0; }
 
 .chart-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--ink-2); }
@@ -606,6 +629,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .wizard__step { margin-top: 20px; }
 .wizard__progress { font-size: 12px; color: var(--muted); text-align: center; margin: 18px 0 0; }
 .modal--wizard .modal__actions { margin-top: 16px; }
+/* Wizard Placement : bouton « Simuler mes économies mensuelles » sous le
+   champ Épargne, et les deux rendements à comparer sur la même étape. */
+.wizard__extra { width: 100%; margin-top: 12px; }
+.wizard__step--pair { display: grid; gap: 12px; }
+.wizard__step--pair[hidden] { display: none; }
 
 /* Liste scrollable générique pour le contenu d'une modale qui grandit avec les
    données (Historique des dépenses, paramétrage CashBack…). */
@@ -727,7 +755,6 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 @media (max-width: 900px) {
   .wrap { padding: 0 14px; }
   .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .results { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
   /* Sur mobile et tablette, seul l'export reste : l'impression est une action bureau. */
   #btnPrint { display: none; }
 }
@@ -809,6 +836,14 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #addDepenseMobileSlot { text-align: center; }
   /* Bouton Ajouter une comparaison centré en mobile, comme Ajouter une charge. */
   #addScenarioMobileSlot { text-align: center; }
+  /* Bouton Simuler un placement centré en mobile, comme Ajouter une charge. */
+  #addYieldMobileSlot { text-align: center; }
+  /* Tableau des rendements en mobile : cellules plus serrées pour tenir les
+     trois colonnes. */
+  .cmp { font-size: 13px; }
+  .cmp__labels { width: 30%; }
+  .cmp th, .cmp td { padding: 9px 8px; }
+  .cmp__capital td { font-size: 17px; }
   /* Retour à la ligne réservé au desktop : en mobile, le texte coule normalement. */
   .br-desktop { display: none; }
   /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
@@ -844,9 +879,6 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .pie-wrap { flex: 1 1 100%; display: flex; justify-content: center; }
   .split { gap: 16px; }
   .actions { flex-basis: 100%; justify-content: center; }
-  .results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .res { padding: 12px 14px; }
-  .res__big { font-size: 22px; }
   .chart-head, .syn-tools { gap: 10px 16px; }
 
   /* Camembert : donut centré dans sa largeur, bascule mois/an centrée. */

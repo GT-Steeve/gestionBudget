@@ -218,7 +218,13 @@
       overlay.hidden = true;
       document.removeEventListener('keydown', onKey);
     };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    // Échap ne ferme que la pop-up du dessus (ex. Exemples ouverte depuis le
+    // wizard Placement : seule celle-ci se ferme).
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      const top = [...document.querySelectorAll('.modal-overlay:not([hidden])')].pop();
+      if (top === overlay) close();
+    };
     const open = () => {
       showStep(0);
       overlay.hidden = false;
@@ -238,7 +244,7 @@
     // Entrée dans un champ texte/nombre = Suivant (ou Terminer sur la
     // dernière étape), comme la touche "suivant" d'un clavier mobile.
     form.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || e.target.tagName === 'SELECT') return;
+      if (e.key !== 'Enter' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
       e.preventDefault();
       (current === total - 1 ? finishBtn : nextBtn).click();
     });
@@ -1251,10 +1257,6 @@
     $('#yCapital').value = state.yield.capital;
     $('#yVersement').value = state.yield.versement;
     $('#yAnnees').value = state.yield.annees;
-    $('#yTaux1').value = state.yield.taux1;
-    $('#yTaux2').value = state.yield.taux2;
-    $('#yAnneeGain').value = state.yield.anneeGain;
-    $('#yAnneeGain').max = state.yield.annees;
   }
 
   let chartData = null; // { series, years }
@@ -1274,7 +1276,75 @@
 
   /** Intérêts gagnés pendant l'année n uniquement (pas cumulés). */
   const gainOfYear = (pts, n) => (pts[n].balance - pts[n].deposited) - (pts[n - 1].balance - pts[n - 1].deposited);
-  const gainYearLabel = (n) => (n === 1 ? 'Gain la 1ʳᵉ année' : `Gain de l'année ${n}`);
+  const gainYearLabel = (n) => `Année ${n}`;
+
+  /** Tableau comparatif des deux rendements, construit une seule fois :
+      libellés à gauche (Capital, Épargné, Intérêts, Année X avec boutons
+      haut/bas), une colonne par taux avec son champ « … % » en en-tête
+      (« Rendement (annuel) » à gauche indique que c'est un taux par an). Mis à jour sur place pour ne pas recréer le champ en cours de
+      saisie. */
+  let yieldCards = null;
+  const chevron = (d) => s('svg', { width: 10, height: 10, viewBox: '0 0 16 16', 'aria-hidden': 'true' },
+    s('path', { d, fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+
+  function yieldCardEls() {
+    if (yieldCards) return yieldCards;
+    const cols = ['taux1', 'taux2'].map((key, i) => {
+      const rate = h('input', {
+        class: 'cmp__rate', type: 'number', min: 0, max: MAX_RATE, step: 0.01, inputmode: 'decimal',
+        'aria-label': `Rendement ${i + 1}, en % par an`
+      });
+      rate.addEventListener('input', () => {
+        state.yield[key] = clamp(num(rate.value), 0, MAX_RATE);
+        onYieldChange();
+      });
+      return {
+        rate,
+        col: h('col', {}),
+        head: h('th', { scope: 'col', class: 'cmp__head' },
+          h('label', { class: 'cmp__rate-field' }, rate, ' %')),
+        big: h('td', {}),
+        dep: h('td', {}),
+        gain: h('td', { class: 'good' }),
+        yearGain: h('td', { class: 'good' })
+      };
+    });
+
+    const yearLbl = h('span', {});
+    const up = h('button', { type: 'button', class: 'year-step__btn', 'aria-label': 'Année suivante' }, chevron('M4 10l4-4 4 4'));
+    const down = h('button', { type: 'button', class: 'year-step__btn', 'aria-label': 'Année précédente' }, chevron('M4 6l4 4 4-4'));
+    const stepYear = (delta) => {
+      state.yield.anneeGain = clamp(state.yield.anneeGain + delta, 1, state.yield.annees);
+      onYieldChange();
+    };
+    up.addEventListener('click', () => stepYear(1));
+    down.addEventListener('click', () => stepYear(-1));
+
+    const row = (label, cls, cell, attrs = {}) =>
+      h('tr', { class: cls }, h('th', { scope: 'row', ...attrs }, label), ...cols.map((c) => c[cell]));
+    const table = h('table', { class: 'cmp' },
+      h('caption', { class: 'sr-only' }, 'Comparaison des deux rendements'),
+      h('colgroup', {}, h('col', { class: 'cmp__labels' }), cols.map((c) => c.col)),
+      // « Rendement » écrit une fois, au-dessus de Capital, pour les deux colonnes.
+      h('thead', {}, h('tr', {}, h('th', { scope: 'row' }, 'Rendement (annuel)'), cols.map((c) => c.head))),
+      h('tbody', {},
+        row('Capital', 'cmp__capital', 'big'),
+        row('Épargné', null, 'dep'),
+        row('Intérêts', null, 'gain'),
+        row(h('span', { class: 'year-step' }, yearLbl, h('span', { class: 'year-step__btns' }, up, down)), null, 'yearGain')
+      ));
+
+    yieldCards = { cols, yearLbl, up, down };
+    $('#yieldCards').replaceChildren(table);
+    return yieldCards;
+  }
+
+  function onYieldChange() {
+    renderYield();
+    renderSummary();
+    renderSynthese();
+    save();
+  }
 
   function renderYield() {
     if (!$('#h-rend')) return;
@@ -1291,21 +1361,30 @@
     $('#thCapHigh').textContent = `Capital à ${rHigh}`;
     $('#thGainHigh').textContent = `Gain à ${rHigh}`;
 
-    // Cartes de résultat
-    const cards = $('#yieldCards');
-    cards.replaceChildren(...[[low, 'r2'], [high, 'r10']].map(([{ rate, pts }, cls]) => {
+    // Cartes de résultat : une par taux saisi (taux1 puis taux2), mises à
+    // jour sur place pour ne pas recréer le champ Rendement en cours de saisie.
+    // La couleur suit le rang du taux (le plus bas = r2), comme le graphique.
+    const { taux1, taux2 } = state.yield;
+    const ui = yieldCardEls();
+    ui.cols.forEach((c, i) => {
+      const rate = i === 0 ? taux1 : taux2;
+      const isLow = i === 0 ? taux1 <= taux2 : taux2 < taux1;
+      const { pts } = isLow ? low : high;
       const last = pts[years];
-      const gain = last.balance - last.deposited;
-      return h('article', { class: `res res--${cls}` },
-        h('p', { class: 'res__title' }, `Rendement de ${fmtRate(rate)} par an`),
-        h('p', { class: 'res__big' }, eur0.format(last.balance)),
-        h('dl', {},
-          h('dt', {}, 'Total versé'), h('dd', {}, eur0.format(last.deposited)),
-          h('dt', {}, 'Gain (intérêts)'), h('dd', { class: 'good' }, `+${eur0.format(gain)}`),
-          h('dt', {}, gainYearLabel(gainYear)), h('dd', { class: 'good' }, `+${eur0.format(gainOfYear(pts, gainYear))}`)
-        )
-      );
-    }));
+      // Couleur de la colonne = celle de sa courbe (taux le plus bas = r2).
+      for (const el of [c.col, c.head]) {
+        el.classList.toggle('cmp--r2', isLow);
+        el.classList.toggle('cmp--r10', !isLow);
+      }
+      if (document.activeElement !== c.rate) c.rate.value = rate;
+      c.big.textContent = eur0.format(last.balance);
+      c.dep.textContent = eur0.format(last.deposited);
+      c.gain.textContent = `+${eur0.format(last.balance - last.deposited)}`;
+      c.yearGain.textContent = `+${eur0.format(gainOfYear(pts, gainYear))}`;
+    });
+    ui.yearLbl.textContent = gainYearLabel(gainYear);
+    ui.down.disabled = gainYear <= 1;
+    ui.up.disabled = gainYear >= years;
 
     // Légende
     $('#legend').replaceChildren(
@@ -1483,34 +1562,60 @@
       state.yield.capital = num($('#yCapital').value);
       state.yield.versement = num($('#yVersement').value);
       state.yield.annees = clamp(Math.round(num($('#yAnnees').value)) || 1, 1, 50);
-      state.yield.taux1 = clamp(num($('#yTaux1').value), 0, MAX_RATE);
-      state.yield.taux2 = clamp(num($('#yTaux2').value), 0, MAX_RATE);
-
-      // L'année du gain reste comprise entre 1 et la durée ; le champ suit si on la corrige.
-      const wanted = Math.round(num($('#yAnneeGain').value)) || 1;
-      state.yield.anneeGain = clamp(wanted, 1, state.yield.annees);
-      $('#yAnneeGain').max = state.yield.annees;
-      if (wanted !== state.yield.anneeGain && $('#yAnneeGain').value !== '') {
-        $('#yAnneeGain').value = state.yield.anneeGain;
-      }
-      renderYield();
-      renderSummary();
-      renderSynthese();
-      save();
+      // L'année du gain (boutons haut/bas des tuiles) reste dans la durée.
+      state.yield.anneeGain = clamp(state.yield.anneeGain, 1, state.yield.annees);
+      onYieldChange();
     };
-    ['#yCapital', '#yVersement', '#yAnnees', '#yTaux1', '#yTaux2', '#yAnneeGain']
+    ['#yCapital', '#yVersement', '#yAnnees']
       .forEach((sel) => $(sel).addEventListener('input', read));
 
+    const ecoMonthly = () => Math.round(computeSavings().monthly * 100) / 100;
     $('#btnUseEco').addEventListener('click', () => {
-      const eco = computeSavings().monthly;
+      const eco = ecoMonthly();
       if (eco <= 0) return;
-      state.yield.versement = Math.round(eco * 100) / 100;
+      state.yield.versement = eco;
       syncYieldInputs();
-      renderYield();
-      renderSummary();
-      renderSynthese();
-      save();
+      onYieldChange();
     });
+
+    // Pop-up « Simuler un placement » : préremplie avec la simulation en
+    // cours, appliquée d'un coup sur Terminer.
+    const wizardOverlay = $('#yieldWizardOverlay');
+    $('#btnOpenYieldWizard').addEventListener('click', () => {
+      const y = state.yield;
+      $('#wCapital').value = y.capital;
+      $('#wVersement').value = y.versement;
+      $('#wAnnees').value = y.annees;
+      $('#wTaux1').value = y.taux1;
+      $('#wTaux2').value = y.taux2;
+      $('#wBtnUseEco').disabled = ecoMonthly() <= 0;
+      $('#wBtnUseEco').title = $('#btnUseEco').title;
+    });
+    $('#wBtnUseEco').addEventListener('click', () => {
+      const eco = ecoMonthly();
+      if (eco > 0) $('#wVersement').value = eco;
+    });
+    // Listener ajouté avant celui de bindAddWizard, qui ferme ensuite la pop-up.
+    $('#yieldWizardForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const y = state.yield;
+      y.capital = num($('#wCapital').value);
+      y.versement = num($('#wVersement').value);
+      y.annees = clamp(Math.round(num($('#wAnnees').value)) || 1, 1, 50);
+      y.taux1 = clamp(num($('#wTaux1').value), 0, MAX_RATE);
+      y.taux2 = clamp(num($('#wTaux2').value), 0, MAX_RATE);
+      y.anneeGain = clamp(y.anneeGain, 1, y.annees);
+      syncYieldInputs();
+      onYieldChange();
+    });
+    bindAddWizard({
+      openBtn: '#btnOpenYieldWizard', overlay: '#yieldWizardOverlay', form: '#yieldWizardForm',
+      closeBtn: '#yieldWizardClose', backBtn: '#yieldWizardBack',
+      nextBtn: '#yieldWizardNext', finishBtn: '#yieldWizardFinish', stepLabel: '#yieldWizardStepLabel',
+      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
+      fields: ['#wCapital', '#wVersement', '#wAnnees', '#wTaux1']
+    });
+    bindResponsiveTrigger('#btnOpenYieldWizard', '#addYieldMobileSlot', '#rendement .card__head');
 
     // Pop-up d'exemples : chaque bouton préremplit épargne/durée/taux depuis ses data-attributes.
     document.querySelectorAll('.example-item').forEach((btn) => {
@@ -1521,11 +1626,11 @@
         state.yield.taux2 = clamp(num(btn.dataset.taux2), 0, MAX_RATE);
         state.yield.anneeGain = clamp(state.yield.anneeGain, 1, state.yield.annees);
         syncYieldInputs();
-        renderYield();
-        renderSummary();
-        renderSynthese();
-        save();
+        onYieldChange();
         $('#exampleClose').click();
+        // Exemple choisi depuis la pop-up « Simuler un placement » : ses
+        // paramètres remplacent toutes les étapes, donc on la ferme aussi.
+        if (wizardOverlay && !wizardOverlay.hidden) $('#yieldWizardClose').click();
       });
     });
 
@@ -1977,6 +2082,7 @@
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
     bindInfoModal('#btnExemple', '#exampleOverlay', '#exampleClose');
+    bindInfoModal('#wBtnExemple', '#exampleOverlay', '#exampleClose');
     bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
     syncYieldInputs();

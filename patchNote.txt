@@ -30,6 +30,7 @@ v1.07.0 = rework UI ajout revenu / dépense / charge
 v1.07.1 = polish UX cashback / round Up dans nouvelle charge + nouvelle dépenses
 v1.07.2 = pop-up saisie économie + textes
 v1.08.0 = polish économie
+v1.08.1 = rework UI simulation de placement
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
