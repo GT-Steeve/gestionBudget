@@ -425,6 +425,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   border: 0; background: transparent; color: var(--muted); border-radius: 8px; cursor: pointer;
 }
 .icon-btn:hover { background: var(--wash); color: var(--bad); }
+.icon-btn--view:hover { color: var(--accent); }
+/* Œil + corbeille côte à côte dans la cellule Actions (Charges, Dépenses). */
+.row-actions { white-space: nowrap; }
 
 .delta { font-weight: 650; }
 .delta small { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); }
@@ -979,11 +982,21 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      repoussé au bord par la colonne Libellé, qui n'a pas de largeur max). */
   .row-desktop { display: none; }
   .row-mobile { display: table-row; }
-  #depensesTable { table-layout: fixed; }
-  #depensesTable th:nth-child(1), #depensesTable td:nth-child(1) { width: 33%; }
-  #depensesTable th:nth-child(2), #depensesTable td:nth-child(2) { width: 27%; }
-  #depensesTable th:nth-child(3), #depensesTable td:nth-child(3) { width: 28%; }
+  /* min-width 590px : Catégorie (~180px) affiche « Entretien ménager » en
+     entier, tandis que Libellé (~186px) + Montant (~154px) tiennent sans
+     défilement dès 390px d'écran. */
+  #depensesTable { table-layout: fixed; min-width: 590px; }
+  #depensesTable th:nth-child(1), #depensesTable td:nth-child(1) { width: 31.5%; }
+  #depensesTable th:nth-child(2), #depensesTable td:nth-child(2) { width: 26%; }
+  #depensesTable th:nth-child(3), #depensesTable td:nth-child(3) { width: 30.5%; }
   #depensesTable th:nth-child(4), #depensesTable td:nth-child(4) { width: 12%; }
+  /* Œil + corbeille : boutons resserrés pour rapprocher les deux icônes. */
+  #depensesTable .row-actions .icon-btn { width: 24px; }
+  /* Catégorie alignée à droite : colle la valeur aux boutons œil/corbeille
+     pour les catégories courtes, sans retirer la place nécessaire aux noms
+     longs (« Entretien ménager ») qui occupent déjà toute la largeur. */
+  #depensesTable td:nth-child(3) .cell--pick { text-align: right; }
+  #depensesTable thead tr.row-mobile th:nth-child(3) { text-align: right; }
 
   /* Revenus/Charges : bascule vers l'ordre Libellé, Mensuel, Catégorie, Annuel
      — Libellé et Mensuel passent en premier pour rester visibles sans
@@ -1000,6 +1013,14 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 14%; }
   #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
   #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 8%; }
+  /* Charges : min-width 640px pour afficher Catégorie en entier (~154px,
+     « Abonnements ») et loger œil + corbeille, sans rogner Libellé/Mensuel. */
+  #chargesTable { min-width: 640px; }
+  #chargesTable th:nth-child(1), #chargesTable td:nth-child(1) { width: 30%; }
+  #chargesTable th:nth-child(2), #chargesTable td:nth-child(2) { width: 19%; }
+  #chargesTable th:nth-child(3), #chargesTable td:nth-child(3) { width: 24%; }
+  #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 16%; }
+  #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 11%; }
 
   /* CashBack/RoundUp : bascule vers l'ordre Libellé, Cashback/RoundUp,
      Mensuel/Montant — les deux premières colonnes (ce qui compte le plus ici)

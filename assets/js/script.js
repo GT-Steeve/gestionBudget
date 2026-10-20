@@ -489,6 +489,64 @@
 
   const TRASH_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.6 8.4a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7.5v4M9.5 7.5v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
 
+  const EYE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+
+  /** Pop-up de détails d'une ligne (bouton œil) : rows = [[libellé, valeur], …]. */
+  function showDetails(title, rows) {
+    const overlay = $('#detailOverlay');
+    if (!overlay) return;
+    $('#detailTitle').textContent = title;
+    $('#detailList').replaceChildren(
+      ...rows.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)])
+    );
+    const closeBtn = $('#detailClose');
+    const close = () => {
+      overlay.hidden = true;
+      closeBtn.removeEventListener('click', close);
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onKey);
+    };
+    const onOverlayClick = (e) => { if (e.target === overlay) close(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', onOverlayClick);
+    document.addEventListener('keydown', onKey);
+    overlay.hidden = false;
+    closeBtn.focus();
+  }
+
+  /** Bouton œil d'une charge ou d'une dépense : toutes ses informations, cashback
+      et round up compris (lus au clic, donc toujours à jour des modifications). */
+  function detailButton(item, kind) {
+    const btn = h('button', {
+      class: 'icon-btn icon-btn--view', type: 'button', 'aria-label': `Voir le détail de ${item.nom}`, title: 'Voir le détail',
+      onclick: () => {
+        const isCharge = kind === 'charges';
+        const montant = isCharge ? item.mensuel : item.montant;
+        const suffix = isCharge ? ' / mois' : '';
+        const rows = [
+          ['Catégorie', item.categorie],
+          ['Libellé', item.nom],
+          [isCharge ? 'Mensuel' : 'Montant', `${eur2.format(montant)}${suffix}`]
+        ];
+        const cashback = item.cashbackOn !== false ? eur2.format(montant * cashbackFraction()) : null;
+        const roundUp = item.roundUpOn !== false ? eur2.format(roundUpAmount(montant)) : null;
+        const rate = fmtRate(state.cashbackRate);
+        const multiple = `x${state.roundUpTo}`;
+        // Le taux et le multiple accompagnent l'intitulé, pas le montant.
+        const off = isCharge ? 'Non inclus' : 'Désactivé';
+        if (isCharge) rows.push(['Annuel', eur2.format(annual(montant))]);
+        rows.push(
+          [`Cashback (${rate})`, cashback || off],
+          [`RoundUp (${multiple})`, roundUp || off]
+        );
+        showDetails(isCharge ? 'Détail de la charge' : 'Détail de la dépense', rows);
+      }
+    });
+    btn.innerHTML = EYE_ICON;
+    return btn;
+  }
+
   function renderLines(type) {
     const cfg = LINE_TYPES[type];
     const body = $(cfg.body);
@@ -546,6 +604,9 @@
         }
       });
       del.innerHTML = TRASH_ICON;
+      // Les revenus n'ont ni cashback ni round up : pas de bouton œil.
+      const actions = h('td', { class: 'num row-actions' },
+        type === 'charges' ? detailButton(c, type) : null, del);
 
       body.append(MOBILE_QUERY.matches
         ? h('tr', {},
@@ -553,14 +614,14 @@
           h('td', { class: 'num' }, amountInput),
           h('td', {}, catCell),
           annualCell,
-          h('td', { class: 'num' }, del)
+          actions
         )
         : h('tr', {},
           h('td', {}, catCell),
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
           annualCell,
-          h('td', { class: 'num' }, del)
+          actions
         ));
     }
     updateScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
@@ -784,19 +845,20 @@
         }
       });
       del.innerHTML = TRASH_ICON;
+      const actions = h('td', { class: 'num row-actions' }, detailButton(d, 'depenses'), del);
 
       body.append(MOBILE_QUERY.matches
         ? h('tr', {},
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
           h('td', {}, catCell),
-          h('td', { class: 'num' }, del)
+          actions
         )
         : h('tr', {},
           h('td', {}, catCell),
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
-          h('td', { class: 'num' }, del)
+          actions
         ));
     }
     updateScrollArrows($('#depensesTableWrap'), $('#depensesScrollLeft'), $('#depensesScrollRight'));

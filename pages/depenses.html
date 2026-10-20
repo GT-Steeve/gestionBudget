@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.46">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.55">
 </head>
 <body data-app="true">
 
@@ -198,6 +198,18 @@
   </div>
 </div>
 
+<!-- Détails d'une ligne du tableau (bouton œil) : toutes ses informations,
+     cashback et round up compris. -->
+<div id="detailOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <p id="detailTitle" class="modal__title"></p>
+    <dl id="detailList" class="modal__details"></dl>
+    <div class="modal__actions modal__actions--center">
+      <button type="button" id="detailClose" class="btn btn--ghost">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
@@ -274,8 +286,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.46"></script>
-<script src="../assets/js/calc.js?v=1.01.46"></script>
-<script src="../assets/js/script.js?v=1.01.46"></script>
+<script src="../assets/js/nav.js?v=1.01.55"></script>
+<script src="../assets/js/calc.js?v=1.01.55"></script>
+<script src="../assets/js/script.js?v=1.01.55"></script>
 </body>
 </html>
