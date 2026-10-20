@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.20.0...v1.21.0) (2026-10-20)
+
+
+### Features
+
+* **categories:** modifie la catégorie d'une ligne via une pop-up ([037c0e2](https://github.com/GT-Steeve/gestionBudget/commit/037c0e292cb7715796479eba01da74b5757e06a4))
+
 # [1.20.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.19.0...v1.20.0) (2026-10-19)
 
 
