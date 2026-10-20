@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.21.0...v1.22.0) (2026-10-20)
+
+
+### Features
+
+* **details:** ajoute un bouton œil pour voir le détail d'une ligne ([4f1f57c](https://github.com/GT-Steeve/gestionBudget/commit/4f1f57cd3079a2550392c07b66028ad16dfe0165))
+
 # [1.21.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.20.0...v1.21.0) (2026-10-20)
 
 
