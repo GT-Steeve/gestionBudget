@@ -186,6 +186,47 @@
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   }
 
+  /** Pop-up de choix de catégorie (une proposition par bouton, la catégorie
+      actuelle mise en avant) ; onPick(cat) n'est appelé que si elle change. */
+  function pickCategory(cats, current, onPick) {
+    const overlay = $('#catPickerOverlay');
+    if (!overlay) return;
+    const close = () => {
+      overlay.hidden = true;
+      overlay.removeEventListener('click', onOverlayClick);
+      $('#catPickerClose').removeEventListener('click', close);
+      document.removeEventListener('keydown', onKey);
+    };
+    const onOverlayClick = (e) => { if (e.target === overlay) close(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+    const buttons = cats.map((cat) => h('button', {
+      type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(cat === current),
+      onclick: () => { close(); if (cat !== current) onPick(cat); }
+    }, cat));
+    $('#catPickerList').replaceChildren(...buttons);
+
+    overlay.addEventListener('click', onOverlayClick);
+    $('#catPickerClose').addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    overlay.hidden = false;
+    (buttons.find((b) => b.getAttribute('aria-pressed') === 'true') || buttons[0]).focus();
+  }
+
+  /** Bouton de cellule affichant la catégorie d'une ligne ; ouvre pickCategory. */
+  function categoryCell(item, cats) {
+    const btn = h('button', {
+      type: 'button', class: 'cell cell--pick', 'aria-label': `Catégorie : ${item.categorie}`,
+      onclick: () => pickCategory(cats, item.categorie, (cat) => {
+        item.categorie = cat;
+        btn.textContent = cat;
+        btn.setAttribute('aria-label', `Catégorie : ${cat}`);
+        refresh();
+      })
+    }, item.categorie);
+    return btn;
+  }
+
   /** Pop-up d'ajout guidé, un champ à la fois (Retour/Suivant), plus
       pratique qu'une ligne de formulaire à plusieurs champs côte à côte au
       clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape. */
@@ -476,11 +517,7 @@
         }
       });
 
-      const catSelect = h('select', {
-        class: 'cell', 'aria-label': 'Catégorie',
-        onchange: (e) => { c.categorie = e.target.value; refresh(); }
-      }, cfg.cats.map((cat) => h('option', { value: cat }, cat)));
-      catSelect.value = c.categorie;
+      const catCell = categoryCell(c, cfg.cats);
 
       const amountInput = h('input', {
         class: 'cell num', type: 'number', min: 0, step: '0.01', inputmode: 'decimal',
@@ -514,12 +551,12 @@
         ? h('tr', {},
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
-          h('td', {}, catSelect),
+          h('td', {}, catCell),
           annualCell,
           h('td', { class: 'num' }, del)
         )
         : h('tr', {},
-          h('td', {}, catSelect),
+          h('td', {}, catCell),
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
           annualCell,
@@ -723,11 +760,7 @@
         }
       });
 
-      const catSelect = h('select', {
-        class: 'cell', 'aria-label': 'Catégorie',
-        onchange: (e) => { d.categorie = e.target.value; refresh(); }
-      }, sortAlpha(DEP_CATEGORIES).map((cat) => h('option', { value: cat }, cat)));
-      catSelect.value = d.categorie;
+      const catCell = categoryCell(d, sortAlpha(DEP_CATEGORIES));
 
       const amountInput = h('input', {
         class: 'cell num', type: 'number', min: 0, step: '0.01', inputmode: 'decimal',
@@ -756,11 +789,11 @@
         ? h('tr', {},
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
-          h('td', {}, catSelect),
+          h('td', {}, catCell),
           h('td', { class: 'num' }, del)
         )
         : h('tr', {},
-          h('td', {}, catSelect),
+          h('td', {}, catCell),
           h('td', {}, nameInput),
           h('td', { class: 'num' }, amountInput),
           h('td', { class: 'num' }, del)

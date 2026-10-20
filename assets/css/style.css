@@ -411,6 +411,13 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 }
 .cell:hover { border-color: var(--border); background: var(--surface); }
 select.cell { padding: 0 4px; }
+/* Catégorie (Revenus/Charges/Dépenses) : bouton qui ouvre la pop-up de choix, avec
+   l'allure d'une cellule éditable plutôt que celle d'un .btn. */
+.cell--pick {
+  display: block; border: 1px solid transparent; color: var(--ink); font: inherit; font-size: 15px;
+  text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cell--pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
 input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display: block; font-variant-numeric: tabular-nums; }
 
 .icon-btn {
@@ -687,6 +694,19 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* padding-right : laisse la place à la barre de défilement native du
    navigateur, qui sinon chevauche le contenu collé au bord (ex. interrupteurs
    CashBack). */
+/* Pop-up de choix de catégorie : une proposition par bouton, deux colonnes,
+   la catégorie actuelle en couleur d'accent. */
+.cat-picker {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  margin-top: 16px; max-height: 60vh; overflow-y: auto;
+}
+.cat-picker__opt {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  min-height: 40px; padding: 6px 10px; cursor: pointer; text-align: center;
+}
+.cat-picker__opt:hover { background: var(--wash); }
+.cat-picker__opt[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .modal-list { max-height: 60vh; overflow-y: auto; overflow-x: hidden; margin-bottom: 16px; padding-right: 14px; }
 
 /* Pop-up Historique (dépenses) : un bloc par mois archivé, chacun avec son
@@ -981,16 +1001,24 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
   #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 8%; }
 
-  /* CashBack : bascule vers l'ordre Libellé, Cashback, Mensuel/Montant — les
-     deux premières colonnes (ce qui compte le plus ici) restent visibles sans
-     défilement ; Mensuel/Montant reste accessible en défilant. */
-  #cashbackChargesTable, #cashbackDepensesTable { table-layout: fixed; }
+  /* CashBack/RoundUp : bascule vers l'ordre Libellé, Cashback/RoundUp,
+     Mensuel/Montant — les deux premières colonnes (ce qui compte le plus ici)
+     restent visibles sans défilement ; Mensuel/Montant reste accessible en
+     défilant. */
+  #cashbackChargesTable, #cashbackDepensesTable,
+  #roundUpChargesTable, #roundUpDepensesTable { table-layout: fixed; }
   #cashbackChargesTable th:nth-child(1), #cashbackChargesTable td:nth-child(1),
-  #cashbackDepensesTable th:nth-child(1), #cashbackDepensesTable td:nth-child(1) { width: 35%; }
+  #cashbackDepensesTable th:nth-child(1), #cashbackDepensesTable td:nth-child(1),
+  #roundUpChargesTable th:nth-child(1), #roundUpChargesTable td:nth-child(1),
+  #roundUpDepensesTable th:nth-child(1), #roundUpDepensesTable td:nth-child(1) { width: 35%; }
   #cashbackChargesTable th:nth-child(2), #cashbackChargesTable td:nth-child(2),
-  #cashbackDepensesTable th:nth-child(2), #cashbackDepensesTable td:nth-child(2) { width: 25%; }
+  #cashbackDepensesTable th:nth-child(2), #cashbackDepensesTable td:nth-child(2),
+  #roundUpChargesTable th:nth-child(2), #roundUpChargesTable td:nth-child(2),
+  #roundUpDepensesTable th:nth-child(2), #roundUpDepensesTable td:nth-child(2) { width: 25%; }
   #cashbackChargesTable th:nth-child(3), #cashbackChargesTable td:nth-child(3),
-  #cashbackDepensesTable th:nth-child(3), #cashbackDepensesTable td:nth-child(3) { width: 40%; }
+  #cashbackDepensesTable th:nth-child(3), #cashbackDepensesTable td:nth-child(3),
+  #roundUpChargesTable th:nth-child(3), #roundUpChargesTable td:nth-child(3),
+  #roundUpDepensesTable th:nth-child(3), #roundUpDepensesTable td:nth-child(3) { width: 40%; }
 }
 
 @media (max-width: 380px) {
