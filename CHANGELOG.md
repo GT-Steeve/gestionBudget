@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.22.0...v1.23.0) (2026-10-23)
+
+
+### Features
+
+* **detail:** pop-up détail modifiable avec date et heure d'ajout ([de88fc3](https://github.com/GT-Steeve/gestionBudget/commit/de88fc3693c30d7500298df5634867d4de62ea20))
+
 # [1.22.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.21.0...v1.22.0) (2026-10-20)
 
 
