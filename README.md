@@ -4,6 +4,8 @@ Petite application web pour suivre son budget : revenus, charges, dépenses,
 cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle.
 
+**Version actuelle :** v1.10.0 (historique dans [`patchNote.txt`](patchNote.txt))
+
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
 > **Avertissement :** cet outil ne fournit qu'une **estimation**. Il ne tient
@@ -18,11 +20,19 @@ placement, exemples de produits financiers et synthèse visuelle.
   guidée (un champ par étape), totaux mensuels et annuels (× 12) calculés
   automatiquement, édition et suppression en ligne. Les dépenses se suivent
   au mois, avec un historique des mois précédents.
+- **Pop-up Détail** (bouton œil sur chaque revenu, charge et dépense) —
+  libellé, catégorie, montant, annuel, cashback et RoundUp, avec la date et
+  l'heure d'ajout. Le bouton **Modifier** rend ces valeurs éditables
+  (Valider / Annuler), date et heure comprises.
+- **Sélecteurs maison** — catégories, calendrier (avec choix de l'année) et
+  heure à molettes chiffre par chiffre, en boutons plutôt que les listes et
+  sélecteurs natifs du navigateur, plus lisibles sur mobile.
 - **Répartition par catégorie** — vue synthétique des revenus et des charges
   avec barres de proportion.
 - **CashBack & RoundUp** — estimation du cashback reversé par la banque et de
   l'arrondi automatique (différence mise de côté, comme sur Trade Republic),
-  activables ligne par ligne dès l'ajout d'une charge ou d'une dépense.
+  activables ligne par ligne dès l'ajout d'une charge ou d'une dépense. Un
+  montant déjà rond est arrondi au multiple suivant (x1 → 1,00 €, x2 → 2,00 €).
 - **Économie potentielle** — comparez une charge à une alternative
   (fournisseur moins cher, autre offre…) et voyez l'économie mensuelle/annuelle.
 - **Simulation de placement** — intérêts composés sur deux rendements annuels

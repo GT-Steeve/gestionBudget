@@ -186,11 +186,17 @@
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   }
 
-  /** Pop-up de choix de catégorie (une proposition par bouton, la catégorie
-      actuelle mise en avant) ; onPick(cat) n'est appelé que si elle change. */
-  function pickCategory(cats, current, onPick) {
+  /** Pop-up de choix en boutons (catégorie, date, heure) plutôt qu'un menu
+      ou sélecteur natif, plus lisible sur mobile. fill(list, close) remplit
+      la grille et renvoie le bouton à focaliser ; compact = petites cases. */
+  function openPicker(title, fill, { compact = false } = {}) {
     const overlay = $('#catPickerOverlay');
     if (!overlay) return;
+    // Ouverte aussi depuis d'autres pop-ups (wizard d'ajout, Détail) : déplacée
+    // en fin de <body> pour s'afficher au-dessus (et que leur Échap la voie
+    // comme celle du dessus).
+    document.body.append(overlay);
+    const list = $('#catPickerList');
     const close = () => {
       overlay.hidden = true;
       overlay.removeEventListener('click', onOverlayClick);
@@ -200,17 +206,152 @@
     const onOverlayClick = (e) => { if (e.target === overlay) close(); };
     const onKey = (e) => { if (e.key === 'Escape') close(); };
 
-    const buttons = cats.map((cat) => h('button', {
-      type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(cat === current),
-      onclick: () => { close(); if (cat !== current) onPick(cat); }
-    }, cat));
-    $('#catPickerList').replaceChildren(...buttons);
-
+    $('#catPickerTitle').textContent = title;
+    list.classList.toggle('cat-picker--compact', compact);
+    const focusEl = fill(list, close);
     overlay.addEventListener('click', onOverlayClick);
     $('#catPickerClose').addEventListener('click', close);
     document.addEventListener('keydown', onKey);
     overlay.hidden = false;
-    (buttons.find((b) => b.getAttribute('aria-pressed') === 'true') || buttons[0]).focus();
+    focusEl?.focus();
+  }
+
+  /** Bouton d'option de la grille du picker, mis en avant s'il est sélectionné. */
+  const pickerOpt = (label, selected, onclick, extra = {}) => h('button', {
+    type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(selected), onclick, ...extra
+  }, label);
+
+  /** Choix de catégorie (la catégorie actuelle mise en avant) ; onPick(cat)
+      n'est appelé que si elle change. */
+  function pickCategory(cats, current, onPick) {
+    openPicker('Choisir la catégorie', (list, close) => {
+      const buttons = cats.map((cat) => pickerOpt(cat, cat === current, () => { close(); if (cat !== current) onPick(cat); }));
+      list.style.gridTemplateColumns = '';
+      list.replaceChildren(...buttons);
+      return buttons.find((b) => b.getAttribute('aria-pressed') === 'true') || buttons[0];
+    });
+  }
+
+  /** Choix d'une date : calendrier d'un mois (‹ mois ›), un bouton par jour ;
+      un clic sur « mois année » affiche les années (12 par page) pour en
+      changer. onPick(année, mois, jour). */
+  function pickDate(current, onPick) {
+    const ref = current || new Date();
+    let year = ref.getFullYear();
+    let month = ref.getMonth();
+    let yearStart = year - 5; // première année de la page affichée en vue Années
+    openPicker('Choisir la date', (list, close) => {
+      const navBar = (label, labelProps, prevLabel, nextLabel, shift) => h('div', { class: 'cal__nav' },
+        h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'prev', 'aria-label': prevLabel, onclick: () => shift(-1) }, '‹'),
+        h('button', { type: 'button', class: 'cal__month', ...labelProps }, label),
+        h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'next', 'aria-label': nextLabel, onclick: () => shift(1) }, '›'));
+      const navFocus = (delta) => (delta < 0 ? '[data-nav="prev"]' : '[data-nav="next"]');
+
+      const drawYears = (focusSel) => {
+        const years = Array.from({ length: 12 }, (_, i) => yearStart + i).map((y) => pickerOpt(String(y), y === year, () => {
+          year = y;
+          drawDays('.cal__month');
+        }));
+        list.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+        list.replaceChildren(
+          navBar(`${yearStart} – ${yearStart + 11}`, { 'aria-label': 'Revenir au calendrier', onclick: () => drawDays('.cal__month') },
+            'Années précédentes', 'Années suivantes', (delta) => { yearStart += delta * 12; drawYears(navFocus(delta)); }),
+          ...years);
+        const el = focusSel ? $(focusSel, list) : years.find((b) => b.getAttribute('aria-pressed') === 'true') || years[0];
+        el.focus();
+        return el;
+      };
+
+      const drawDays = (focusSel) => {
+        const label = capitalize(new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }));
+        const shift = (delta) => {
+          const d = new Date(year, month + delta, 1);
+          year = d.getFullYear();
+          month = d.getMonth();
+          drawDays(navFocus(delta));
+        };
+        const nav = navBar(label, { 'aria-label': `${label} : changer d’année`, onclick: () => { yearStart = year - 5; drawYears(); } },
+          'Mois précédent', 'Mois suivant', shift);
+        const weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j) => h('span', { class: 'cal__wd', 'aria-hidden': 'true' }, j));
+        const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi en premier
+        const blanks = Array.from({ length: offset }, () => h('span'));
+        const days = Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, i) => {
+          const day = i + 1;
+          const selected = !!current && current.getFullYear() === year && current.getMonth() === month && current.getDate() === day;
+          return pickerOpt(String(day), selected, () => { close(); onPick(year, month, day); },
+            { 'aria-label': new Date(year, month, day).toLocaleDateString('fr-FR', { dateStyle: 'full' }) });
+        });
+        list.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
+        list.replaceChildren(nav, ...weekdays, ...blanks, ...days);
+        const el = focusSel ? $(focusSel, list) : days.find((b) => b.getAttribute('aria-pressed') === 'true') || days[0];
+        el.focus();
+        return el;
+      };
+      return drawDays();
+    }, { compact: true });
+  }
+
+  /** Choix d'une heure chiffre par chiffre : dizaine et unité de l'heure,
+      dizaine et unité des minutes, chacune encadrée de flèches ±1 (en boucle,
+      l'heure restant entre 0 et 23), puis Valider. onPick(heures, minutes). */
+  function pickTime(current, onPick) {
+    const ref = current || new Date();
+    // Chiffres : [dizaine heure, unité heure, dizaine minutes, unité minutes].
+    const digits = [Math.floor(ref.getHours() / 10), ref.getHours() % 10, Math.floor(ref.getMinutes() / 10), ref.getMinutes() % 10];
+    const max = (i) => [2, digits[0] === 2 ? 3 : 9, 5, 9][i];
+    const CHEVRON = (up) => `<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="${up ? 'M4 10l4-4 4 4' : 'M4 6l4 4 4-4'}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const LABELS = ['Dizaine des heures', 'Unité des heures', 'Dizaine des minutes', 'Unité des minutes'];
+    openPicker('Choisir l’heure', (list, close) => {
+      const valueEls = digits.map(() => h('span', { class: 'time-spin__value' }));
+      /** Affiche le chiffre i ; dir (+1/−1) le fait rouler comme la molette
+          d'un cadenas : +1 descend (le nouveau chiffre arrive par le haut),
+          −1 monte. Sans dir (ou mouvements réduits) : changement direct. */
+      const roll = (i, dir = 0) => {
+        const box = valueEls[i];
+        const next = h('span', { class: 'time-spin__digit' }, String(digits[i]));
+        if (!dir || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          box.replaceChildren(next);
+          return;
+        }
+        const way = dir > 0 ? 'down' : 'up';
+        // Chiffres sortants (plusieurs si clics rapides) : retirés en fin d'animation.
+        for (const old of [...box.children]) {
+          old.className = `time-spin__digit time-spin__digit--out-${way}`;
+          old.addEventListener('animationend', () => old.remove(), { once: true });
+        }
+        next.classList.add(`time-spin__digit--in-${way}`);
+        box.append(next);
+      };
+      const step = (i, delta) => {
+        const m = max(i);
+        digits[i] = (digits[i] + delta + m + 1) % (m + 1);
+        roll(i, delta);
+        // Passage à 2x heures : l'unité ne peut dépasser 3 (23 h max).
+        if (i === 0 && digits[1] > max(1)) {
+          digits[1] = max(1);
+          roll(1, -1);
+        }
+      };
+      const arrow = (i, up) => {
+        const btn = h('button', {
+          type: 'button', class: 'icon-btn time-spin__arrow', 'aria-label': `${LABELS[i]} ${up ? '+1' : '−1'}`,
+          onclick: () => step(i, up ? 1 : -1)
+        });
+        btn.innerHTML = CHEVRON(up);
+        return btn;
+      };
+      const col = (i) => h('div', { class: 'time-spin__col' }, arrow(i, true), valueEls[i], arrow(i, false));
+      const ok = h('button', {
+        type: 'button', class: 'btn time-spin__ok',
+        onclick: () => { close(); onPick(digits[0] * 10 + digits[1], digits[2] * 10 + digits[3]); }
+      }, 'Valider');
+      list.style.gridTemplateColumns = '1fr';
+      list.replaceChildren(
+        h('div', { class: 'time-spin' }, col(0), col(1), h('span', { class: 'time-spin__sep' }, 'h'), col(2), col(3)),
+        ok);
+      digits.forEach((_, i) => roll(i));
+      return ok;
+    });
   }
 
   /** Bouton de cellule affichant la catégorie d'une ligne ; ouvre pickCategory. */
@@ -225,6 +366,21 @@
       })
     }, item.categorie);
     return btn;
+  }
+
+  /** Champ catégorie du wizard d'ajout : bouton (au lieu d'un <select> natif)
+      qui ouvre pickCategory et reporte le choix dans l'input caché associé. */
+  function bindCategoryButton(btnSel, inputSel, cats) {
+    const btn = $(btnSel);
+    const input = $(inputSel);
+    if (!btn || !input) return;
+    const set = (cat) => {
+      input.value = cat;
+      btn.textContent = cat;
+      input.dispatchEvent(new Event('change'));
+    };
+    set(input.value || cats[0]);
+    btn.addEventListener('click', () => pickCategory(cats, input.value, (cat) => { set(cat); btn.focus(); }));
   }
 
   /** Pop-up d'ajout guidé, un champ à la fois (Retour/Suivant), plus
@@ -349,6 +505,9 @@
     };
   }
 
+  /** Date d'ajout enregistrée (ISO) si valide, sinon null (anciennes lignes). */
+  const validDate = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
+
   function loadState() {
     const saved = store.get(STORAGE_KEY);
     if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios) || !saved.yield) {
@@ -361,13 +520,15 @@
         nom: String(c.nom || 'Sans nom').slice(0, 60),
         mensuel: num(c.mensuel),
         cashbackOn: c.cashbackOn !== false,
-        roundUpOn: c.roundUpOn !== false
+        roundUpOn: c.roundUpOn !== false,
+        ajout: validDate(c.ajout)
       })),
       revenus: (Array.isArray(saved.revenus) ? saved.revenus : []).map((r) => ({
         id: String(r.id || uid()),
         categorie: REV_CATEGORIES.includes(r.categorie) ? r.categorie : 'Salaire',
         nom: String(r.nom || 'Sans nom').slice(0, 60),
-        mensuel: num(r.mensuel)
+        mensuel: num(r.mensuel),
+        ajout: validDate(r.ajout)
       })),
       depenses: (Array.isArray(saved.depenses) ? saved.depenses : []).map((d) => ({
         id: String(d.id || uid()),
@@ -375,7 +536,8 @@
         nom: String(d.nom || 'Sans nom').slice(0, 60),
         montant: num(d.montant),
         cashbackOn: d.cashbackOn !== false,
-        roundUpOn: d.roundUpOn !== false
+        roundUpOn: d.roundUpOn !== false,
+        ajout: validDate(d.ajout)
       })),
       depensesHistorique: (Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : []).map((m) => ({
         mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
@@ -384,7 +546,8 @@
           id: String(d.id || uid()),
           categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
           nom: String(d.nom || 'Sans nom').slice(0, 60),
-          montant: num(d.montant)
+          montant: num(d.montant),
+          ajout: validDate(d.ajout)
         }))
       })).slice(0, 12),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
@@ -440,10 +603,15 @@
   /** Taux de cashback configurable (state.cashbackRate, en %), en fraction (0.01 = 1 %). */
   const cashbackFraction = () => state.cashbackRate / 100;
 
-  /** Différence jusqu'au multiple supérieur de state.roundUpTo (0 si déjà pile dessus). */
+  /** Différence jusqu'au multiple supérieur de state.roundUpTo ; un montant
+      déjà pile sur un multiple est arrondi au multiple suivant (x1 → 1,00 €,
+      x2 → 2,00 €…) plutôt qu'à 0,00 €. */
   const roundUpAmount = (montant) => {
     const n = state.roundUpTo;
-    return Math.max(0, Math.ceil(montant / n) * n - montant);
+    if (montant <= 0) return 0;
+    const diff = Math.ceil(montant / n) * n - montant;
+    // Tolérance au centime : les flottants ne tombent pas toujours pile.
+    return diff < 0.005 ? n : diff;
   };
   const project = Calc.project;
   const totalMonthly = () => state.charges.reduce((sum, c) => sum + c.mensuel, 0);
@@ -471,9 +639,9 @@
   };
 
   function renderLineForms() {
-    if ($('#rCat')) $('#rCat').replaceChildren(...sortAlpha(REV_CATEGORIES).map((c) => h('option', { value: c }, c)));
-    if ($('#cCat')) $('#cCat').replaceChildren(...sortAlpha(CATEGORIES).map((c) => h('option', { value: c }, c)));
-    if ($('#dCat')) $('#dCat').replaceChildren(...sortAlpha(DEP_CATEGORIES).map((c) => h('option', { value: c }, c)));
+    bindCategoryButton('#rCatBtn', '#rCat', sortAlpha(REV_CATEGORIES));
+    bindCategoryButton('#cCatBtn', '#cCat', sortAlpha(CATEGORIES));
+    bindCategoryButton('#dCatBtn', '#dCat', sortAlpha(DEP_CATEGORIES));
   }
 
   /** Met à jour le placeholder du champ "Libellé" selon la catégorie choisie
@@ -491,26 +659,184 @@
 
   const EYE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 
-  /** Pop-up de détails d'une ligne (bouton œil) : rows = [[libellé, valeur], …]. */
-  function showDetails(title, rows) {
+  /** « Vendredi 13 Octobre 2026 » : jour et mois avec majuscule. */
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+  const fmtAjoutDate = (d) => {
+    const jour = capitalize(d.toLocaleDateString('fr-FR', { weekday: 'long' }));
+    const mois = capitalize(d.toLocaleDateString('fr-FR', { month: 'long' }));
+    return `${jour} ${d.getDate()} ${mois} ${d.getFullYear()}`;
+  };
+
+  /** Pop-up de détails d'une charge ou d'une dépense (bouton œil), avec mode
+      Modifier : Libellé, Catégorie et Montant deviennent des champs ; les
+      valeurs calculées (annuel, cashback, round up) suivent la saisie. */
+  function showItemDetails(item, kind) {
     const overlay = $('#detailOverlay');
     if (!overlay) return;
-    $('#detailTitle').textContent = title;
-    $('#detailList').replaceChildren(
-      ...rows.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)])
-    );
+    const isCharge = kind === 'charges';
+    const isRevenu = kind === 'revenus';
+    const monthly = isCharge || isRevenu; // montant mensuel (sinon ponctuel)
+    const key = monthly ? 'mensuel' : 'montant';
+    const cats = sortAlpha(isCharge ? CATEGORIES : isRevenu ? REV_CATEGORIES : DEP_CATEGORIES);
+    const editBtn = $('#detailEdit');
     const closeBtn = $('#detailClose');
+    const cancelBtn = $('#detailCancel');
+    const saveBtn = $('#detailSave');
+    let draft = null; // { nom, categorie, montant, ajout } pendant la modification
+
+    $('#detailTitle').textContent = isCharge ? 'Détail de la charge' : isRevenu ? 'Détail du revenu' : 'Détail de la dépense';
+    $('#detailStamp').hidden = false;
+    const fmtDate = (d) => (d ? fmtAjoutDate(d) : 'Date non connue');
+    const fmtTime = (d) => (d ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}` : '?? h ??');
+
+    /** Date (à gauche) et heure (à droite) d'ajout ; valeurs de repli pour les
+        lignes créées avant leur enregistrement. En modification : boutons
+        ouvrant le calendrier / le choix de l'heure. */
+    const renderStamp = () => {
+      if (!draft) {
+        const d = item.ajout ? new Date(item.ajout) : null;
+        $('#detailDate').replaceChildren(fmtDate(d));
+        $('#detailTime').replaceChildren(fmtTime(d));
+        return;
+      }
+      const dateBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Date d’ajout',
+        onclick: () => pickDate(draft.ajout, (y, m, day) => {
+          const base = draft.ajout || new Date(y, m, day, 0, 0);
+          draft.ajout = new Date(y, m, day, base.getHours(), base.getMinutes());
+          renderStamp();
+          $('#detailDate button').focus();
+        })
+      }, fmtDate(draft.ajout));
+      const timeBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Heure d’ajout',
+        onclick: () => pickTime(draft.ajout, (hr, mn) => {
+          const base = draft.ajout || new Date();
+          draft.ajout = new Date(base.getFullYear(), base.getMonth(), base.getDate(), hr, mn);
+          renderStamp();
+          $('#detailTime button').focus();
+        })
+      }, fmtTime(draft.ajout));
+      $('#detailDate').replaceChildren(dateBtn);
+      $('#detailTime').replaceChildren(timeBtn);
+    };
+
+    /** Valeurs calculées à partir d'un montant (affichées en lecture seule). */
+    const computed = (montant) => {
+      // Le taux et le multiple accompagnent l'intitulé, pas le montant.
+      const off = isCharge ? 'Non inclus' : 'Désactivé';
+      const rows = [];
+      if (monthly) rows.push(['Annuel', eur2.format(annual(montant))]);
+      // Les revenus n'ont ni cashback ni round up.
+      if (isRevenu) return rows;
+      rows.push(
+        [`Cashback (${fmtRate(state.cashbackRate)})`, item.cashbackOn !== false ? eur2.format(montant * cashbackFraction()) : off],
+        [`RoundUp (x${state.roundUpTo})`, item.roundUpOn !== false ? eur2.format(roundUpAmount(montant)) : off]
+      );
+      return rows;
+    };
+    const row = ([label, value]) => [h('dt', {}, label), h('dd', {}, value)];
+
+    const render = () => {
+      const list = $('#detailList');
+      const suffix = monthly ? ' / mois' : '';
+      renderStamp();
+      if (!draft) {
+        list.replaceChildren(...[
+          ['Libellé', item.nom],
+          ['Catégorie', item.categorie],
+          [monthly ? 'Mensuel' : 'Montant', `${eur2.format(item[key])}${suffix}`],
+          ...computed(item[key])
+        ].flatMap(row));
+        return;
+      }
+      const computedDds = [];
+      const updateComputed = () => computed(draft.montant).forEach(([, v], i) => { computedDds[i].textContent = v; });
+      const nomInput = h('input', {
+        type: 'text', class: 'detail-field', maxlength: '60', required: true, 'aria-label': 'Libellé',
+        oninput: (e) => { draft.nom = e.target.value; }
+      });
+      nomInput.value = draft.nom;
+      const catBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field', 'aria-label': 'Catégorie',
+        onclick: () => pickCategory(cats, draft.categorie, (cat) => { draft.categorie = cat; catBtn.textContent = cat; catBtn.focus(); })
+      }, draft.categorie);
+      const montantInput = h('input', {
+        type: 'number', class: 'detail-field detail-field--num', min: '0', step: '0.01', inputmode: 'decimal',
+        'aria-label': monthly ? 'Mensuel' : 'Montant',
+        oninput: (e) => { draft.montant = num(e.target.value); fitWidth(); updateComputed(); }
+      });
+      // Largeur ajustée au contenu : nombre de caractères saisis + 2.
+      const fitWidth = () => { montantInput.style.width = `calc(${montantInput.value.length + 2}ch + 24px)`; };
+      montantInput.value = String(draft.montant);
+      fitWidth();
+      const computedRows = computed(draft.montant).map(([label, value]) => {
+        const dd = h('dd', {}, value);
+        computedDds.push(dd);
+        return [h('dt', {}, label), dd];
+      });
+      list.replaceChildren(
+        h('dt', {}, 'Libellé'), h('dd', {}, nomInput),
+        h('dt', {}, 'Catégorie'), h('dd', {}, catBtn),
+        h('dt', {}, monthly ? 'Mensuel' : 'Montant'), h('dd', {}, montantInput),
+        ...computedRows.flat()
+      );
+      nomInput.focus();
+    };
+
+    const setEditing = (on) => {
+      draft = on ? { nom: item.nom, categorie: item.categorie, montant: item[key], ajout: item.ajout ? new Date(item.ajout) : null } : null;
+      editBtn.hidden = on;
+      closeBtn.hidden = on;
+      cancelBtn.hidden = !on;
+      saveBtn.hidden = !on;
+      render();
+      if (!on) editBtn.focus();
+    };
+    const onEdit = () => setEditing(true);
+    const onCancel = () => setEditing(false);
+    const onSave = () => {
+      const nom = draft.nom.trim();
+      if (!nom) { $('.detail-field', overlay)?.reportValidity(); return; }
+      item.nom = nom.slice(0, 60);
+      item.categorie = draft.categorie;
+      item[key] = draft.montant;
+      if (draft.ajout) item.ajout = draft.ajout.toISOString();
+      if (monthly) renderLines(kind); else renderDepenses();
+      refresh();
+      setEditing(false);
+    };
+    // Entrée dans un champ = Valider.
+    const onListKey = (e) => {
+      if (e.key === 'Enter' && draft && e.target.tagName === 'INPUT') { e.preventDefault(); onSave(); }
+    };
+
     const close = () => {
       overlay.hidden = true;
+      editBtn.removeEventListener('click', onEdit);
+      cancelBtn.removeEventListener('click', onCancel);
+      saveBtn.removeEventListener('click', onSave);
       closeBtn.removeEventListener('click', close);
+      $('#detailList').removeEventListener('keydown', onListKey);
       overlay.removeEventListener('click', onOverlayClick);
       document.removeEventListener('keydown', onKey);
     };
     const onOverlayClick = (e) => { if (e.target === overlay) close(); };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    // Échap ne ferme que la pop-up du dessus (choix de catégorie ouvert depuis
+    // le mode Modifier : seule celle-ci se ferme).
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      const top = [...document.querySelectorAll('.modal-overlay:not([hidden])')].pop();
+      if (top === overlay) close();
+    };
+    editBtn.addEventListener('click', onEdit);
+    cancelBtn.addEventListener('click', onCancel);
+    saveBtn.addEventListener('click', onSave);
     closeBtn.addEventListener('click', close);
+    $('#detailList').addEventListener('keydown', onListKey);
     overlay.addEventListener('click', onOverlayClick);
     document.addEventListener('keydown', onKey);
+    setEditing(false);
     overlay.hidden = false;
     closeBtn.focus();
   }
@@ -520,28 +846,7 @@
   function detailButton(item, kind) {
     const btn = h('button', {
       class: 'icon-btn icon-btn--view', type: 'button', 'aria-label': `Voir le détail de ${item.nom}`, title: 'Voir le détail',
-      onclick: () => {
-        const isCharge = kind === 'charges';
-        const montant = isCharge ? item.mensuel : item.montant;
-        const suffix = isCharge ? ' / mois' : '';
-        const rows = [
-          ['Catégorie', item.categorie],
-          ['Libellé', item.nom],
-          [isCharge ? 'Mensuel' : 'Montant', `${eur2.format(montant)}${suffix}`]
-        ];
-        const cashback = item.cashbackOn !== false ? eur2.format(montant * cashbackFraction()) : null;
-        const roundUp = item.roundUpOn !== false ? eur2.format(roundUpAmount(montant)) : null;
-        const rate = fmtRate(state.cashbackRate);
-        const multiple = `x${state.roundUpTo}`;
-        // Le taux et le multiple accompagnent l'intitulé, pas le montant.
-        const off = isCharge ? 'Non inclus' : 'Désactivé';
-        if (isCharge) rows.push(['Annuel', eur2.format(annual(montant))]);
-        rows.push(
-          [`Cashback (${rate})`, cashback || off],
-          [`RoundUp (${multiple})`, roundUp || off]
-        );
-        showDetails(isCharge ? 'Détail de la charge' : 'Détail de la dépense', rows);
-      }
+      onclick: () => showItemDetails(item, kind)
     });
     btn.innerHTML = EYE_ICON;
     return btn;
@@ -604,9 +909,7 @@
         }
       });
       del.innerHTML = TRASH_ICON;
-      // Les revenus n'ont ni cashback ni round up : pas de bouton œil.
-      const actions = h('td', { class: 'num row-actions' },
-        type === 'charges' ? detailButton(c, type) : null, del);
+      const actions = h('td', { class: 'num row-actions' }, detailButton(c, type), del);
 
       body.append(MOBILE_QUERY.matches
         ? h('tr', {},
@@ -705,7 +1008,7 @@
         e.preventDefault();
         const nom = $(ids.nom).value.trim();
         if (!nom) return;
-        const entry = { id: uid(), categorie: $(ids.cat).value, nom, mensuel: num($(ids.montant).value) };
+        const entry = { id: uid(), categorie: $(ids.cat).value, nom, mensuel: num($(ids.montant).value), ajout: new Date().toISOString() };
         // CashBack/RoundUp : étape 4 du wizard, absente du formulaire Revenus.
         if (ids.cashbackOn) entry.cashbackOn = $(ids.cashbackOn).checked;
         if (ids.roundUpOn) entry.roundUpOn = $(ids.roundUpOn).checked;
@@ -728,7 +1031,7 @@
       closeBtn: '#revenuWizardClose', backBtn: '#revenuWizardBack',
       nextBtn: '#revenuWizardNext', finishBtn: '#revenuWizardFinish', stepLabel: '#revenuWizardStepLabel',
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
-      fields: ['#rCat', '#rMontant', '#rNom']
+      fields: ['#rCatBtn', '#rMontant', '#rNom']
     });
     bindResponsiveTrigger('#btnOpenRevenuWizard', '#addRevenuMobileSlot', '#revenus .card__head');
     bindAddWizard({
@@ -736,7 +1039,7 @@
       closeBtn: '#chargeWizardClose', backBtn: '#chargeWizardBack',
       nextBtn: '#chargeWizardNext', finishBtn: '#chargeWizardFinish', stepLabel: '#chargeWizardStepLabel',
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
-      fields: ['#cCat', '#cMontant', '#cNom', null]
+      fields: ['#cCatBtn', '#cMontant', '#cNom', null]
     });
     bindResponsiveTrigger('#btnOpenChargeWizard', '#addChargeMobileSlot', '#charges .card__head');
 
@@ -886,7 +1189,7 @@
       closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
       nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
-      fields: ['#dCat', '#dMontant', '#dNom', null]
+      fields: ['#dCatBtn', '#dMontant', '#dNom', null]
     });
     bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
     const form = $('#depenseForm');
@@ -897,7 +1200,8 @@
         if (!nom) return;
         state.depenses.push({
           id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value),
-          cashbackOn: $('#dCashbackOn').checked, roundUpOn: $('#dRoundUpOn').checked
+          cashbackOn: $('#dCashbackOn').checked, roundUpOn: $('#dRoundUpOn').checked,
+          ajout: new Date().toISOString()
         });
         $('#dNom').value = '';
         $('#dMontant').value = '';

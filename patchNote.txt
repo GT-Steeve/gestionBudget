@@ -35,7 +35,9 @@ v1.09.0 = polish UI simulation de placement
 v1.09.1 = ajout produitFinance.html + MAJ readme.md
 v1.09.2 = modification catégorie via un pop-up
 v1.09.3 = polish pop-up détail dépense + charge
+v1.10.0 = pop-up détail revenu + ajout modification et date dans pop-up détail
 
 ** Next idea **
 exporter et impressions les donnée en PDF de chaque page
 personnaliser la taille des éléments 
+réfléchir un don soutien où placement pub

@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.55">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.56">
 </head>
 <body data-app="true">
 
@@ -217,6 +217,24 @@
   </div>
 </div>
 
+<!-- Détails d'une ligne du tableau (bouton œil) : toutes ses informations,
+     cashback et round up compris. -->
+<div id="detailOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal__head">
+      <p id="detailTitle" class="modal__title"></p>
+      <button type="button" id="detailEdit" class="btn btn--ghost btn--sm">Modifier</button>
+    </div>
+    <p id="detailStamp" class="modal__stamp" hidden><span id="detailDate"></span><span id="detailTime"></span></p>
+    <dl id="detailList" class="modal__details"></dl>
+    <div class="modal__actions modal__actions--center">
+      <button type="button" id="detailClose" class="btn btn--ghost">Fermer</button>
+      <button type="button" id="detailCancel" class="btn btn--ghost" hidden>Annuler</button>
+      <button type="button" id="detailSave" class="btn" hidden>Valider</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
@@ -251,9 +269,10 @@
     </div>
     <form id="revenuForm" autocomplete="off">
       <div class="wizard__step" data-step="1">
-        <label for="rCat">Désignez la catégorie
-          <select id="rCat"></select>
+        <label for="rCatBtn">Désignez la catégorie
+          <button type="button" id="rCatBtn" class="select-btn"></button>
         </label>
+        <input type="hidden" id="rCat">
       </div>
       <div class="wizard__step" data-step="2" hidden>
         <label for="rMontant">Montant mensuel (€)
@@ -275,8 +294,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.55"></script>
-<script src="../assets/js/calc.js?v=1.01.55"></script>
-<script src="../assets/js/script.js?v=1.01.55"></script>
+<script src="../assets/js/nav.js?v=1.01.56"></script>
+<script src="../assets/js/calc.js?v=1.01.56"></script>
+<script src="../assets/js/script.js?v=1.01.56"></script>
 </body>
 </html>
