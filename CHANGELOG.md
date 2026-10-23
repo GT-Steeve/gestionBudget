@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.24.0...v1.25.0) (2026-10-23)
+
+
+### Features
+
+* **securite:** bloque toute connexion sortante et page « Vos données » ([76ac4c1](https://github.com/GT-Steeve/gestionBudget/commit/76ac4c1aff20f22d06e72ae36e9a01c8c51b1c10))
+
 # [1.24.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.23.0...v1.24.0) (2026-10-23)
 
 
