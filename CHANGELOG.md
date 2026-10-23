@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.23.0...v1.24.0) (2026-10-23)
+
+
+### Features
+
+* **economie:** choix du poste de charge en pop-up avec pagination ([cc1e57a](https://github.com/GT-Steeve/gestionBudget/commit/cc1e57ad3647c5b1d1d9d09011878da2f5992de9))
+
 # [1.23.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.22.0...v1.23.0) (2026-10-23)
 
 
