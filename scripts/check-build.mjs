@@ -5,6 +5,8 @@
  * référence des fichiers locaux (css/js/img) qui existent bien sur disque,
  * pour attraper un lien cassé avant le déploiement, et que le numéro de
  * cache ?v= des CSS/JS a bien été augmenté quand ces fichiers ont changé.
+ * Vérifie aussi que chaque page porte la Content-Security-Policy qui bloque
+ * toute connexion sortante (aucune fuite des données saisies).
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -20,6 +22,10 @@ if (htmlFiles.length === 0) {
 const attrPattern = /(?:src|href)="([^"]+)"/g;
 let missing = 0;
 let versionErrors = 0;
+let cspErrors = 0;
+// Directives indispensables : aucune connexion, aucun script ni fichier externe.
+const cspRequired = ["default-src 'none'", "connect-src 'none'", "script-src 'self'", "form-action 'none'"];
+const cspPattern = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/;
 const manifest = readManifest();
 
 for (const rel of htmlFiles) {
@@ -35,6 +41,18 @@ for (const rel of htmlFiles) {
       console.error(`✖ ${rel} référence un fichier introuvable : ${ref}`);
       missing++;
     }
+  }
+
+  const csp = html.match(cspPattern)?.[1];
+  const cspMissing = csp ? cspRequired.filter((d) => !csp.split(';').map((x) => x.trim()).includes(d)) : ['balise absente'];
+  if (cspMissing.length) {
+    console.error(`✖ ${rel} : Content-Security-Policy incomplète (${cspMissing.join(', ')}).`);
+    cspErrors++;
+  }
+  // Une CSP en <meta> ne s'applique qu'aux ressources déclarées après elle.
+  if (csp && html.indexOf(csp) > html.search(/<(link|script)[\s>]/)) {
+    console.error(`✖ ${rel} : la Content-Security-Policy doit précéder les <link>/<script>.`);
+    cspErrors++;
   }
 
   for (const [, v] of html.matchAll(versionPattern)) {
@@ -58,6 +76,12 @@ if (missing > 0) {
   process.exit(1);
 }
 
+if (cspErrors > 0) {
+  console.error(`
+${cspErrors} problème(s) de Content-Security-Policy.`);
+  process.exit(1);
+}
+
 if (versionErrors > 0) {
   console.error(`\n${versionErrors} problème(s) de version de cache des CSS/JS.`);
   process.exit(1);
@@ -65,3 +89,4 @@ if (versionErrors > 0) {
 
 console.log(`✓ ${htmlFiles.length} page(s) HTML vérifiée(s), toutes les références locales existent.`);
 console.log(`✓ Version de cache des CSS/JS à jour (?v=${manifest.version}).`);
+console.log('✓ Content-Security-Policy présente sur chaque page : aucune connexion sortante autorisée.');

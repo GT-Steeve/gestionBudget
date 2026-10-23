@@ -2,6 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+  <!-- Aucune fuite de données : le navigateur refuse toute connexion sortante
+       (connect-src 'none') et tout fichier externe ; seuls les fichiers du site
+       sont chargés. Vérifié par npm run build (scripts/check-build.mjs). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; manifest-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>À propos · Gestion budget</title>
   <meta name="description" content="Ce qu'est Gestion budget, ses limites (estimation uniquement, inflation et fiscalité non prises en compte) et la confidentialité de vos données.">
@@ -23,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.62">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.63">
 </head>
 <body>
 
@@ -108,11 +112,11 @@
     <h3 class="h3 h3--gap about-subtitle">Vos données</h3>
     <p class="about-text">
       Rien n'est envoyé à un serveur : tout ce que vous saisissez reste enregistré localement,
-      dans le stockage de votre navigateur, sur cet appareil.
+      dans le stockage de votre navigateur, sur cet appareil. <a href="howKeepData.html">(en savoir plus)</a>
     </p>
   </section>
 
-  <p class="version-tag">v1.10.1</p>
+  <p class="version-tag">v1.11.0</p>
 
 </main>
 
@@ -131,6 +135,6 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.62"></script>
+<script src="../assets/js/nav.js?v=1.01.63"></script>
 </body>
 </html>

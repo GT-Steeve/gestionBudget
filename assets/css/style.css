@@ -320,6 +320,17 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
    bloc, léger écart), sur sa propre ligne, centrée, en gras, couleur d'accent. */
 .about-key { display: block; margin-top: 10px; text-align: center; font-weight: 700; color: var(--accent); }
 .about-key__main { text-decoration: underline; text-underline-offset: 3px; }
+/* Page « Vos données » (howKeepData.html) : listes lisibles, termes techniques
+   en police à chasse fixe, lien de retour. */
+.about-text a, .about-back a { color: var(--accent); }
+.about-list { font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 70ch; margin: 10px auto 0; padding-left: 20px; }
+.about-list li { margin-top: 8px; }
+.about-list strong { color: var(--ink); }
+.about-list code, .about-text code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.88em;
+  background: var(--wash); border-radius: 4px; padding: 1px 5px;
+}
+.about-back { text-align: center; margin: 24px 0 0; font-size: 14px; }
 /* Page Annexe : chaque terme est présenté comme une petite fiche, en grille
    qui passe naturellement à plusieurs colonnes sur les écrans larges (auto-fit,
    pas besoin de media query) et reste en une seule colonne sur mobile. */

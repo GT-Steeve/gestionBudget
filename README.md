@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.10.1 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.11.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -60,6 +60,10 @@ placement, exemples de produits financiers et synthèse visuelle,
   petit écran.
 - Toutes les données restent **dans le navigateur** (`localStorage`) —
   aucun serveur, aucun compte.
+- **Aucune connexion sortante** — chaque page déclare une
+  Content-Security-Policy (`connect-src 'none'`, aucun script ni fichier
+  externe) : même un script ajouté par erreur ne pourrait rien envoyer.
+  `npm run build` échoue si une page n'en a pas.
 
 ## Utilisation
 
@@ -79,7 +83,7 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
-  Économie, Placement, Produits financiers, Annexe, À propos)
+  Économie, Placement, Produits financiers, Annexe, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), mise en page, responsive, impression
 - `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression)
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests

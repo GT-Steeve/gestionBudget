@@ -37,6 +37,7 @@ v1.09.2 = modification catégorie via un pop-up
 v1.09.3 = polish pop-up détail dépense + charge
 v1.10.0 = pop-up détail revenu + ajout modification et date dans pop-up détail
 v1.10.1 = polish a propos + polish UI liste poste à économiser
+v1.11.0 = Blocage des connexions + ajout complément apropos.html
 
 ** Next idea **
 ajouter des pré-set où profil
@@ -47,3 +48,6 @@ un mode tuto
 exporter et impressions les donnée en PDF de chaque page
 personnaliser la taille des éléments 
 réfléchir un don soutien où placement pub
+
+** A VERIFIER **
+Blocage des connexions : une règle de sécurité (Content-Security-Policy) dans chaque page qui interdit au navigateur toute connexion sortante. Même un futur bug ou un script ajouté par erreur ne pourrait rien envoyer. Le principe passerait d'une promesse à une garantie technique.
