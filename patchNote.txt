@@ -36,8 +36,14 @@ v1.09.1 = ajout produitFinance.html + MAJ readme.md
 v1.09.2 = modification catégorie via un pop-up
 v1.09.3 = polish pop-up détail dépense + charge
 v1.10.0 = pop-up détail revenu + ajout modification et date dans pop-up détail
+v1.10.1 = polish a propos + polish UI liste poste à économiser
 
 ** Next idea **
+ajouter des pré-set où profil
+    - chiffrage PDF où mot de passe possible sur le profil
+un mode tuto 
+    - lorsque la data est vide pour détecté un nouvelle utilisateur pour démarrer le tuto
+    - feature simuler un budget pour que l'user ajuste en modifiant pour apprendre
 exporter et impressions les donnée en PDF de chaque page
 personnaliser la taille des éléments 
 réfléchir un don soutien où placement pub

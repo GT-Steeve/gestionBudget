@@ -316,6 +316,10 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 /* Note sur toute la largeur de la carte, texte justifié (ex. Produits financiers). */
 .note--full { max-width: none; text-align: justify; }
 .about-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 8px auto 0; max-width: 70ch; text-align: justify; }
+/* Phrase mise en valeur (À propos) : dans le paragraphe d'intro (même
+   bloc, léger écart), sur sa propre ligne, centrée, en gras, couleur d'accent. */
+.about-key { display: block; margin-top: 10px; text-align: center; font-weight: 700; color: var(--accent); }
+.about-key__main { text-decoration: underline; text-underline-offset: 3px; }
 /* Page Annexe : chaque terme est présenté comme une petite fiche, en grille
    qui passe naturellement à plusieurs colonnes sur les écrans larges (auto-fit,
    pas besoin de media query) et reste en une seule colonne sur mobile. */
@@ -754,6 +758,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 .cal__month:hover { background: var(--wash); color: var(--accent); }
 .cal__wd { text-align: center; font-size: 12px; color: var(--muted); }
+/* Pagination du choix de poste de charge (au-delà de 7). */
+.picker__pages { margin-top: 4px; }
+.picker__page { font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .time-spin { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .time-spin__col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 /* Chiffre en « molette de cadenas » : fenêtre d'une ligne, le chiffre sortant

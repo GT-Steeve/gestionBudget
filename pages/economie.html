@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.56">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.62">
 </head>
 <body data-app="true">
 
@@ -178,6 +178,20 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
 
+<!-- Choix du poste de charge (wizard Comparaison) : propositions en
+     boutons plutôt qu'un menu déroulant natif, plus lisible sur mobile. -->
+<div id="catPickerOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catPickerTitle">
+    <div class="wizard__head">
+      <p id="catPickerTitle" class="modal__title">Choisir la catégorie</p>
+      <button type="button" id="catPickerClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="catPickerList" class="cat-picker"></div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
@@ -201,9 +215,10 @@
     </div>
     <form id="scForm" autocomplete="off">
       <div class="wizard__step" data-step="1">
-        <label for="sLigne">Quel poste de charge remplacer ?
-          <select id="sLigne"></select>
+        <label for="sLigneBtn">Quel poste de charge remplacer ?
+          <button type="button" id="sLigneBtn" class="select-btn"></button>
         </label>
+        <input type="hidden" id="sLigne">
       </div>
       <div class="wizard__step" data-step="2" hidden>
         <label for="sMontant">Nouveau montant mensuel (€)
@@ -226,8 +241,8 @@
   </div>
 </div>
 
-<script src="../assets/js/nav.js?v=1.01.56"></script>
-<script src="../assets/js/calc.js?v=1.01.56"></script>
-<script src="../assets/js/script.js?v=1.01.56"></script>
+<script src="../assets/js/nav.js?v=1.01.62"></script>
+<script src="../assets/js/calc.js?v=1.01.62"></script>
+<script src="../assets/js/script.js?v=1.01.62"></script>
 </body>
 </html>

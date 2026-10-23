@@ -1499,20 +1499,53 @@
      2. Économies potentielles
      ========================================================================== */
 
-  let lineSignature = '';
+  const chargeLabel = (c) => `${c.nom} (${eur2.format(c.mensuel)}/mois)`;
+  /** Charges par ordre alphabétique, puis par montant décroissant à nom identique. */
+  const sortedCharges = () => [...state.charges].sort((a, b) =>
+    a.nom.localeCompare(b.nom, 'fr', { sensitivity: 'base' }) || b.mensuel - a.mensuel);
+
+  const CHARGES_PER_PAGE = 7;
+
+  /** Choix du poste de charge à remplacer : même pop-up en boutons que les
+      catégories (une charge par ligne, libellés plus longs), 7 par page avec
+      pagination ‹ n / total › au-delà. onPick(id). */
+  function pickCharge(currentId, onPick) {
+    const charges = sortedCharges();
+    const pages = Math.max(1, Math.ceil(charges.length / CHARGES_PER_PAGE));
+    // Ouvre sur la page qui contient la charge sélectionnée.
+    let pageIdx = Math.max(0, Math.floor(charges.findIndex((c) => c.id === currentId) / CHARGES_PER_PAGE));
+    openPicker('Choisir le poste de charge', (list, close) => {
+      const draw = (focusSel) => {
+        const buttons = charges.slice(pageIdx * CHARGES_PER_PAGE, (pageIdx + 1) * CHARGES_PER_PAGE)
+          .map((c) => pickerOpt(chargeLabel(c), c.id === currentId, () => {
+            close();
+            if (c.id !== currentId) onPick(c.id);
+          }));
+        const go = (delta) => {
+          pageIdx = (pageIdx + delta + pages) % pages;
+          draw(delta < 0 ? '[data-nav="prev"]' : '[data-nav="next"]');
+        };
+        const nav = pages > 1 ? h('div', { class: 'cal__nav picker__pages' },
+          h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'prev', 'aria-label': 'Page précédente', onclick: () => go(-1) }, '‹'),
+          h('span', { class: 'picker__page', 'aria-live': 'polite' }, `${pageIdx + 1} / ${pages}`),
+          h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'next', 'aria-label': 'Page suivante', onclick: () => go(1) }, '›')) : null;
+        list.style.gridTemplateColumns = '1fr';
+        list.replaceChildren(...buttons, ...(nav ? [nav] : []));
+        const el = focusSel ? $(focusSel, list) : buttons.find((b) => b.getAttribute('aria-pressed') === 'true') || buttons[0];
+        el?.focus();
+        return el;
+      };
+      return draw();
+    });
+  }
 
   function renderScenarioForm() {
     if (!$('#scForm')) return;
+    // #sLigne (caché) garde l'id de la charge choisie ; #sLigneBtn l'affiche.
     const sel = $('#sLigne');
-    const sig = state.charges.map((c) => `${c.id}|${c.nom}|${c.mensuel}`).join(';');
-    if (sig !== lineSignature) {
-      lineSignature = sig;
-      const previous = sel.value;
-      const sorted = [...state.charges].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
-      sel.replaceChildren(...sorted.map((c) =>
-        h('option', { value: c.id }, `${c.nom} (${eur2.format(c.mensuel)}/mois)`)));
-      if (state.charges.some((c) => c.id === previous)) sel.value = previous;
-    }
+    if (!state.charges.some((c) => c.id === sel.value)) sel.value = sortedCharges()[0]?.id || '';
+    const current = state.charges.find((c) => c.id === sel.value);
+    $('#sLigneBtn').textContent = current ? chargeLabel(current) : 'Aucune charge';
     const disabled = !state.charges.length;
     $('#scForm').querySelectorAll('input, select, button').forEach((el) => { el.disabled = disabled; });
     const openBtn = $('#btnOpenScenarioWizard');
@@ -1629,14 +1662,18 @@
       $('#sOption').focus();
       refresh();
     });
-    $('#sLigne').addEventListener('change', renderScenarioForm);
+    $('#sLigneBtn').addEventListener('click', () => pickCharge($('#sLigne').value, (id) => {
+      $('#sLigne').value = id;
+      renderScenarioForm();
+      $('#sLigneBtn').focus();
+    }));
     $('#sMontant').addEventListener('input', renderPreview);
     bindAddWizard({
       openBtn: '#btnOpenScenarioWizard', overlay: '#scenarioWizardOverlay', form: '#scForm',
       closeBtn: '#scenarioWizardClose', backBtn: '#scenarioWizardBack',
       nextBtn: '#scenarioWizardNext', finishBtn: '#scenarioWizardFinish', stepLabel: '#scenarioWizardStepLabel',
       steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]'],
-      fields: ['#sLigne', '#sMontant', '#sOption']
+      fields: ['#sLigneBtn', '#sMontant', '#sOption']
     });
     bindResponsiveTrigger('#btnOpenScenarioWizard', '#addScenarioMobileSlot', '#economies .card__head');
     $('#btnClearScenarios').addEventListener('click', () => {
