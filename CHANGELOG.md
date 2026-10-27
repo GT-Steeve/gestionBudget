@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.26.0...v1.27.0) (2026-10-27)
+
+
+### Features
+
+* **export:** pages Exporter (PDF, Word, Google Docs) et Imprimer ([0699e30](https://github.com/GT-Steeve/gestionBudget/commit/0699e30a534a212dd2588137df126d8ef26634b1))
+
 # [1.26.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.25.0...v1.26.0) (2026-10-27)
 
 
