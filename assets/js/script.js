@@ -2521,6 +2521,212 @@
   }
 
   /* ==========================================================================
+     Export (page Exporter) : un même rapport, rendu en HTML pour le PDF et
+     l'impression (fenêtre d'impression du navigateur), ou en fichier .docx
+     pour Word et Google Docs (docx.js). Format du rapport : voir docx.js.
+     ========================================================================== */
+
+  const EXPORT_MODELS = {
+    simple: { label: 'Simple', sections: ['synthese', 'depenses'] },
+    standard: { label: 'Standard', sections: ['synthese', 'depenses', 'cashback', 'roundup', 'placement'] },
+    complet: {
+      label: 'Complet',
+      sections: ['synthese', 'revenus', 'depenses', 'charges', 'historique', 'economie', 'placement', 'cashback', 'roundup']
+    }
+  };
+
+  const fmtDay = (iso) => (iso ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(new Date(iso)) : '–');
+  /** Tableau du rapport, ou une phrase si la liste est vide. */
+  const reportTable = (head, rows, extra = {}) => (rows.length
+    ? { type: 'table', head, rows, align: head.map((_, i) => (i >= (extra.textCols || 1) ? 'right' : 'left')), ...extra }
+    : { type: 'p', text: 'Aucune donnée pour le moment.' });
+  /** Répartition par catégorie (montant et part du total), de la plus grosse à la plus petite. */
+  const categoryTable = (cats, items, key) => {
+    const total = items.reduce((sum, x) => sum + x[key], 0);
+    const rows = cats
+      .map((cat) => [cat, items.filter((x) => x.categorie === cat).reduce((sum, x) => sum + x[key], 0)])
+      .filter(([, v]) => v > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([cat, v]) => [cat, eur2.format(v), pct1.format(v / total)]);
+    return reportTable(['Catégorie', 'Montant', 'Part'], rows);
+  };
+  const lineTable = (lines) => reportTable(['Catégorie', 'Libellé', 'Mensuel', 'Annuel'],
+    lines.map((l) => [l.categorie, l.nom, eur2.format(l.mensuel), eur2.format(annual(l.mensuel))]),
+    { textCols: 2, foot: ['Total', '', eur2.format(lines.reduce((sum, l) => sum + l.mensuel, 0)), eur2.format(annual(lines.reduce((sum, l) => sum + l.mensuel, 0)))] });
+  const depenseTable = (items) => reportTable(['Date', 'Catégorie', 'Libellé', 'Montant'],
+    [...items].sort((a, b) => String(a.ajout).localeCompare(String(b.ajout)))
+      .map((d) => [fmtDay(d.ajout), d.categorie, d.nom, eur2.format(d.montant)]),
+    { textCols: 3, foot: ['Total', '', '', eur2.format(items.reduce((sum, d) => sum + d.montant, 0))] });
+  /** Tableau CashBack / RoundUp : lignes concernées (charges puis dépenses du mois). */
+  const extraTable = (flag, amountOf, label) => {
+    const rows = [
+      ...state.charges.filter((c) => c[flag] !== false).map((c) => [c.nom, 'Charge', eur2.format(c.mensuel), eur2.format(amountOf(c.mensuel))]),
+      ...state.depenses.filter((d) => d[flag] !== false).map((d) => [d.nom, 'Dépense', eur2.format(d.montant), eur2.format(amountOf(d.montant))])
+    ];
+    return reportTable(['Libellé', 'Type', 'Montant', label], rows, { textCols: 2 });
+  };
+  const extraTotals = (flag, amountOf) => {
+    const charges = state.charges.reduce((sum, c) => sum + (c[flag] !== false ? amountOf(c.mensuel) : 0), 0);
+    const depenses = state.depenses.reduce((sum, d) => sum + (d[flag] !== false ? amountOf(d.montant) : 0), 0);
+    return [
+      ['Sur les charges', `${eur2.format(charges)} par mois · ${eur2.format(annual(charges))} par an`],
+      [`Sur les dépenses ${currentMonthWithPreposition()}`, eur2.format(depenses)]
+    ];
+  };
+
+  const REPORT_SECTIONS = {
+    synthese() {
+      const rev = totalRevenus();
+      const ch = totalMonthly();
+      const solde = rev - ch;
+      const eco = computeSavings().monthly;
+      const { years, results: [low, high] } = computeYield();
+      return {
+        title: 'Synthèse',
+        blocks: [
+          { type: 'kv', rows: [
+            ['Revenus par mois', eur2.format(rev)],
+            ['Charges par mois', eur2.format(ch)],
+            ['Solde par mois (revenus − charges)', eur2.format(solde)],
+            ['Taux d\'épargne', rev > 0 ? pct1.format(solde / rev) : '–'],
+            ['Économie possible', `${eur2.format(eco)} par mois`],
+            [`Capital dans ${years} an${years > 1 ? 's' : ''}`,
+              `${eur0.format(high.pts[years].balance)} à ${fmtRate(high.rate)} · ${eur0.format(low.pts[years].balance)} à ${fmtRate(low.rate)}`]
+          ] },
+          { type: 'h3', text: 'Répartition des charges' },
+          categoryTable(CATEGORIES, state.charges, 'mensuel')
+        ]
+      };
+    },
+    revenus: () => ({ title: 'Revenus', blocks: [lineTable(state.revenus)] }),
+    charges: () => ({ title: 'Charges', blocks: [lineTable(state.charges)] }),
+    depenses: () => ({
+      title: `Dépenses de ${monthLabel(state.depensesMoisCourant)}`,
+      blocks: [
+        depenseTable(state.depenses),
+        { type: 'h3', text: 'Répartition par catégorie' },
+        categoryTable(DEP_CATEGORIES, state.depenses, 'montant')
+      ]
+    }),
+    historique: () => ({
+      title: 'Historique des dépenses',
+      blocks: state.depensesHistorique.length
+        ? state.depensesHistorique.flatMap((m) => [
+          { type: 'h3', text: `${capitalize(monthLabel(m.mois))} · ${eur2.format(m.total)}` },
+          depenseTable(m.items)
+        ])
+        : [{ type: 'p', text: 'Aucun mois archivé pour le moment.' }]
+    }),
+    economie() {
+      const { rows, monthly, annual: yearly } = computeSavings();
+      return {
+        title: 'Économie',
+        blocks: [
+          reportTable(['Charge', 'Alternative', 'Actuel', 'Nouveau', 'Économie / mois'],
+            rows.map((r) => [r.charge.nom, r.sc.option || '–', eur2.format(r.charge.mensuel), eur2.format(r.sc.nouveau), eur2.format(r.eco)]),
+            { textCols: 2 }),
+          { type: 'kv', rows: [['Économie possible (meilleure option par charge)', `${eur2.format(monthly)} par mois · ${eur2.format(yearly)} par an`]] }
+        ]
+      };
+    },
+    placement() {
+      const { years, results: [low, high] } = computeYield();
+      return {
+        title: 'Placement',
+        blocks: [
+          { type: 'kv', rows: [
+            ['Épargne mensuelle', eur2.format(state.yield.versement)],
+            ['Capital de départ', eur2.format(state.yield.capital)],
+            ['Durée', `${years} an${years > 1 ? 's' : ''}`],
+            ['Rendements annuels comparés', `${fmtRate(low.rate)} et ${fmtRate(high.rate)}`]
+          ] },
+          reportTable(['Année', 'Total versé', `Capital à ${fmtRate(low.rate)}`, `Capital à ${fmtRate(high.rate)}`],
+            low.pts.slice(1).map((p, i) => [String(p.year), eur0.format(p.deposited), eur0.format(p.balance), eur0.format(high.pts[i + 1].balance)]))
+        ]
+      };
+    },
+    cashback: () => ({
+      title: `CashBack (${fmtRate(state.cashbackRate)})`,
+      blocks: [extraTable('cashbackOn', (m) => m * cashbackFraction(), 'Cashback'),
+        { type: 'kv', rows: extraTotals('cashbackOn', (m) => m * cashbackFraction()) }]
+    }),
+    roundup: () => ({
+      title: `RoundUp (arrondi à ${eur2.format(state.roundUpTo)})`,
+      blocks: [extraTable('roundUpOn', roundUpAmount, 'Arrondi'),
+        { type: 'kv', rows: extraTotals('roundUpOn', roundUpAmount) }]
+    })
+  };
+
+  function buildReport(modelKey) {
+    const model = EXPORT_MODELS[modelKey] || EXPORT_MODELS.simple;
+    const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date());
+    return {
+      title: `Gestion budget · modèle ${model.label}`,
+      subtitle: `Profil « ${Profiles.active().nom} » · exporté le ${date}`,
+      sections: model.sections.map((key) => REPORT_SECTIONS[key]())
+    };
+  }
+
+  /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Exporter). */
+  function renderReportHtml(report, box) {
+    const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
+    const block = (b) => {
+      if (b.type === 'h3') return h('h3', {}, b.text);
+      if (b.type === 'p') return h('p', {}, b.text);
+      if (b.type === 'kv') {
+        return h('table', { class: 'report__kv' },
+          h('tbody', {}, b.rows.map(([k, v]) => h('tr', {}, h('th', { scope: 'row' }, k), h('td', { class: 'num' }, v)))));
+      }
+      return h('table', {},
+        h('thead', {}, h('tr', {}, cells('th', b.head, b.align))),
+        h('tbody', {}, b.rows.map((r) => h('tr', {}, cells('td', r, b.align)))),
+        b.foot ? h('tfoot', {}, h('tr', {}, cells('td', b.foot, b.align))) : null);
+    };
+    box.replaceChildren(
+      h('h1', {}, report.title),
+      h('p', { class: 'report__sub' }, report.subtitle),
+      ...report.sections.map((sec) => h('section', {}, h('h2', {}, sec.title), sec.blocks.map(block)))
+    );
+  }
+
+  function downloadFile(bytes, mime, filename) {
+    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const link = h('a', { href: url, download: filename });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  /** Pages Exporter et Imprimer : même formulaire, la page Imprimer fixe le
+      format à « print » (champ caché) et ne propose que le choix du modèle. */
+  function bindExport() {
+    const form = $('#exportForm');
+    if (!form) return;
+    const status = $('#exportStatus');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const format = form.elements.format.value;
+      const modelKey = form.elements.modele.value;
+      const report = buildReport(modelKey);
+      if (format === 'print' || format === 'pdf') {
+        // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
+        // navigateur propose « Enregistrer au format PDF » comme destination.
+        status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
+        renderReportHtml(report, $('#printReport'));
+        window.print();
+        return;
+      }
+      downloadFile(Docx.build(report), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
+      // Google Docs : aucune connexion n'est possible depuis l'application,
+      // le même fichier .docx s'importe dans Google Drive.
+      status.textContent = format === 'gdocs'
+        ? 'Fichier .docx téléchargé. Pour l\'ouvrir dans Google Docs : sur Google Drive, Nouveau → Importer un fichier, puis « Ouvrir avec Google Docs ».'
+        : 'Fichier Word (.docx) téléchargé.';
+    });
+  }
+
+  /* ==========================================================================
      Résumé (tuiles du haut)
      ========================================================================== */
 
@@ -2583,6 +2789,7 @@
     bindInfoModal('#wBtnExemple', '#exampleOverlay', '#exampleClose');
     bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
+    bindExport();
     syncYieldInputs();
     renderLines('revenus');
     renderLines('charges');

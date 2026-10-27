@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.12.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.13.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -50,10 +50,16 @@ placement, exemples de produits financiers et synthèse visuelle,
   ETF, cashback, arrondi automatique).
 - **Synthèse graphique** — camembert de répartition des dépenses et graphique
   en barres, par mois ou par an.
-- **Export PDF & impression** — boutons « Exporter » et « Imprimer » sous la
-  synthèse : ils ouvrent la boîte de dialogue d'impression du navigateur
-  (feuille de style `@media print` dédiée), qui propose « Enregistrer en PDF »
-  comme destination.
+- **Exporter** — page dédiée : format **PDF** (fenêtre d'impression du
+  navigateur, « Enregistrer en PDF »), **Word** (fichier `.docx` généré dans
+  le navigateur, sans bibliothèque) ou **Google Docs** (le même `.docx`, à
+  importer dans Google Drive : aucune connexion n'est faite). Trois modèles :
+  **Simple** (synthèse + dépenses du mois), **Standard** (+ cashback, RoundUp,
+  placement) et **Complet** (+ revenus, charges, historique des dépenses,
+  économie).
+- **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
+  directement le rapport. Les boutons « Exporter » et « Imprimer » restent
+  aussi disponibles sous la synthèse.
 - **Profils** — plusieurs budgets indépendants sur le même appareil (le vôtre,
   celui d'un proche…) : chacun garde ses propres revenus, charges, dépenses et
   placements, sans rien mélanger. Création d'un profil vide ou pré-rempli,
@@ -93,10 +99,11 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
-  Économie, Placement, Produits financiers, Annexe, Profil, Paramètres,
-  À propos, Vos données)
+  Économie, Placement, Produits financiers, Annexe, Exporter, Imprimer,
+  Profil, Paramètres, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
-- `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression, profil d'exemple)
+- `assets/js/script.js` — logique de l'application (rendu, stockage local, rapports d'export et d'impression, profil d'exemple)
+- `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
@@ -112,7 +119,7 @@ et une release automatisée :
 ```bash
 npm install       # installe l'outillage (lint, tests, hooks Git)
 npm run lint      # ESLint sur assets/js
-npm test          # Vitest sur assets/js/calc.js et assets/js/profiles.js
+npm test          # Vitest sur calc.js, profiles.js et docx.js
 npm run build     # vérifie les références des pages et la version de cache des CSS/JS
 npm run bump-assets  # augmente le ?v= des CSS/JS après les avoir modifiés
 ```

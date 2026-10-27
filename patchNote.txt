@@ -39,6 +39,7 @@ v1.10.0 = pop-up détail revenu + ajout modification et date dans pop-up détail
 v1.10.1 = polish a propos + polish UI liste poste à économiser
 v1.11.0 = Blocage des connexions + ajout complément apropos.html
 v1.12.0 = ajout profil + ajout parametre + rework UI Menu sur bureau
+v1.13.0 = ajout exporter + ajout imprimer
 
 ** Next idea **
 un mode tuto 

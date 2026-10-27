@@ -20,6 +20,7 @@ module.exports = [
         Profiles: 'readonly',
         confirmDialog: 'readonly',
         Prefs: 'readonly',
+        Docx: 'readonly',
       },
     },
     rules: {

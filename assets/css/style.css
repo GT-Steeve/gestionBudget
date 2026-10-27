@@ -681,6 +681,30 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 .has-example-close .foot { padding-bottom: 100px; }
 
+/* ---------- Exporter ---------- */
+
+.export-actions { display: flex; justify-content: center; margin-top: 24px; }
+.export-status { text-align: center; margin: 12px auto 0; }
+.export-status:empty { display: none; }
+
+/* Rapport généré par la page Exporter : invisible à l'écran, seul contenu
+   imprimé (voir @media print). Couleurs fixes, lisibles sur papier quel que
+   soit le thème. */
+.report { display: none; color: #1a1a1a; font-size: 10.5pt; line-height: 1.4; }
+.report h1 { font-size: 20pt; margin: 0; }
+.report__sub { color: #6b6457; margin: 2px 0 14pt; }
+.report h2 { font-size: 14pt; color: #256abf; margin: 16pt 0 6pt; break-after: avoid; }
+.report h3 { font-size: 11.5pt; margin: 10pt 0 4pt; break-after: avoid; }
+.report p { margin: 0 0 6pt; }
+.report table { width: 100%; border-collapse: collapse; margin: 0 0 8pt; }
+.report th, .report td { border: 1px solid #c9c0ad; padding: 3pt 6pt; text-align: left; vertical-align: top; }
+.report thead th { background: #ede7da; }
+.report thead { display: table-header-group; } /* en-tête répété sur chaque page */
+.report tr { break-inside: avoid; }
+.report tfoot td { font-weight: 700; }
+.report .num { text-align: right; white-space: nowrap; }
+.report__kv th { font-weight: 400; width: 55%; }
+
 /* ---------- Paramètres ---------- */
 
 .note--tight { margin-top: 4px; }
@@ -1009,6 +1033,8 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .syn-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   /* Sur mobile et tablette, seul l'export reste : l'impression est une action bureau. */
   #btnPrint { display: none; }
+  /* Même règle pour l'onglet Imprimer (.nav a.desk-only l'emporte sur .nav a). */
+  .desk-only, .nav a.desk-only { display: none; }
 }
 
 /* Bureau et tablette : plus de barre du haut. Le <header> devient une barre
@@ -1295,6 +1321,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
   .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }
   body { background: #fff; display: block; }
+  /* Page Exporter : seul le rapport généré s'imprime. */
+  body:has(#printReport) main > :not(#printReport) { display: none !important; }
+  .report { display: block; }
   .card { break-inside: avoid; box-shadow: none; }
 
   /* Pop-up Historique (dépenses) ouvert : n'imprime que son contenu, pas le
