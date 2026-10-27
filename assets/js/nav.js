@@ -1,11 +1,12 @@
 /* ==========================================================================
-   Gestion budget — chrome partagé entre les pages (thème + menu mobile)
-   Inclus par index.html ET apropos.html, avant script.js s'il est présent.
+   Gestion budget — chrome partagé entre les pages (thème, taille, menu mobile)
+   Inclus par toutes les pages, après profiles.js et avant script.js s'il est présent.
    ========================================================================== */
 'use strict';
 
 (() => {
   const THEME_KEY = 'gestion-epargne-theme';
+  const ZOOM_KEY = 'gestion-epargne-zoom';
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -37,10 +38,8 @@
     btn.addEventListener('click', () => {
       if (menu.classList.contains('is-open')) close(); else open();
     });
-    // Referme le menu une fois un lien de section activé, mais pas pour le bouton
-    // thème : changer d'apparence ne doit pas couper la navigation dans le menu.
+    // Referme le menu une fois un lien de section activé.
     menu.addEventListener('click', (e) => {
-      if (e.target.closest('#themeBtn')) return;
       if (e.target.closest('a, button')) close();
     });
     document.addEventListener('click', (e) => {
@@ -59,20 +58,31 @@
     });
   }
 
-  /* ---------- Thème ---------- */
+  /* ---------- Préférences d'affichage (thème, taille) ----------
+     Appliquées sur chaque page via <html data-theme> et <html data-zoom> ;
+     la page Paramètres (parametres.js) les modifie via window.Prefs. Le
+     facteur de la taille agrandie est défini dans le CSS (html[data-zoom]). */
 
-  function initTheme() {
-    const saved = store.get(THEME_KEY);
-    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-    const btn = $('#themeBtn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      const current = document.documentElement.dataset.theme
-        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      store.set(THEME_KEY, next);
-    });
+  const root = document.documentElement;
+  const Prefs = {
+    /** Thème affiché : choix enregistré, sinon celui de l'appareil. */
+    theme: () => root.dataset.theme
+      || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+    setTheme(theme) {
+      root.dataset.theme = theme;
+      store.set(THEME_KEY, theme);
+    },
+    zoom: () => (root.dataset.zoom === 'large' ? 'large' : 'normal'),
+    setZoom(zoom) {
+      if (zoom === 'large') root.dataset.zoom = 'large'; else delete root.dataset.zoom;
+      store.set(ZOOM_KEY, zoom);
+    }
+  };
+
+  function initPrefs() {
+    const theme = store.get(THEME_KEY);
+    if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+    if (store.get(ZOOM_KEY) === 'large') root.dataset.zoom = 'large';
   }
 
   /* ---------- Bouton « Pour tout effacer » du footer ----------
@@ -81,11 +91,17 @@
      Annexe). Même pop-up de confirmation que script.js (#confirmOverlay), pas l'alerte
      native du navigateur, pour une expérience cohérente sur toutes les pages. */
 
-  function confirmDeleteFooter(title, details, onConfirm) {
+  /** opts.center : pop-up étroit, titre, texte et boutons centrés (comme script.js). */
+  function confirmDeleteFooter(title, details, onConfirm, opts = {}) {
     const overlay = $('#confirmOverlay');
     if (!overlay) { onConfirm(); return; }
+    const center = !!opts.center;
     $('#confirmTitle').textContent = title;
+    $('#confirmTitle').classList.toggle('modal__title--center', center);
+    $('#confirmOverlay .modal').classList.toggle('modal--narrow', center);
+    $('#confirmOverlay .modal__actions').classList.toggle('modal__actions--center', center);
     const detailsEl = $('#confirmDetails');
+    detailsEl.classList.toggle('modal__details--center', center);
     detailsEl.replaceChildren();
     for (const [label, value] of details) {
       const dt = document.createElement('dt');
@@ -121,8 +137,8 @@
   function initClearFooter() {
     const btn = $('#btnClearFooter');
     if (!btn || document.body.dataset.app === 'true') return;
-    const STORAGE_KEY = 'gestion-epargne-v1';
     btn.addEventListener('click', () => {
+      const STORAGE_KEY = Profiles.dataKey();
       const saved = store.get(STORAGE_KEY) || {};
       const revenus = Array.isArray(saved.revenus) ? saved.revenus : [];
       const charges = Array.isArray(saved.charges) ? saved.charges : [];
@@ -182,8 +198,37 @@
     });
   }
 
+  /* ---------- Bouton « Fermer l'exemple » ----------
+     Tant que le profil d'exemple est ouvert, un bouton fixé en bas de l'écran
+     permet d'en sortir : retour au profil d'avant, puis à la page Profil.
+     Revenir sur la page Profil ferme aussi l'exemple, sans bouton : fait ici,
+     avant profil.js, pour que la liste affichée ne contienne plus l'exemple. */
+
+  function initExampleClose() {
+    if (!Profiles.active().exemple) return;
+    if ($('#profilList')) {
+      Profiles.closeExample();
+      return;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn example-close';
+    btn.textContent = 'Fermer l\'exemple';
+    btn.addEventListener('click', () => {
+      Profiles.closeExample();
+      location.href = location.pathname.includes('/pages/') ? 'profil.html' : 'pages/profil.html';
+    });
+    document.body.append(btn);
+    document.body.classList.add('has-example-close');
+  }
+
+  // Même pop-up de confirmation, réutilisée par la page Profil (profil.js).
+  window.confirmDialog = confirmDeleteFooter;
+  window.Prefs = Prefs;
+
+  initPrefs();
   initMenu();
-  initTheme();
   initClearFooter();
+  initExampleClose();
   initNavScrollArrows();
 })();

@@ -10,10 +10,10 @@
 (() => {
   /* ---------- Constantes ---------- */
 
-  const STORAGE_KEY = 'gestion-epargne-v1';
-  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Autre'];
+  const STORAGE_KEY = Profiles.dataKey(); // données du profil actif (voir profiles.js)
+  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Prêt', 'Famille / Proche', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
-  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Famille / Proche', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Autre'];
   /** Exemples de libellés par catégorie : affichés comme placeholder du champ
       "Libellé" selon la catégorie choisie, pour guider la saisie. */
   const NOM_PLACEHOLDERS = {
@@ -32,6 +32,8 @@
       'Plaisir': 'Ex. Restaurant',
       'Assurance': 'Ex. Voiture, habitation',
       'Épargne': 'Ex. Économie, PEA',
+      'Prêt': 'Ex. Crédit immobilier, prêt auto',
+      'Famille / Proche': 'Ex. Aide aux parents, argent de poche',
       'Autre': 'Ex. Pension alimentaire (enfants)'
     },
     depenses: {
@@ -44,6 +46,7 @@
       'Équipement': 'Ex. Lave-linge, télé',
       'Entretien ménager': 'Ex. Liquide vaisselle, Javel',
       'Cadeau': 'Ex. Anniversaire, fleur',
+      'Famille / Proche': 'Ex. Aide ponctuelle, sortie en famille',
       'Santé': 'Ex. Médecin, lunettes',
       'Amende': 'Ex. Stationnement, radar',
       'Imprévu': 'Ex. Panne voiture, garage',
@@ -61,6 +64,8 @@
     Plaisir: 'Ex. Sortie moins chère, moins de restaurants, offre découverte',
     Assurance: 'Ex. Comparateur, changement de formule, regroupement de contrats',
     'Épargne': 'Ex. Virement automatique, livret, arrondi à l\'achat',
+    'Prêt': 'Ex. Renégociation du taux, rachat de crédit',
+    'Famille / Proche': 'Ex. Budget fixe, montant revu ensemble',
     Autre: 'Ex. Option moins chère'
   };
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
@@ -485,22 +490,71 @@
     const inter = { id: uid(), categorie: 'Factures', nom: 'Internet + mobile', mensuel: 90 };
     const courses = { id: uid(), categorie: 'Courses', nom: 'Courses alimentaires', mensuel: 400 };
     const transport = { id: uid(), categorie: 'Transport', nom: 'Pass transport', mensuel: 90 };
+    const assurance = { id: uid(), categorie: 'Assurance', nom: 'Assurance habitation', mensuel: 25 };
+    const abos = { id: uid(), categorie: 'Abonnements', nom: 'Netflix + Spotify', mensuel: 30 };
+    const livret = { id: uid(), categorie: 'Épargne', nom: 'Livret A', mensuel: 150 };
+
+    // Dépenses datées par rapport à aujourd'hui : mois en cours (jours déjà
+    // passés uniquement) et deux mois précédents, archivés dans l'historique.
+    const now = new Date();
+    const depense = (monthsAgo, day, categorie, nom, montant) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1, 12);
+      d.setDate(monthsAgo ? day : Math.min(day, now.getDate()));
+      return { id: uid(), categorie, nom, montant, ajout: d.toISOString() };
+    };
+    const archive = (monthsAgo, items) => ({
+      mois: monthKey(new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1)),
+      total: items.reduce((sum, d) => sum + d.montant, 0),
+      items
+    });
+
     return {
       revenus: [
-        { id: uid(), categorie: 'Salaire', nom: 'Salaire net', mensuel: 2000 },
+        { id: uid(), categorie: 'Salaire', nom: 'Salaire net', mensuel: 2300 },
         { id: uid(), categorie: 'Aide', nom: 'Aide enfant', mensuel: 150 }
       ],
-      charges: [loyer, elec, inter, courses, transport],
-      depenses: [],
-      depensesHistorique: [],
-      depensesMoisCourant: monthKey(new Date()),
+      charges: [loyer, elec, inter, courses, transport, assurance, abos, livret],
+      depenses: [
+        depense(0, 2, 'Alimentaire', 'Boulangerie', 8.4),
+        depense(0, 4, 'Transport', 'Essence', 55),
+        depense(0, 6, 'Restaurant', 'Pizzeria', 32.5),
+        depense(0, 9, 'Shopping', 'Zara', 49.99),
+        depense(0, 12, 'Divertissement', 'Jeu Steam', 19.99),
+        depense(0, 15, 'Santé', 'Pharmacie', 14.2),
+        depense(0, 18, 'Sortie', 'Cinéma', 22),
+        depense(0, 21, 'Cadeau', 'Anniversaire de Léa', 35),
+        depense(0, 24, 'Entretien ménager', 'Lessive, éponges', 12.8)
+      ],
+      depensesHistorique: [
+        archive(1, [
+          depense(1, 3, 'Alimentaire', 'Marché', 23.6),
+          depense(1, 5, 'Transport', 'Essence', 60),
+          depense(1, 8, 'Restaurant', 'Fast-food', 14.9),
+          depense(1, 11, 'Famille / Proche', 'Sortie en famille', 45),
+          depense(1, 14, 'Équipement', 'Bouilloire', 29.99),
+          depense(1, 19, 'Sortie', 'Bowling', 18),
+          depense(1, 22, 'Amende', 'Stationnement', 35),
+          depense(1, 27, 'Shopping', 'Amazon', 24.5)
+        ]),
+        archive(2, [
+          depense(2, 2, 'Alimentaire', 'Boulangerie', 6.9),
+          depense(2, 6, 'Transport', 'Péage', 12.4),
+          depense(2, 9, 'Imprévu', 'Garage, plaquettes de frein', 180),
+          depense(2, 13, 'Restaurant', 'Restaurant japonais', 41),
+          depense(2, 17, 'Santé', 'Médecin', 30),
+          depense(2, 20, 'Divertissement', 'Place de concert', 55),
+          depense(2, 25, 'Cadeau', 'Fleurs', 25)
+        ])
+      ],
+      depensesMoisCourant: monthKey(now),
       cashbackRate: 1,
       roundUpTo: 1,
       scenarios: [
         { id: uid(), chargeId: elec.id, option: 'Fournisseur moins cher', nouveau: 52 },
-        { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 }
+        { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 },
+        { id: uid(), chargeId: abos.id, option: 'Offre duo partagée', nouveau: 18 }
       ],
-      yield: { capital: 1000, versement: 100, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 },
+      yield: { capital: 3000, versement: 150, annees: 15, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 5 },
       view: 'mois'
     };
   }

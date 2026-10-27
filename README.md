@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.11.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.12.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -54,10 +54,20 @@ placement, exemples de produits financiers et synthèse visuelle,
   synthèse : ils ouvrent la boîte de dialogue d'impression du navigateur
   (feuille de style `@media print` dédiée), qui propose « Enregistrer en PDF »
   comme destination.
-- **Thème clair / sombre**, au choix ou automatique selon les préférences du
-  système.
-- **Interface responsive** (mobile, tablette, desktop) avec menu compact sur
-  petit écran.
+- **Profils** — plusieurs budgets indépendants sur le même appareil (le vôtre,
+  celui d'un proche…) : chacun garde ses propres revenus, charges, dépenses et
+  placements, sans rien mélanger. Création d'un profil vide ou pré-rempli,
+  changement, renommage et suppression depuis la page Profil.
+- **Profil d'exemple** — un budget fictif complet (dépenses du mois et des
+  deux mois précédents, comparaisons, placement) pour découvrir chaque page.
+  Il s'ouvre à part et le bouton « Fermer l'exemple » le supprime en ramenant
+  au profil d'avant : vos données ne sont jamais touchées.
+- **Paramètres** — taille d'affichage normale ou agrandie (115 %, comme le
+  zoom du navigateur) et thème clair ou sombre (automatique selon le système
+  tant qu'aucun choix n'est fait).
+- **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
+  qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
+  onglets sous le titre, avec Profil et Paramètres en icônes.
 - Toutes les données restent **dans le navigateur** (`localStorage`) —
   aucun serveur, aucun compte.
 - **Aucune connexion sortante** — chaque page déclare une
@@ -83,11 +93,14 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
-  Économie, Placement, Produits financiers, Annexe, À propos, Vos données)
-- `assets/css/style.css` — thème (clair/sombre), mise en page, responsive, impression
-- `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression)
+  Économie, Placement, Produits financiers, Annexe, Profil, Paramètres,
+  À propos, Vos données)
+- `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
+- `assets/js/script.js` — logique de l'application (rendu, stockage local, export/impression, profil d'exemple)
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
-- `assets/js/nav.js` — menu mobile, thème, effacement des données
+- `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`
+- `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
+- `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
 - `assets/img/` — favicons et image de partage (Open Graph)
 
@@ -99,7 +112,7 @@ et une release automatisée :
 ```bash
 npm install       # installe l'outillage (lint, tests, hooks Git)
 npm run lint      # ESLint sur assets/js
-npm test          # Vitest sur assets/js/calc.js
+npm test          # Vitest sur assets/js/calc.js et assets/js/profiles.js
 npm run build     # vérifie les références des pages et la version de cache des CSS/JS
 npm run bump-assets  # augmente le ?v= des CSS/JS après les avoir modifiés
 ```

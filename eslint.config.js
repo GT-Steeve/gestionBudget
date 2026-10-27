@@ -17,6 +17,9 @@ module.exports = [
         module: 'writable',
         require: 'readonly',
         Calc: 'readonly',
+        Profiles: 'readonly',
+        confirmDialog: 'readonly',
+        Prefs: 'readonly',
       },
     },
     rules: {

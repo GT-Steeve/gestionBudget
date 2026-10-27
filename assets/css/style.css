@@ -105,7 +105,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--zoom)); /* 100vh est lui aussi agrandi par zoom */
   display: flex;
   flex-direction: column;
   background: var(--page);
@@ -138,9 +138,11 @@ main.wrap { flex: 1 0 auto; }
 .topbar__in { position: relative; display: flex; align-items: center; gap: 16px; height: 56px; }
 .brand { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; margin-right: auto; }
 .brand a { color: inherit; text-decoration: none; }
+/* Icône du projet : seulement dans la barre latérale repliée (bureau, voir plus bas). */
+.brand__short { display: none; }
 
-/* Sur desktop, le conteneur ne fait que grouper nav + thème sans exister dans la mise en page :
-   .nav et #themeBtn restent des enfants flex directs de .topbar__in, comme avant. */
+/* Le conteneur ne fait que grouper le menu et les icônes Profil / Paramètres, sans
+   exister dans la mise en page : ses enfants sont placés directement par .topbar__in. */
 .site-menu { display: contents; }
 
 /* Ancre les flèches de défilement mobiles (voir media query), sans effet sur
@@ -179,27 +181,25 @@ main.wrap { flex: 1 0 auto; }
 .menu-toggle[aria-expanded="true"] .menu-icon--bars { opacity: 0; transform: rotate(45deg); }
 .menu-toggle[aria-expanded="true"] .menu-icon--close { opacity: 1; transform: rotate(0deg); }
 
-/* Bouton thème : icône seule (soleil / lune), sans fond ni bordure de bouton.
-   Le bouton Accueil (icône maison, à gauche du titre) partage exactement le
-   même traitement visuel, mais n'apparaît que sur mobile (voir media query)
-   où il remplace l'onglet Synthèse du menu déroulant ; sur desktop, Synthèse
-   reste un onglet du menu comme avant (voir .nav-home plus bas). */
-.theme-toggle, .home-link {
+/* Icônes seules, sans fond ni bordure de bouton, visibles uniquement sur
+   mobile (voir media query) : Accueil (maison, à gauche du titre) à la place
+   de l'onglet Synthèse, Profil et Paramètres (à droite) à la place de leurs
+   onglets. Sur bureau, ces trois pages restent des onglets du menu. */
+.icon-link, .home-link {
   display: inline-flex; flex: none; align-items: center; justify-content: center;
   width: 36px; height: 36px; padding: 0;
   color: var(--ink); background: transparent; border: none; border-radius: 8px; cursor: pointer;
   text-decoration: none;
 }
 .home-link { display: none; }
-.theme-toggle:hover, .home-link:hover { background: var(--wash); }
-/* Clair par défaut : lune visible, soleil masqué. */
-.theme-toggle .icon-sun { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .theme-toggle .icon-moon { display: none; }
-  :root:where(:not([data-theme="light"])) .theme-toggle .icon-sun { display: inline-flex; }
-}
-:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
-:root[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+.icon-link:hover, .home-link:hover { background: var(--wash); }
+.icon-link[aria-current="page"] { color: var(--accent); }
+.top-actions { display: none; gap: 2px; }
+
+/* Taille agrandie (page Paramètres) : agrandit toute l'interface, comme le
+   zoom du navigateur. Le facteur est affiché tel quel sur la page Paramètres. */
+:root { --zoom-large: 1.15; --zoom: 1; }
+html[data-zoom="large"] { --zoom: var(--zoom-large); zoom: var(--zoom); }
 
 /* ---------- Buttons & fields ---------- */
 
@@ -645,6 +645,75 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .details summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink-2); padding: 6px 0; }
 .details summary:hover { color: var(--ink); }
 
+/* ---------- Profils ---------- */
+
+.profile-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.profile-item {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px;
+}
+.profile-item.is-active { border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+.profile-item__name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 0; min-width: 0; font-size: 15px; }
+.profile-item__name strong { overflow-wrap: anywhere; }
+.profile-item__name input { width: min(100%, 280px); }
+.profile-item__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Indicateur « Actif » à la place du bouton « Utiliser » (même gabarit, non cliquable).
+   min-width : « Actif » et « Utiliser » occupent la même largeur. */
+.btn.profile-active {
+  min-width: 72px; cursor: default; filter: none;
+  color: var(--good); background: transparent; border-color: currentColor;
+}
+.profile-item .btn--sm:first-child { min-width: 72px; }
+.profile-example { margin-top: 16px; justify-content: flex-start; }
+/* Carte « Profil d'exemple » (page Profil) : titre et bouton centrés, texte
+   justifié dans un bloc centré. */
+.example-card h2 { text-align: center; }
+.example-card .lead { margin: 2px auto 0; text-align: justify; }
+.example-card .profile-example { display: flex; justify-content: center; }
+
+/* Bouton « Fermer l'exemple » (nav.js), fixé en bas de l'écran tant que le
+   profil d'exemple est ouvert. La marge basse du footer évite qu'il ne
+   recouvre la fin du contenu (pas celle du body, qui raccourcirait la
+   barre latérale sur bureau). */
+.example-close {
+  position: fixed; left: 50%; bottom: 20px; z-index: 50; transform: translateX(-50%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+.has-example-close .foot { padding-bottom: 100px; }
+
+/* ---------- Paramètres ---------- */
+
+.note--tight { margin-top: 4px; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px; margin-top: 12px; }
+/* Carte cliquable autour d'un bouton radio (masqué visuellement mais
+   toujours utilisable au clavier et lu par les lecteurs d'écran). */
+.choice {
+  position: relative; gap: 2px; padding: 14px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.choice:hover { border-color: var(--axis); }
+.choice:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice__label { font-size: 15px; font-weight: 650; color: var(--ink); }
+.choice__sub { font-size: 13px; color: var(--muted); }
+.choice__preview {
+  display: flex; align-items: center; justify-content: center;
+  height: 64px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border);
+}
+.choice__preview--text { font-size: 20px; font-weight: 650; color: var(--ink); background: var(--page); }
+.choice__preview--large { font-size: 28px; }
+/* Aperçus de thème : couleurs fixes (celles du thème représenté, pas du thème actif). */
+.choice__preview--light, .choice__preview--dark { flex-direction: column; align-items: stretch; gap: 5px; padding: 10px 14px; }
+.choice__preview--light { background: #ece6d8; }
+.choice__preview--dark { background: #0d0d0d; }
+.choice__preview--light span, .choice__preview--dark span { display: block; height: 8px; border-radius: 4px; }
+.choice__preview--light span { background: #2a251c; }
+.choice__preview--dark span { background: #ffffff; }
+.choice__preview span:first-child { width: 45%; height: 10px; }
+.choice__preview span:nth-child(2) { width: 85%; opacity: 0.45; }
+.choice__preview span:nth-child(3) { width: 30%; background: #256abf; }
+
 /* ---------- Footer ---------- */
 
 .foot { padding-top: 8px; padding-bottom: 40px; font-size: 13px; color: var(--muted); text-align: center; }
@@ -678,6 +747,10 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .modal__details:empty { display: none; }
 .modal__details dt { color: var(--ink-2); }
 .modal__details dd { text-align: right; font-weight: 600; }
+/* Variante centrée (ex. suppression d'un profil) : une seule colonne, texte au centre. */
+.modal__details--center { grid-template-columns: 1fr; text-align: center; }
+.modal__details--center dd { text-align: center; }
+.modal__details--center dd:empty { display: none; }
 /* Pop-up Détail : date (à gauche) et heure (à droite) d'ajout, sous le titre. */
 .modal__stamp {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -938,10 +1011,78 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   #btnPrint { display: none; }
 }
 
+/* Bureau et tablette : plus de barre du haut. Le <header> devient une barre
+   latérale à gauche, sur toute la hauteur : titre en haut, menu (icône +
+   texte), puis Profil, À propos et le bouton thème calés en bas. Le menu
+   reste le même HTML sur toutes les pages : seul le CSS le déplace.
+   Sa largeur suit son plus long texte (le titre « Gestion budget ») : la
+   colonne de grille max-content s'y ajuste, avec 24px de chaque côté
+   (12px de .topbar__in + 12px du titre ou des liens). */
+@media (min-width: 641px) {
+  html { scroll-padding-top: 16px; }
+  body { display: grid; grid-template-columns: max-content minmax(0, 1fr); grid-template-rows: 1fr auto; }
+  main.wrap { grid-column: 2; grid-row: 1; }
+  .foot { grid-column: 2; grid-row: 2; }
+  .topbar {
+    grid-column: 1; grid-row: 1 / -1; align-self: start;
+    position: sticky; top: 0; height: calc(100vh / var(--zoom));
+    background: var(--page); backdrop-filter: none;
+    border-bottom: 0; border-right: 1px solid var(--border);
+  }
+  .topbar__in {
+    flex-direction: column; align-items: stretch; gap: 0;
+    height: 100%; max-width: none; padding: 20px 12px 16px;
+  }
+  .brand { margin: 0 0 8px; padding: 0 12px; white-space: nowrap; text-transform: uppercase; }
+  .nav-scroll-wrap { flex: 1 1 auto; min-height: 0; display: flex; overflow-y: auto; }
+  .nav { flex: 1 0 auto; flex-direction: column; gap: 2px; }
+  .nav a { padding: 8px 12px; }
+  /* Profil puis À propos (qui le suit dans le HTML) sont poussés en bas du menu. */
+  .nav a[href$="profil.html"] { margin-top: auto; }
+  .nav a[aria-current="page"] { background: var(--wash); color: var(--accent); font-weight: 650; }
+  .nav-icon { display: inline-flex; }
+  /* Flèches de défilement : utiles seulement pour les onglets horizontaux du mobile. */
+  .nav-scroll-wrap .scroll-arrow { display: none; }
+}
+
+/* Bureau (souris) : la barre latérale est repliée sur ses icônes et
+   l'icône du projet. Au survol (ou au clavier), elle se déplie par-dessus le
+   contenu, sans le décaler : libellés des onglets et titre complet. Les
+   écrans tactiles (tablettes), sans survol, gardent la barre dépliée.
+   65px = icône 16px + 24px de chaque côté (12px de .topbar__in + 12px de
+   lien) + 1px de bordure droite. */
+@media (min-width: 641px) and (hover: hover) {
+  :root { --rail-w: 65px; }
+  body { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
+  .topbar {
+    width: var(--rail-w); overflow: hidden; z-index: 20;
+    interpolate-size: allow-keywords; /* anime jusqu'à max-content là où c'est pris en charge */
+    transition: width .2s ease, box-shadow .2s ease;
+  }
+  .topbar:hover, .topbar:has(:focus-visible) {
+    width: max-content; box-shadow: 6px 0 18px rgba(0, 0, 0, 0.12);
+  }
+  /* Même hauteur avec ou sans libellé (8px + ligne de 21px + 8px) : les
+     icônes ne bougent pas quand la barre se déplie. */
+  .nav a { white-space: nowrap; min-height: 37px; }
+  /* Titre à la hauteur de l'icône (32px), replié ou non : rien ne bouge en dessous. */
+  .brand { display: flex; align-items: center; min-height: 32px; }
+  .topbar:not(:hover):not(:has(:focus-visible)) .brand { padding: 0; justify-content: center; }
+  .topbar:not(:hover):not(:has(:focus-visible)) .brand__short { display: block; }
+  /* Masqués visuellement, mais toujours lus par les lecteurs d'écran. */
+  .topbar:not(:hover):not(:has(:focus-visible)) .brand__full,
+  .topbar:not(:hover):not(:has(:focus-visible)) .nav a span {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+}
+
 /* Mobile */
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
   .about-head .lead--center { text-align: justify; }
+  /* Carte « Profil d'exemple » : texte sur toute la largeur en mobile. */
+  .example-card .lead { max-width: none; }
   /* Le bouton hamburger disparaît : le menu reste affiché en permanence, pas besoin
      de le déplier. Le lien Synthèse (icône + texte) est plus large que le
      bouton thème : centrer le titre dans la seule colonne du milieu le
@@ -949,7 +1090,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      toute la largeur de la ligne (grid-column 1/-1, superposé aux colonnes
      home/theme) et centré par rapport à l'écran, pas à l'espace restant. */
   .topbar__in {
-    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "home . theme" "nav nav nav";
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "home . actions" "nav nav nav";
     gap: 0 10px; height: auto; padding-top: 4px; padding-bottom: 2px;
   }
   .menu-toggle { display: none; }
@@ -963,10 +1104,13 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      desktop c'est l'inverse : #homeBtn reste masqué et Synthèse garde sa
      place habituelle dans le menu. */
   .nav a.nav-home { display: none; }
-  /* display: contents fait passer .nav et #themeBtn comme des enfants directs de
-     .topbar__in (comme sur desktop), pour pouvoir les placer via grid-area. */
+  /* Même principe pour Profil et Paramètres : icônes en haut à droite
+     (.top-actions) plutôt qu'onglets. */
+  .nav a[href$="profil.html"], .nav a[href$="parametres.html"] { display: none; }
+  /* display: contents fait passer .nav et .top-actions comme des enfants directs de
+     .topbar__in, pour pouvoir les placer via grid-area. */
   .site-menu { display: contents; }
-  #themeBtn { grid-area: theme; justify-self: end; align-self: center; }
+  .top-actions { display: flex; grid-area: actions; justify-self: end; align-self: center; }
   /* Onglets plats : pas de fond ni de bordure, seul un soulignement de 2px
      distingue l'onglet actif (couleur d'accent). Défilement horizontal en
      secours si les 6 onglets ne tiennent pas sur un petit écran, signalé par
@@ -1146,11 +1290,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 
 @media print {
-  .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot { display: none !important; }
+  .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot, .example-close { display: none !important; }
   /* À l'export/impression, seule la Synthèse (camembert + bilan) est utile :
      les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
   .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }
-  body { background: #fff; }
+  body { background: #fff; display: block; }
   .card { break-inside: avoid; box-shadow: none; }
 
   /* Pop-up Historique (dépenses) ouvert : n'imprime que son contenu, pas le
