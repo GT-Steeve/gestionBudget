@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.25.0...v1.26.0) (2026-10-27)
+
+
+### Features
+
+* **profil:** profils, page Paramètres et menu latéral sur bureau ([b8c9985](https://github.com/GT-Steeve/gestionBudget/commit/b8c9985a861824f30698b23e29e284c96584664f))
+
 # [1.25.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.24.0...v1.25.0) (2026-10-23)
 
 
