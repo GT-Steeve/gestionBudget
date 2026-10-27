@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.13.1 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.13.2 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -54,9 +54,9 @@ placement, exemples de produits financiers et synthèse visuelle,
   navigateur, « Enregistrer en PDF »), **Word** (fichier `.docx` généré dans
   le navigateur, sans bibliothèque) ou **Google Docs** (le même `.docx`, à
   importer dans Google Drive : aucune connexion n'est faite). Trois modèles :
-  **Simple** (synthèse + dépenses du mois), **Standard** (+ cashback, RoundUp,
-  placement) et **Complet** (+ revenus, charges, historique des dépenses,
-  économie).
+  **Simple** (synthèse + dépenses du mois), **Standard** (+ revenus, charges,
+  placement) et **Complet** (+ historique des dépenses, économie, cashback,
+  RoundUp).
 - **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
   directement le rapport. Les boutons « Exporter » et « Imprimer » restent
   aussi disponibles sous la synthèse.

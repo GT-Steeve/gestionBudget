@@ -2528,7 +2528,7 @@
 
   const EXPORT_MODELS = {
     simple: { label: 'Simple', sections: ['synthese', 'depenses'] },
-    standard: { label: 'Standard', sections: ['synthese', 'depenses', 'cashback', 'roundup', 'placement'] },
+    standard: { label: 'Standard', sections: ['synthese', 'revenus', 'depenses', 'charges', 'placement'] },
     complet: {
       label: 'Complet',
       sections: ['synthese', 'revenus', 'depenses', 'charges', 'historique', 'economie', 'placement', 'cashback', 'roundup']
