@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.27.0...v1.28.0) (2026-10-27)
+
+
+### Features
+
+* **export:** rapport PDF/impression avec page de garde, sommaire et graphiques ([d108e68](https://github.com/GT-Steeve/gestionBudget/commit/d108e68eb793ea3986eb252af93801f893be636b))
+
 # [1.27.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.26.0...v1.27.0) (2026-10-27)
 
 
