@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.28.0...v1.29.0) (2026-10-27)
+
+
+### Features
+
+* **export:** le modèle Standard inclut revenus et charges au lieu de CashBack et RoundUp ([fdb3030](https://github.com/GT-Steeve/gestionBudget/commit/fdb3030721cc349464123bd9459d57a87facf8b6))
+
 # [1.28.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.27.0...v1.28.0) (2026-10-27)
 
 
