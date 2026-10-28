@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.13.2 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.14.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -56,20 +56,29 @@ placement, exemples de produits financiers et synthèse visuelle,
   importer dans Google Drive : aucune connexion n'est faite). Trois modèles :
   **Simple** (synthèse + dépenses du mois), **Standard** (+ revenus, charges,
   placement) et **Complet** (+ historique des dépenses, économie, cashback,
-  RoundUp).
+  RoundUp). Le `.docx` et le PDF embarquent aussi toutes les données du profil
+  (quel que soit le modèle), pour pouvoir les réimporter : partie JSON dans le
+  `.docx`, lien « Gestion budget » de la page de garde dans le PDF.
 - **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
   directement le rapport. Les boutons « Exporter » et « Imprimer » restent
   aussi disponibles sous la synthèse.
 - **Profils** — plusieurs budgets indépendants sur le même appareil (le vôtre,
   celui d'un proche…) : chacun garde ses propres revenus, charges, dépenses et
-  placements, sans rien mélanger. Création d'un profil vide ou pré-rempli,
-  changement, renommage et suppression depuis la page Profil.
+  placements, sans rien mélanger. Chaque profil de la liste affiche ses
+  revenus, charges, dépenses du mois et son solde, avec un bouton œil pour
+  masquer ses montants. Création d'un profil vide ou pré-rempli (point de
+  départ choisi dans une pop-up), changement, renommage et suppression depuis
+  la page Profil. **Import** d'un profil à partir du `.docx` ou du PDF exporté
+  par l'application (glisser-déposer sur bureau) ; tout autre fichier est
+  refusé (autre application, export modifié ou réenregistré), et un nom déjà
+  pris doit être changé. Après une création ou un import, l'application ouvre
+  la page où continuer et y confirme l'action dans une pop-up.
 - **Profil d'exemple** — un budget fictif complet (dépenses du mois et des
   deux mois précédents, comparaisons, placement) pour découvrir chaque page.
   Il s'ouvre à part et le bouton « Fermer l'exemple » le supprime en ramenant
   au profil d'avant : vos données ne sont jamais touchées.
-- **Paramètres** — taille d'affichage normale ou agrandie (115 %, comme le
-  zoom du navigateur) et thème clair ou sombre (automatique selon le système
+- **Paramètres** — taille d'affichage petite (100 %), normale (115 %, par
+  défaut) ou agrandie (130 %), comme le zoom du navigateur, et thème clair ou sombre (automatique selon le système
   tant qu'aucun choix n'est fait).
 - **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
   qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
@@ -104,6 +113,7 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
 - `assets/js/script.js` — logique de l'application (rendu, stockage local, rapports d'export et d'impression, profil d'exemple)
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
+- `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
@@ -119,7 +129,7 @@ et une release automatisée :
 ```bash
 npm install       # installe l'outillage (lint, tests, hooks Git)
 npm run lint      # ESLint sur assets/js
-npm test          # Vitest sur calc.js, profiles.js et docx.js
+npm test          # Vitest sur calc.js, profiles.js, docx.js et pdflink.js
 npm run build     # vérifie les références des pages et la version de cache des CSS/JS
 npm run bump-assets  # augmente le ?v= des CSS/JS après les avoir modifiés
 ```

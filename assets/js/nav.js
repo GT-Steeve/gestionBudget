@@ -6,7 +6,9 @@
 
 (() => {
   const THEME_KEY = 'gestion-epargne-theme';
-  const ZOOM_KEY = 'gestion-epargne-zoom';
+  const ZOOM_KEY = 'gestion-epargne-taille';
+  const OLD_ZOOM_KEY = 'gestion-epargne-zoom'; // ancien réglage à 2 tailles (normal 100 % / large 115 %)
+  const ZOOMS = ['small', 'normal', 'large'];
 
   const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -61,7 +63,8 @@
   /* ---------- Préférences d'affichage (thème, taille) ----------
      Appliquées sur chaque page via <html data-theme> et <html data-zoom> ;
      la page Paramètres (parametres.js) les modifie via window.Prefs. Le
-     facteur de la taille agrandie est défini dans le CSS (html[data-zoom]). */
+     facteur de chaque taille est défini dans le CSS (--zoom-*) ; sans
+     data-zoom, c'est la taille normale. */
 
   const root = document.documentElement;
   const Prefs = {
@@ -72,9 +75,9 @@
       root.dataset.theme = theme;
       store.set(THEME_KEY, theme);
     },
-    zoom: () => (root.dataset.zoom === 'large' ? 'large' : 'normal'),
+    zoom: () => root.dataset.zoom || 'normal',
     setZoom(zoom) {
-      if (zoom === 'large') root.dataset.zoom = 'large'; else delete root.dataset.zoom;
+      if (zoom === 'small' || zoom === 'large') root.dataset.zoom = zoom; else delete root.dataset.zoom;
       store.set(ZOOM_KEY, zoom);
     }
   };
@@ -82,7 +85,14 @@
   function initPrefs() {
     const theme = store.get(THEME_KEY);
     if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
-    if (store.get(ZOOM_KEY) === 'large') root.dataset.zoom = 'large';
+    let zoom = store.get(ZOOM_KEY);
+    if (!ZOOMS.includes(zoom)) {
+      // Reprend l'ancien réglage en gardant la même taille à l'écran.
+      const old = store.get(OLD_ZOOM_KEY);
+      zoom = old === 'large' ? 'normal' : old === 'normal' ? 'small' : null;
+      if (zoom) store.set(ZOOM_KEY, zoom);
+    }
+    if (zoom === 'small' || zoom === 'large') root.dataset.zoom = zoom;
   }
 
   /* ---------- Bouton « Pour tout effacer » du footer ----------
@@ -222,13 +232,70 @@
     document.body.classList.add('has-example-close');
   }
 
+  /* ---------- Message après redirection ----------
+     Une page qui redirige (ex. Profil après une création ou un import)
+     enregistre un message avec Flash.set ; la page d'arrivée l'affiche une
+     seule fois dans une pop-up : { title, text?, action? (libellé du bouton) }. */
+
+  const FLASH_KEY = 'gestion-budget-flash';
+  const Flash = {
+    set(message) {
+      try { sessionStorage.setItem(FLASH_KEY, JSON.stringify(message)); } catch { /* stockage indisponible */ }
+    },
+    take() {
+      try {
+        const message = JSON.parse(sessionStorage.getItem(FLASH_KEY));
+        sessionStorage.removeItem(FLASH_KEY);
+        return message;
+      } catch { return null; }
+    }
+  };
+
+  function initFlash() {
+    const message = Flash.take();
+    if (!message || typeof message.title !== 'string') return;
+    const el = (tag, className, text) => {
+      const node = document.createElement(tag);
+      node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+    const overlay = el('div', 'modal-overlay');
+    const modal = el('div', 'modal modal--narrow');
+    const title = el('p', 'modal__title modal__title--center', message.title);
+    const text = el('p', 'modal__text success-text', typeof message.text === 'string' ? message.text : '');
+    const ok = el('button', 'btn', typeof message.action === 'string' ? message.action : 'Fermer');
+    title.id = 'flashTitle';
+    ok.type = 'button';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'flashTitle');
+    const actions = el('div', 'modal__actions modal__actions--center');
+    actions.append(ok);
+    modal.append(title, text, actions);
+    overlay.append(modal);
+
+    const close = () => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    ok.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.append(overlay);
+    ok.focus();
+  }
+
   // Même pop-up de confirmation, réutilisée par la page Profil (profil.js).
   window.confirmDialog = confirmDeleteFooter;
   window.Prefs = Prefs;
+  window.Flash = Flash;
 
   initPrefs();
   initMenu();
   initClearFooter();
   initExampleClose();
   initNavScrollArrows();
+  initFlash();
 })();

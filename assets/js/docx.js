@@ -5,6 +5,8 @@
    Rapport attendu : { title, subtitle, sections: [{ title, blocks }] }, où un
    bloc vaut { type: 'p' | 'h3', text }, { type: 'kv', rows: [[libellé, valeur]] }
    ou { type: 'table', head: [], rows: [[]], foot?: [], align?: ['left'|'right'] }.
+   Le fichier peut aussi embarquer les données du profil (partie JSON
+   invisible dans Word), relues par readData pour l'import (page Profil).
    ========================================================================== */
 'use strict';
 
@@ -15,6 +17,10 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   const PAGE_WIDTH = 9638; // largeur utile d'une page A4 (marges de 2 cm), en twips
+  // Données du profil dans l'archive, reliées au paquet par une relation
+  // propre à l'application (Word ignore les relations qu'il ne connaît pas).
+  const DATA_PART = 'gestion-budget/profil.json';
+  const DATA_REL = 'https://gt-steeve.github.io/gestionBudget/relationships/profil';
 
   /* ---------- XML Word ---------- */
 
@@ -92,13 +98,16 @@
     '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
     '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
     '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Default Extension="json" ContentType="application/json"/>' +
     '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
     '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
     '</Types>';
 
-  const rels = (id, type, target) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  const OFFICE_REL = (type) => `http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}`;
+  /** links : [[Id, Type (URI complète), Target]]. */
+  const rels = (...links) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-    `<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${type}" Target="${target}"/>` +
+    links.map(([id, type, target]) => `<Relationship Id="${id}" Type="${type}" Target="${target}"/>`).join('') +
     '</Relationships>';
 
   /* ---------- Archive ZIP (méthode « stockée », sans compression) ---------- */
@@ -167,18 +176,72 @@
     return out;
   }
 
-  /** Rapport → fichier .docx (Uint8Array), lisible par Word et importable dans Google Docs. */
-  function build(report) {
+  /** Rapport → fichier .docx (Uint8Array), lisible par Word et importable dans
+      Google Docs. data (facultatif) : objet JSON embarqué pour l'import. */
+  function build(report, { data } = {}) {
     const enc = new TextEncoder();
     const file = (name, xml) => ({ name, data: enc.encode(xml) });
+    const rootLinks = [['rId1', OFFICE_REL('officeDocument'), 'word/document.xml']];
+    if (data) rootLinks.push(['rId2', DATA_REL, DATA_PART]);
     return zip([
       file('[Content_Types].xml', CONTENT_TYPES),
-      file('_rels/.rels', rels('rId1', 'officeDocument', 'word/document.xml')),
-      file('word/_rels/document.xml.rels', rels('rId1', 'styles', 'styles.xml')),
+      file('_rels/.rels', rels(...rootLinks)),
+      file('word/_rels/document.xml.rels', rels(['rId1', OFFICE_REL('styles'), 'styles.xml'])),
       file('word/document.xml', documentXml(report)),
-      file('word/styles.xml', STYLES)
+      file('word/styles.xml', STYLES),
+      ...(data ? [file(DATA_PART, JSON.stringify(data))] : [])
     ]);
   }
 
-  return { MIME, build, documentXml, zip, crc32 };
+  /* ---------- Relecture (import) ---------- */
+
+  /** Contenu d'un fichier de l'archive, ou null. Seule la méthode « stockée »
+      écrite par zip() est acceptée : un fichier réenregistré par Word ou
+      Google Docs (compressé) est refusé. Chaque position est bornée et le
+      CRC-32 vérifié : une archive tronquée ou altérée est refusée. */
+  function unzipStored(bytes, wanted) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const within = (pos, len) => pos >= 0 && len >= 0 && pos + len <= bytes.length;
+    // Fin du répertoire central : 22 octets + commentaire éventuel (65 535 max).
+    let end = -1;
+    for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 0xffff); i--) {
+      if (view.getUint32(i, true) === 0x06054b50) { end = i; break; }
+    }
+    if (end < 0) return null;
+    const count = view.getUint16(end + 10, true);
+    let pos = view.getUint32(end + 16, true);
+    const name = new TextEncoder().encode(wanted);
+    for (let n = 0; n < count; n++) {
+      if (!within(pos, 46) || view.getUint32(pos, true) !== 0x02014b50) return null;
+      const method = view.getUint16(pos + 10, true);
+      const crc = view.getUint32(pos + 16, true);
+      const size = view.getUint32(pos + 20, true);
+      const nameLen = view.getUint16(pos + 28, true);
+      const extraLen = view.getUint16(pos + 30, true);
+      const commentLen = view.getUint16(pos + 32, true);
+      const offset = view.getUint32(pos + 42, true);
+      if (!within(pos + 46, nameLen)) return null;
+      const entry = bytes.subarray(pos + 46, pos + 46 + nameLen);
+      if (entry.length === name.length && entry.every((b, i) => b === name[i])) {
+        if (method !== 0 || view.getUint32(pos + 24, true) !== size) return null;
+        if (!within(offset, 30) || view.getUint32(offset, true) !== 0x04034b50) return null;
+        const start = offset + 30 + view.getUint16(offset + 26, true) + view.getUint16(offset + 28, true);
+        if (!within(start, size)) return null;
+        const data = bytes.subarray(start, start + size);
+        return crc32(data) === crc ? data : null;
+      }
+      pos += 46 + nameLen + extraLen + commentLen;
+    }
+    return null;
+  }
+
+  /** Données embarquées par build(report, { data }), ou null si absentes ou illisibles. */
+  function readData(bytes) {
+    try {
+      const part = unzipStored(bytes, DATA_PART);
+      return part ? JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(part)) : null;
+    } catch { return null; }
+  }
+
+  return { MIME, build, readData, documentXml, zip, crc32 };
 });

@@ -21,6 +21,8 @@ module.exports = [
         confirmDialog: 'readonly',
         Prefs: 'readonly',
         Docx: 'readonly',
+        PdfLink: 'readonly',
+        Flash: 'readonly',
       },
     },
     rules: {

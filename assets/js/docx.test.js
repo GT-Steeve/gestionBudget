@@ -50,5 +50,25 @@ describe('Docx', () => {
     expect(zipNames(bytes)).toEqual([
       '[Content_Types].xml', '_rels/.rels', 'word/_rels/document.xml.rels', 'word/document.xml', 'word/styles.xml'
     ]);
+    expect(Docx.readData(bytes)).toBeNull();
+  });
+
+  it('embeds data that readData reads back', () => {
+    const data = { app: 'gestion-budget', nom: 'Élise « test »', data: { charges: [1, 2] } };
+    const bytes = Docx.build(report, { data });
+    expect(zipNames(bytes)).toContain('gestion-budget/profil.json');
+    expect(Docx.readData(bytes)).toEqual(data);
+  });
+
+  it('refuses altered, truncated or foreign files', () => {
+    const bytes = Docx.build(report, { data: { nom: 'Moi' } });
+    const altered = bytes.slice();
+    const json = new TextDecoder('latin1').decode(bytes).indexOf('{"nom":"Moi"}');
+    expect(json).toBeGreaterThan(0);
+    altered[json + 8] ^= 1; // « M » de Moi modifié : le CRC ne correspond plus
+    expect(Docx.readData(altered)).toBeNull();
+    expect(Docx.readData(bytes.subarray(0, bytes.length - 30))).toBeNull();
+    expect(Docx.readData(new TextEncoder().encode('%PDF-1.7 pas une archive'))).toBeNull();
+    expect(Docx.readData(new Uint8Array(0))).toBeNull();
   });
 });

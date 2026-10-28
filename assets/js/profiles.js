@@ -19,6 +19,15 @@
   const REGISTRY_KEY = 'gestion-epargne-profils';
   const MAIN_ID = 'principal';
   const MAX_NAME = 40;
+  // Marque des données exportées (fichier .docx de la page Exporter) : seul un
+  // fichier qui la porte peut être importé. Ce n'est pas une signature (tout
+  // le code est public) ; les valeurs importées sont de toute façon nettoyées
+  // une à une par script.js (loadState) avant d'être affichées.
+  const EXPORT_APP = 'gestion-budget';
+  const EXPORT_FORMAT = 1;
+  const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'depensesMoisCourant',
+    'scenarios', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
+  const MAX_ITEMS = 5000;
 
   /** Repli en mémoire si localStorage est indisponible (navigation privée stricte…). */
   const memory = new Map();
@@ -62,6 +71,19 @@
 
   const dataKey = (id = readRegistry().active) => (id === MAIN_ID ? BASE_KEY : `${BASE_KEY}:${id}`);
 
+  const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+  /** Données d'un fichier importé, réduites aux champs connus, ou null si le
+      fichier ne vient pas de l'application (marque, format, structure). */
+  function readExport(payload) {
+    if (!isObject(payload) || payload.app !== EXPORT_APP || payload.format !== EXPORT_FORMAT) return null;
+    const data = payload.data;
+    // Mêmes conditions que script.js (loadState) pour ne pas retomber sur l'exemple.
+    if (!isObject(data) || !Array.isArray(data.charges) || !Array.isArray(data.scenarios) || !isObject(data.yield)) return null;
+    const lists = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'scenarios'];
+    if (lists.some((k) => data[k] !== undefined && (!Array.isArray(data[k]) || data[k].length > MAX_ITEMS))) return null;
+    return Object.fromEntries(STATE_KEYS.filter((k) => data[k] !== undefined).map((k) => [k, data[k]]));
+  }
+
   return {
     MAIN_ID,
     MAX_NAME,
@@ -87,6 +109,45 @@
       reg.profils.push(profil);
       writeRegistry(reg);
       if (!preRempli) raw.set(dataKey(profil.id), JSON.stringify(emptyState()));
+      return profil;
+    },
+    /** Données du profil actif, marquées pour l'export (embarquées dans le .docx). */
+    exportData(data) {
+      const reg = readRegistry();
+      const nom = reg.profils.find((p) => p.id === reg.active).nom;
+      return { app: EXPORT_APP, format: EXPORT_FORMAT, nom, exporte: new Date().toISOString(), data };
+    },
+    /** Totaux mensuels d'un profil (page Profil), ou null s'il n'a pas encore de
+        données (profil pré-rempli jamais ouvert). Mêmes calculs que la Synthèse :
+        solde = revenus − charges ; dépenses du mois en cours seulement (celles
+        d'un mois passé seront archivées à la prochaine ouverture du profil). */
+    summary(id, now = new Date()) {
+      const data = readJson(dataKey(id));
+      if (!isObject(data)) return null;
+      const sum = (list, key) => (Array.isArray(list) ? list : [])
+        .reduce((total, x) => total + (Number.isFinite(Number(x?.[key])) ? Number(x[key]) : 0), 0);
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const revenus = sum(data.revenus, 'mensuel');
+      const charges = sum(data.charges, 'mensuel');
+      const depenses = data.depensesMoisCourant === month ? sum(data.depenses, 'montant') : 0;
+      return { revenus, charges, depenses, solde: revenus - charges };
+    },
+    /** Un profil porte-t-il déjà ce nom (espaces et majuscules ignorés) ? */
+    nameExists(nom) {
+      const wanted = cleanName(nom).toLocaleLowerCase('fr');
+      return readRegistry().profils.some((p) => p.nom.toLocaleLowerCase('fr') === wanted);
+    },
+    /** Nom du profil d'un fichier exporté, ou null s'il n'est pas importable. */
+    exportName: (payload) => (readExport(payload) ? cleanName(payload.nom) : null),
+    /** Crée un profil à partir d'un fichier exporté ; null s'il est refusé. */
+    importProfile(payload, nom) {
+      const data = readExport(payload);
+      if (!data) return null;
+      const reg = readRegistry();
+      const profil = { id: uid(), nom: cleanName(nom || payload.nom), exemple: false };
+      reg.profils.push(profil);
+      writeRegistry(reg);
+      raw.set(dataKey(profil.id), JSON.stringify(data));
       return profil;
     },
     /** Active le profil d'exemple (créé au besoin), en retenant le profil en

@@ -15,7 +15,10 @@
   bind('zoom', Prefs.zoom(), Prefs.setZoom);
   bind('theme', Prefs.theme(), Prefs.setTheme);
 
-  // Affiche le facteur réellement défini dans le CSS (--zoom-large).
-  const factor = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-large'));
-  if (factor) document.getElementById('zoomLargeValue').textContent = `${Math.round(factor * 100)} %`;
+  // Affiche les facteurs réellement définis dans le CSS (--zoom-small/normal/large).
+  const css = getComputedStyle(document.documentElement);
+  document.querySelectorAll('[data-zoom-factor]').forEach((el) => {
+    const factor = parseFloat(css.getPropertyValue(`--zoom-${el.dataset.zoomFactor}`));
+    if (factor) el.textContent = `${Math.round(factor * 100)} %`;
+  });
 })();

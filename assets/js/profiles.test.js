@@ -62,6 +62,49 @@ describe('Profiles', () => {
     expect(Profiles.remove('principal')).toBe(false);
   });
 
+  it('imports an exported profile under a new key, keeping only known fields', () => {
+    const data = { charges: [{ nom: 'Loyer', mensuel: 900 }], scenarios: [], yield: { capital: 0 }, intrus: '<script>' };
+    const payload = Profiles.exportData(data);
+    expect(payload).toMatchObject({ app: 'gestion-budget', format: 1, nom: 'Mon budget' });
+    expect(Profiles.exportName(payload)).toBe('Mon budget');
+    const p = Profiles.importProfile(payload, '  Copie  ');
+    expect(p.nom).toBe('Copie');
+    expect(JSON.parse(storage.getItem(Profiles.dataKey(p.id)))).toEqual({
+      charges: [{ nom: 'Loyer', mensuel: 900 }], scenarios: [], yield: { capital: 0 }
+    });
+    expect(Profiles.importProfile(payload).nom).toBe('Mon budget');
+  });
+
+  it('refuses files that do not come from the application', () => {
+    const data = { charges: [], scenarios: [], yield: {} };
+    const refused = [
+      null, data, { app: 'autre', format: 1, data }, { app: 'gestion-budget', format: 2, data },
+      { app: 'gestion-budget', format: 1, data: { charges: [], scenarios: [] } },
+      { app: 'gestion-budget', format: 1, data: { ...data, depenses: 'x' } }
+    ];
+    for (const payload of refused) {
+      expect(Profiles.exportName(payload)).toBeNull();
+      expect(Profiles.importProfile(payload, 'X')).toBeNull();
+    }
+    expect(Profiles.list()).toHaveLength(1);
+  });
+
+  it('sums monthly totals, counting only this month expenses', () => {
+    const now = new Date(2026, 9, 28);
+    storage.setItem('gestion-epargne-v1', JSON.stringify({
+      revenus: [{ mensuel: 2000 }, { mensuel: 150 }], charges: [{ mensuel: 900 }, { mensuel: 'x' }],
+      depenses: [{ montant: 12.5 }, { montant: 7.5 }], depensesMoisCourant: '2026-10'
+    }));
+    expect(Profiles.summary('principal', now)).toEqual({ revenus: 2150, charges: 900, depenses: 20, solde: 1250 });
+    expect(Profiles.summary('principal', new Date(2026, 10, 2)).depenses).toBe(0);
+    expect(Profiles.summary(Profiles.create('Marie', { preRempli: true }).id)).toBeNull();
+  });
+
+  it('detects a name already taken, ignoring case and spaces', () => {
+    expect(Profiles.nameExists('  mon BUDGET ')).toBe(true);
+    expect(Profiles.nameExists('Marie')).toBe(false);
+  });
+
   it('renames with a trimmed, non-empty name', () => {
     Profiles.rename('principal', '   ');
     expect(Profiles.active().nom).toBe('Sans nom');

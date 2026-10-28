@@ -42,12 +42,13 @@ v1.12.0 = ajout profil + ajout parametre + rework UI Menu sur bureau
 v1.13.0 = ajout exporter + ajout imprimer
 v1.13.1 = polish apparence document exporter / imprimer
 v1.13.2 = finish exporter / imprimer
+v1.14.0 = ajout import profil + taille 130%
 
 ** Next idea **
-un mode tuto 
+Mode guide 
     - lorsque la data est vide pour détecté un nouvelle utilisateur pour démarrer le tuto
     - feature simuler un budget pour que l'user ajuste en modifiant pour apprendre
-exporter et impressions les donnée en PDF de chaque page
+calendrier solde dans la page synthèse, revenu, dépense, charge
 réfléchir un don soutien où placement pub
 
 ** A VERIFIER **

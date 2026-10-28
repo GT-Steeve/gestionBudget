@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.100">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.118">
 </head>
 <body>
 
@@ -91,20 +91,56 @@
 
     <h3 class="h3 h3--gap">Vos profils</h3>
     <ul id="profilList" class="profile-list"></ul>
+    <!-- Icônes du bouton œil, à droite du nom de chaque profil : masque /
+         affiche ses montants (profil.js). -->
+    <template id="eyeIcons">
+      <svg class="eye eye--open" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        <circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      <svg class="eye eye--closed" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        <circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <line x1="2.5" y1="13.5" x2="13.5" y2="2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+    </template>
 
     <h3 class="h3 h3--gap">Créer un profil</h3>
     <form id="profilForm" class="form-row">
       <label class="grow">Nom du profil
         <input id="profilNom" type="text" maxlength="40" placeholder="Ex. Marie, Budget vacances" required>
       </label>
-      <label>Point de départ
-        <select id="profilDepart">
-          <option value="vide">Vide</option>
-          <option value="exemple">Pré-rempli avec l'exemple</option>
-        </select>
+      <!-- Choix en pop-up (profil.js) plutôt que la liste native du navigateur. -->
+      <label for="profilDepartBtn">Point de départ
+        <button type="button" id="profilDepartBtn" class="select-btn">Vide</button>
       </label>
+      <input type="hidden" id="profilDepart" value="vide">
       <button type="submit" class="btn">Créer le profil</button>
     </form>
+
+    <div class="h3-with-info h3--gap">
+      <h3 class="h3">Importer un profil</h3>
+      <button type="button" id="importInfoBtn" class="info-btn" aria-label="Quels fichiers peut-on importer ?" title="En savoir plus">
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 2.3 14.6 13.7 1.4 13.7Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>
+          <line x1="8" y1="6.4" x2="8" y2="9.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="8" cy="11.7" r="0.85" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+    <!-- Sur bureau, le choix du fichier est entouré d'une zone en pointillés où
+         l'on peut aussi le glisser (profil.js). Le nom du profil est repris du fichier. -->
+    <form id="importForm" class="import-form">
+      <div id="importDrop" class="import-drop">
+        <span class="import-drop__hint">Glissez le fichier ici ou</span>
+        <label class="btn btn--ghost import-pick">Sélectionner le fichier
+          <input id="importFichier" type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf">
+        </label>
+        <span id="importFileName" class="import-drop__file"></span>
+      </div>
+      <button type="submit" class="btn">Importer</button>
+    </form>
+    <p id="importStatus" class="note import-status" role="status" aria-live="polite"></p>
   </section>
 
   <section class="card example-card">
@@ -135,8 +171,51 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.100"></script>
-<script src="../assets/js/nav.js?v=1.01.100"></script>
-<script src="../assets/js/profil.js?v=1.01.100"></script>
+<div id="importInfoOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="importInfoTitle">
+    <p id="importInfoTitle" class="modal__title">Quels fichiers peut-on importer ?</p>
+    <p class="modal__text">Le fichier importé doit être le fichier Word (.docx) ou PDF exporté par l'application
+      Gestion budget, depuis la page Exporter.<br>Tout autre fichier sera refusé : un fichier d'une autre
+      application, ou un export modifié puis réenregistré (dans Word, Google Docs ou un éditeur de PDF).</p>
+    <div class="modal__actions">
+      <button type="button" id="importInfoClose" class="btn btn--ghost">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Choix du point de départ d'un nouveau profil (profil.js). -->
+<div id="departPickerOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="departPickerTitle">
+    <div class="wizard__head">
+      <p id="departPickerTitle" class="modal__title">Point de départ</p>
+      <button type="button" id="departPickerClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="departPickerList" class="cat-picker"></div>
+  </div>
+</div>
+
+<!-- Import d'un profil dont le nom est déjà pris : on demande un autre nom (profil.js). -->
+<div id="importRenameOverlay" class="modal-overlay" hidden>
+  <form id="importRenameForm" class="modal" role="dialog" aria-modal="true" aria-labelledby="importRenameTitle" novalidate>
+    <p id="importRenameTitle" class="modal__title">Un profil du même nom existe déjà</p>
+    <p class="modal__text modal__text--tight">Renommez le profil importé.</p>
+    <label>Nom du profil importé
+      <input id="importRenameInput" type="text" maxlength="40" autocomplete="off" aria-describedby="importRenameError">
+    </label>
+    <p id="importRenameError" class="note import-status is-error" role="alert"></p>
+    <div class="modal__actions">
+      <button type="button" id="importRenameCancel" class="btn btn--ghost">Annuler</button>
+      <button type="submit" class="btn">Importer</button>
+    </div>
+  </form>
+</div>
+
+<script src="../assets/js/profiles.js?v=1.01.118"></script>
+<script src="../assets/js/docx.js?v=1.01.118"></script>
+<script src="../assets/js/pdflink.js?v=1.01.118"></script>
+<script src="../assets/js/nav.js?v=1.01.118"></script>
+<script src="../assets/js/profil.js?v=1.01.118"></script>
 </body>
 </html>

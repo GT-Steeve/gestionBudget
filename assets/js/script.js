@@ -2817,8 +2817,10 @@
         h('span', { class: `sw${sr.dashed ? ' sw--dashed' : ''}`, style: `--c:${sr.color}` }), sr.label))));
   }
 
-  /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Exporter). */
-  function renderReportHtml(report, box) {
+  /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Exporter).
+      dataUrl : lien « Gestion budget » de la page de garde, qui porte les
+      données du profil pour l'import du PDF (pdflink.js). */
+  function renderReportHtml(report, box, { dataUrl } = {}) {
     const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
     const block = (b) => {
       if (b.type === 'h3') return h('h3', {}, b.text);
@@ -2845,7 +2847,7 @@
     box.replaceChildren(
       // Page de garde
       h('div', { class: 'report__cover' },
-        h('p', { class: 'report__brand' }, 'Gestion budget'),
+        h('p', { class: 'report__brand' }, dataUrl ? h('a', { href: dataUrl }, 'Gestion budget') : 'Gestion budget'),
         h('div', { class: 'report__cover-main' },
           h('p', { class: 'report__kicker' }, `Modèle ${cover.model}`),
           h('h1', {}, 'Rapport de compte'),
@@ -2891,11 +2893,12 @@
         // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
         // navigateur propose « Enregistrer au format PDF » comme destination.
         status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
-        renderReportHtml(report, $('#printReport'));
+        renderReportHtml(report, $('#printReport'), { dataUrl: PdfLink.url(Profiles.exportData(state)) });
         window.print();
         return;
       }
-      downloadFile(Docx.build(report), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
+      // Les données du profil sont embarquées : le fichier s'importe sur la page Profil.
+      downloadFile(Docx.build(report, { data: Profiles.exportData(state) }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
       // Google Docs : aucune connexion n'est possible depuis l'application,
       // le même fichier .docx s'importe dans Google Drive.
       status.textContent = format === 'gdocs'
