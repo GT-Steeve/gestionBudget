@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.30.0...v1.31.0) (2026-10-28)
+
+
+### Features
+
+* **ui:** choix compacts côte à côte dans Paramètres et totaux du profil sur deux lignes en mobile ([16c877c](https://github.com/GT-Steeve/gestionBudget/commit/16c877c56c4caa4def80ea59b97924fc9a14202f))
+
 # [1.30.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.29.0...v1.30.0) (2026-10-28)
 
 
