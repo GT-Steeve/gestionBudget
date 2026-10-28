@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.29.0...v1.30.0) (2026-10-28)
+
+
+### Features
+
+* **profil:** import de profil depuis l'export .docx ou PDF, totaux et masquage des montants ([4bc45b3](https://github.com/GT-Steeve/gestionBudget/commit/4bc45b3332864e8bf6e9a5b02eee9d80ef27b171))
+
 # [1.29.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.28.0...v1.29.0) (2026-10-27)
 
 
