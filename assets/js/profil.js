@@ -104,14 +104,14 @@
   /** Revenus, charges, dépenses et solde du mois sous le nom du profil. */
   function renderStats(s, hideAmounts) {
     if (!s) return h('p', { class: 'profile-stats profile-stats--empty' }, 'Valeurs affichées après la première ouverture du profil.');
-    const stat = (label, value, cls = '') => h('div', { class: `profile-stat${cls}` },
+    const stat = (key, label, value, cls = '') => h('div', { class: `profile-stat profile-stat--${key}${cls}` },
       h('dt', {}, label), h('dd', {}, hideAmounts ? '•••• €' : value));
     const tone = hideAmounts ? '' : s.solde > 0.004 ? ' is-good' : s.solde < -0.004 ? ' is-bad' : '';
     return h('dl', { class: 'profile-stats' },
-      stat('Revenus', eur.format(s.revenus)),
-      stat('Charges', eur.format(s.charges)),
-      stat('Dépenses', eur.format(s.depenses)),
-      stat('Solde', eur.format(s.solde), tone));
+      stat('revenus', 'Revenus', eur.format(s.revenus)),
+      stat('charges', 'Charges', eur.format(s.charges)),
+      stat('depenses', 'Dépenses', eur.format(s.depenses)),
+      stat('solde', 'Solde', eur.format(s.solde), tone));
   }
 
   function render() {

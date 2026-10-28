@@ -1223,6 +1223,16 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 @media (max-width: 640px) {
   .wrap { padding: 0 12px; }
   .about-head .lead--center { text-align: justify; }
+  /* Paramètres : les choix (taille, thème) restent côte à côte, en cartes plus compactes. */
+  .choices { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+  .choice { padding: 10px; }
+  .choice__label { font-size: 14px; }
+  .choice__preview { height: 52px; margin-bottom: 8px; }
+  .choice__preview--light, .choice__preview--dark { padding: 8px 10px; }
+  /* Totaux d'un profil sur deux lignes : Revenus · Charges, puis Solde · Dépenses. */
+  .profile-stats { display: grid; grid-template-columns: auto auto; justify-content: start; }
+  .profile-stat--solde { order: 3; }
+  .profile-stat--depenses { order: 4; }
   /* Import d'un profil : pas de glisser-déposer en mobile, les boutons seuls. */
   .import-form { flex-wrap: wrap; }
   .import-drop { flex-basis: 100%; min-height: 0; justify-content: flex-start; padding: 0; border: 0; }
