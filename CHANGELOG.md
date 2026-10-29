@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.32.0...v1.32.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **export:** choix lisibles sur mobile dans Exporter et Imprimer ([accb962](https://github.com/GT-Steeve/gestionBudget/commit/accb9628440da02522dbd46711f529ed15be5295))
+
 # [1.32.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.31.0...v1.32.0) (2026-10-29)
 
 
