@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 const createProfiles = require('./profiles.js');
 
 /** localStorage minimal en mémoire. */
@@ -110,5 +110,28 @@ describe('Profiles', () => {
     expect(Profiles.active().nom).toBe('Sans nom');
     Profiles.rename('principal', '  Moi  ');
     expect(Profiles.active().nom).toBe('Moi');
+  });
+
+  it('keeps masked amounts in the registry, removed with the profile', () => {
+    const marie = Profiles.create('Marie');
+    expect(Profiles.setMasked(marie.id, true)).toBe(true);
+    expect(Profiles.list().find((p) => p.id === marie.id).masque).toBe(true);
+    Profiles.setMasked(marie.id, false);
+    expect(Profiles.list().find((p) => p.id === marie.id)).not.toHaveProperty('masque');
+    Profiles.setMasked(marie.id, true);
+    Profiles.remove(marie.id);
+    expect(storage.getItem('gestion-epargne-profils')).not.toContain(marie.id);
+    expect(Profiles.setMasked('inconnu', true)).toBe(false);
+  });
+
+  it('never reuses an existing id, nor an empty one', () => {
+    // Math.random renvoie deux fois la même valeur, puis 0 (identifiant vide sans padEnd).
+    const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0.5).mockReturnValueOnce(0.5).mockReturnValueOnce(0);
+    const a = Profiles.create('A');
+    const b = Profiles.create('B');
+    random.mockRestore();
+    expect(a.id).not.toBe(b.id);
+    expect(b.id).toMatch(/^[\w-]{1,20}$/);
+    expect(Profiles.list().map((p) => p.id)).toContain(b.id);
   });
 });

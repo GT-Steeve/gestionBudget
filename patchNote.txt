@@ -47,6 +47,7 @@ v1.14.1 = polish selection taille et theme dans paramètre sur mobile
 v1.14.2 = polish UI ajout profil sur mobile
 v1.14.3 = correctif UI exporter sur mobile
 v1.14.4 = polish UX exporter sur mobile + renforcement export
+v1.15.0 = polish revenu.html + ** MAJ architecture **
 
 ** Next idea **
 Mode guide

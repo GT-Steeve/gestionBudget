@@ -940,8 +940,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .add-trigger { margin: 20px 0 8px; }
 .add-trigger--center { text-align: center; margin: 24px 0 8px; }
 /* Sur tablette/bureau, le JS vide ce conteneur (bouton déplacé dans
-   .card__head) : :empty le masque pour ne pas laisser un espace vide. */
-.add-trigger:empty { display: none; }
+   .card__head) : masqué pour ne pas laisser un espace vide. :empty seul ne
+   suffit pas, les retours à la ligne du HTML y restent : :not(:has(*)). */
+.add-trigger:empty, .add-trigger:not(:has(*)) { display: none; }
 /* Profil : bloc « Ajouter un profil » (boutons Créer / Importer, chacun
    ouvrant sa pop-up) réservé au mobile ; les formulaires en ligne restent sur
    tablette/bureau. */

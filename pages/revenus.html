@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.134">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.136">
 </head>
 <body data-app="true">
 
@@ -116,19 +116,19 @@
       </div>
     </article>
   </section>
-  <!-- Sur mobile, le bouton reste ici, au-dessus de la carte. À partir de la
-       tablette, le JS le déplace dans .card__head (à droite du titre) ; ce
-       conteneur se masque alors tout seul (:empty) via le CSS. -->
-  <div id="addRevenuMobileSlot" class="add-trigger add-trigger--center">
-    <button type="button" id="btnOpenRevenuWizard" class="btn">Ajouter un revenu</button>
-  </div>
-
   <!-- Revenus -->
   <section id="revenus" class="card" aria-labelledby="h-rev">
     <div class="card__head">
       <h2 id="h-rev">Revenus mensuels et annuels</h2>
     </div>
     <p class="lead lead--full">Saisissez vos revenus par mois. Le montant annuel est calculé automatiquement (mensuel × 12).</p>
+
+    <!-- Sur mobile, le bouton reste ici, sous le texte ci-dessus. À partir de
+         la tablette, le JS le déplace dans .card__head (à droite du titre) ;
+         ce conteneur se masque alors tout seul (:empty) via le CSS. -->
+    <div id="addRevenuMobileSlot" class="add-trigger add-trigger--center">
+      <button type="button" id="btnOpenRevenuWizard" class="btn">Ajouter un revenu</button>
+    </div>
 
     <div class="table-scroll-wrap">
       <div class="table-wrap" id="revenusTableWrap">
@@ -288,9 +288,11 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.134"></script>
-<script src="../assets/js/nav.js?v=1.01.134"></script>
-<script src="../assets/js/calc.js?v=1.01.134"></script>
-<script src="../assets/js/script.js?v=1.01.134"></script>
+<script src="../assets/js/profiles.js?v=1.01.136"></script>
+<script src="../assets/js/ui.js?v=1.01.136"></script>
+<script src="../assets/js/nav.js?v=1.01.136"></script>
+<script src="../assets/js/calc.js?v=1.01.136"></script>
+<script src="../assets/js/state.js?v=1.01.136"></script>
+<script src="../assets/js/script.js?v=1.01.136"></script>
 </body>
 </html>

@@ -45,7 +45,13 @@
   const readJson = (key) => { try { return JSON.parse(raw.get(key)); } catch { return null; } };
 
   const cleanName = (nom) => String(nom || '').trim().slice(0, MAX_NAME) || 'Sans nom';
-  const uid = () => Math.random().toString(36).slice(2, 9);
+  /** Identifiant de profil inédit dans le registre (et jamais vide). */
+  const newId = (reg) => {
+    let id;
+    do id = Math.random().toString(36).slice(2, 9).padEnd(7, '0');
+    while (id === MAIN_ID || reg.profils.some((p) => p.id === id));
+    return id;
+  };
 
   /** Données d'un profil vide, au format lu par script.js (loadState) : sans
       elles, un profil sans données s'ouvrirait sur l'exemple pré-rempli. */
@@ -59,7 +65,7 @@
     const saved = readJson(REGISTRY_KEY);
     const profils = (saved && Array.isArray(saved.profils) ? saved.profils : [])
       .filter((p) => p && typeof p.id === 'string' && /^[\w-]{1,20}$/.test(p.id))
-      .map((p) => ({ id: p.id, nom: cleanName(p.nom), exemple: p.exemple === true }));
+      .map((p) => ({ id: p.id, nom: cleanName(p.nom), exemple: p.exemple === true, ...(p.masque === true ? { masque: true } : {}) }));
     if (!profils.length) profils.push({ id: MAIN_ID, nom: 'Mon budget', exemple: false });
     const active = profils.some((p) => p.id === saved?.active) ? saved.active : profils[0].id;
     // Profil à retrouver en fermant l'exemple.
@@ -105,7 +111,7 @@
         (aucune donnée enregistrée : script.js charge alors l'exemple). */
     create(nom, { preRempli = false } = {}) {
       const reg = readRegistry();
-      const profil = { id: uid(), nom: cleanName(nom), exemple: false };
+      const profil = { id: newId(reg), nom: cleanName(nom), exemple: false };
       reg.profils.push(profil);
       writeRegistry(reg);
       if (!preRempli) raw.set(dataKey(profil.id), JSON.stringify(emptyState()));
@@ -144,7 +150,7 @@
       const data = readExport(payload);
       if (!data) return null;
       const reg = readRegistry();
-      const profil = { id: uid(), nom: cleanName(nom || payload.nom), exemple: false };
+      const profil = { id: newId(reg), nom: cleanName(nom || payload.nom), exemple: false };
       reg.profils.push(profil);
       writeRegistry(reg);
       raw.set(dataKey(profil.id), JSON.stringify(data));
@@ -156,7 +162,7 @@
       const reg = readRegistry();
       let exemple = reg.profils.find((p) => p.exemple);
       if (!exemple) {
-        exemple = { id: uid(), nom: 'Exemple', exemple: true };
+        exemple = { id: newId(reg), nom: 'Exemple', exemple: true };
         reg.profils.push(exemple);
       }
       if (reg.active !== exemple.id) reg.retour = reg.active;
@@ -178,6 +184,15 @@
       reg.retour = null;
       writeRegistry(reg);
       raw.remove(dataKey(exemple.id));
+      return true;
+    },
+    /** Masque ou affiche les montants d'un profil dans la liste (page Profil). */
+    setMasked(id, masque) {
+      const reg = readRegistry();
+      const profil = reg.profils.find((p) => p.id === id);
+      if (!profil) return false;
+      if (masque) profil.masque = true; else delete profil.masque;
+      writeRegistry(reg);
       return true;
     },
     rename(id, nom) {

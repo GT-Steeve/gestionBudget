@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.14.4 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.15.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -114,7 +114,10 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
   Économie, Placement, Produits financiers, Annexe, Exporter, Imprimer,
   Profil, Paramètres, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
-- `assets/js/script.js` — logique de l'application (rendu, stockage local, rapports d'export et d'impression, profil d'exemple)
+- `assets/js/script.js` — logique des pages du tableau de bord (rendu, saisie, stockage local)
+- `assets/js/state.js` — état de l'application : catégories, profil d'exemple, lecture des données enregistrées ou importées et archivage mensuel, partagé avec les tests
+- `assets/js/ui.js` — outils d'interface partagés : formats, éléments DOM, pop-ups (pile, Échap, focus), choix en boutons, ajout guidé, tracés SVG
+- `assets/js/report.js` — rapport d'export et d'impression (pages Exporter et Imprimer)
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests

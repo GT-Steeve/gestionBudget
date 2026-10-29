@@ -1,5 +1,8 @@
 /* ==========================================================================
-   Gestion budget
+   Gestion budget — pages du tableau de bord (Synthèse, Revenus, Charges,
+   Dépenses, Économie, Placement, CashBack, RoundUp, Exporter, Imprimer).
+   S'appuie sur state.js (état), ui.js (interface), calc.js (calculs) et,
+   pour l'export, report.js.
    1. Charges mensuelles / annuelles (annuel = mensuel × 12)
    2. Économie potentielle en remplaçant une ligne par une autre option
    3. Simuler un placement (deux taux annuels modifiables, 2 % et 10 % par défaut,
@@ -11,9 +14,6 @@
   /* ---------- Constantes ---------- */
 
   const STORAGE_KEY = Profiles.dataKey(); // données du profil actif (voir profiles.js)
-  const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Prêt', 'Famille / Proche', 'Autre'];
-  const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
-  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Famille / Proche', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Autre'];
   /** Exemples de libellés par catégorie : affichés comme placeholder du champ
       "Libellé" selon la catégorie choisie, pour guider la saisie. */
   const NOM_PLACEHOLDERS = {
@@ -68,296 +68,18 @@
     'Famille / Proche': 'Ex. Budget fixe, montant revu ensemble',
     Autre: 'Ex. Option moins chère'
   };
-  const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
-  const MAX_RATE = 100;          // plafond des rendements saisis, en %
-  const ROUND_UP_OPTIONS = [1, 2, 3, 5, 10]; // multiples disponibles pour le RoundUp, en €
   const MONTHS = Calc.MONTHS;
+  const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, MAX_RATE, ROUND_UP_OPTIONS,
+    uid, num, clamp, readRate } = BudgetState;
+  const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
+    currentMonthName, currentMonthWithPreposition, openModal, confirmDialog: confirmDelete, bindInfoModal,
+    openPicker, pickerOpt, pickCategory, pickDate, pickTime, bindAddWizard, bindResponsiveTrigger,
+    niceScale, arcPath, ringPath } = UI;
 
   /* ---------- Utilitaires ---------- */
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const uid = () => Math.random().toString(36).slice(2, 9);
-  const num = (v) => {
-    const n = parseFloat(String(v).replace(',', '.'));
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  };
-  const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
   /** Copie triée par ordre alphabétique (accents pris en compte) pour les listes déroulantes. */
   const sortAlpha = (list) => [...list].sort((a, b) => a.localeCompare(b, 'fr'));
-  /** Clé « AAAA-MM » du mois d'une date, pour comparer/archiver par mois. */
-  const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  /** Libellé lisible d'une clé « AAAA-MM », ex. « septembre 2026 ». */
-  const monthLabel = (key) => {
-    const [y, m] = key.split('-').map(Number);
-    return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 1));
-  };
-  /** Nom du mois courant seul (sans année), ex. « septembre ». */
-  const currentMonthName = () => new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date());
-  /** « d'octobre », « de mars » : élision devant une voyelle (avril, août, octobre). */
-  const currentMonthWithPreposition = () => {
-    const name = currentMonthName();
-    return /^[aeiouh]/i.test(name) ? `d'${name}` : `de ${name}`;
-  };
-  /** En dessous de 640px, Dépenses/Revenus/Charges basculent vers un ordre de
-      colonnes différent (Libellé/Montant en premier) pour rester visibles
-      sans défilement horizontal — voir renderDepenses/renderLines. */
-  const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
-
-  const eur2 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
-  const eur0 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-  const eurCompact = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', notation: 'compact', maximumFractionDigits: 1 });
-  const pct1 = new Intl.NumberFormat('fr-FR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const rateNf = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
-  /** Taux annuel affiché, ex. « 2 % » ou « 7,5 % » (espace insécable). */
-  const fmtRate = (r) => `${rateNf.format(r)} %`;
-  /** Taux saisi : valeur absente → défaut ; sinon entre 0 et MAX_RATE. */
-  const readRate = (v, fallback) => (v === undefined || v === null || v === '' ? fallback : clamp(num(v), 0, MAX_RATE));
-
-  /** Création d'éléments DOM sans innerHTML (les libellés viennent de l'utilisateur). */
-  function h(tag, props = {}, ...kids) {
-    const el = document.createElement(tag);
-    for (const [k, v] of Object.entries(props)) {
-      if (v == null || v === false) continue;
-      if (k === 'class') el.className = v;
-      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-      else if (v === true) el.setAttribute(k, '');
-      else el.setAttribute(k, v);
-    }
-    el.append(...kids.flat().filter((x) => x != null && x !== false));
-    return el;
-  }
-
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  function s(tag, attrs = {}, ...kids) {
-    const el = document.createElementNS(SVG_NS, tag);
-    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-    el.append(...kids.filter((x) => x != null));
-    return el;
-  }
-
-  /** Pop-up de confirmation avant suppression (détails de la ligne + Annuler/Confirmer). */
-  function confirmDelete(title, details, onConfirm, opts = {}) {
-    const overlay = $('#confirmOverlay');
-    if (!overlay) { onConfirm(); return; }
-    const titleEl = $('#confirmTitle');
-    titleEl.textContent = title;
-    titleEl.classList.toggle('modal__title--center', !!opts.center);
-    $('#confirmDetails').replaceChildren(
-      ...details.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)])
-    );
-    $('#confirmOverlay .modal__actions').classList.toggle('modal__actions--center', !!opts.center);
-    $('#confirmOverlay .modal').classList.toggle('modal--narrow', !!opts.center);
-
-    const okBtn = $('#confirmOk');
-    const cancelBtn = $('#confirmCancel');
-    const close = () => {
-      overlay.hidden = true;
-      okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancel);
-      overlay.removeEventListener('click', onOverlayClick);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOk = () => { close(); onConfirm(); };
-    const onCancel = () => close();
-    const onOverlayClick = (e) => { if (e.target === overlay) onCancel(); };
-    const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
-
-    okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancel);
-    overlay.addEventListener('click', onOverlayClick);
-    document.addEventListener('keydown', onKey);
-
-    overlay.hidden = false;
-    okBtn.focus();
-  }
-
-  /** Relie un bouton « i » à une pop-up d'information (texte statique + Fermer). */
-  function bindInfoModal(triggerSel, overlaySel, closeSel) {
-    const trigger = $(triggerSel);
-    const overlay = $(overlaySel);
-    if (!trigger || !overlay) return;
-    const closeBtn = $(closeSel);
-    const close = () => {
-      overlay.hidden = true;
-      document.removeEventListener('keydown', onKey);
-    };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-    trigger.addEventListener('click', () => {
-      overlay.hidden = false;
-      document.addEventListener('keydown', onKey);
-      closeBtn.focus();
-    });
-    closeBtn.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  }
-
-  /** Pop-up de choix en boutons (catégorie, date, heure) plutôt qu'un menu
-      ou sélecteur natif, plus lisible sur mobile. fill(list, close) remplit
-      la grille et renvoie le bouton à focaliser ; compact = petites cases. */
-  function openPicker(title, fill, { compact = false } = {}) {
-    const overlay = $('#catPickerOverlay');
-    if (!overlay) return;
-    // Ouverte aussi depuis d'autres pop-ups (wizard d'ajout, Détail) : déplacée
-    // en fin de <body> pour s'afficher au-dessus (et que leur Échap la voie
-    // comme celle du dessus).
-    document.body.append(overlay);
-    const list = $('#catPickerList');
-    const close = () => {
-      overlay.hidden = true;
-      overlay.removeEventListener('click', onOverlayClick);
-      $('#catPickerClose').removeEventListener('click', close);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOverlayClick = (e) => { if (e.target === overlay) close(); };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-
-    $('#catPickerTitle').textContent = title;
-    list.classList.toggle('cat-picker--compact', compact);
-    const focusEl = fill(list, close);
-    overlay.addEventListener('click', onOverlayClick);
-    $('#catPickerClose').addEventListener('click', close);
-    document.addEventListener('keydown', onKey);
-    overlay.hidden = false;
-    focusEl?.focus();
-  }
-
-  /** Bouton d'option de la grille du picker, mis en avant s'il est sélectionné. */
-  const pickerOpt = (label, selected, onclick, extra = {}) => h('button', {
-    type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(selected), onclick, ...extra
-  }, label);
-
-  /** Choix de catégorie (la catégorie actuelle mise en avant) ; onPick(cat)
-      n'est appelé que si elle change. */
-  function pickCategory(cats, current, onPick) {
-    openPicker('Choisir la catégorie', (list, close) => {
-      const buttons = cats.map((cat) => pickerOpt(cat, cat === current, () => { close(); if (cat !== current) onPick(cat); }));
-      list.style.gridTemplateColumns = '';
-      list.replaceChildren(...buttons);
-      return buttons.find((b) => b.getAttribute('aria-pressed') === 'true') || buttons[0];
-    });
-  }
-
-  /** Choix d'une date : calendrier d'un mois (‹ mois ›), un bouton par jour ;
-      un clic sur « mois année » affiche les années (12 par page) pour en
-      changer. onPick(année, mois, jour). */
-  function pickDate(current, onPick) {
-    const ref = current || new Date();
-    let year = ref.getFullYear();
-    let month = ref.getMonth();
-    let yearStart = year - 5; // première année de la page affichée en vue Années
-    openPicker('Choisir la date', (list, close) => {
-      const navBar = (label, labelProps, prevLabel, nextLabel, shift) => h('div', { class: 'cal__nav' },
-        h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'prev', 'aria-label': prevLabel, onclick: () => shift(-1) }, '‹'),
-        h('button', { type: 'button', class: 'cal__month', ...labelProps }, label),
-        h('button', { type: 'button', class: 'icon-btn', 'data-nav': 'next', 'aria-label': nextLabel, onclick: () => shift(1) }, '›'));
-      const navFocus = (delta) => (delta < 0 ? '[data-nav="prev"]' : '[data-nav="next"]');
-
-      const drawYears = (focusSel) => {
-        const years = Array.from({ length: 12 }, (_, i) => yearStart + i).map((y) => pickerOpt(String(y), y === year, () => {
-          year = y;
-          drawDays('.cal__month');
-        }));
-        list.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
-        list.replaceChildren(
-          navBar(`${yearStart} – ${yearStart + 11}`, { 'aria-label': 'Revenir au calendrier', onclick: () => drawDays('.cal__month') },
-            'Années précédentes', 'Années suivantes', (delta) => { yearStart += delta * 12; drawYears(navFocus(delta)); }),
-          ...years);
-        const el = focusSel ? $(focusSel, list) : years.find((b) => b.getAttribute('aria-pressed') === 'true') || years[0];
-        el.focus();
-        return el;
-      };
-
-      const drawDays = (focusSel) => {
-        const label = capitalize(new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }));
-        const shift = (delta) => {
-          const d = new Date(year, month + delta, 1);
-          year = d.getFullYear();
-          month = d.getMonth();
-          drawDays(navFocus(delta));
-        };
-        const nav = navBar(label, { 'aria-label': `${label} : changer d’année`, onclick: () => { yearStart = year - 5; drawYears(); } },
-          'Mois précédent', 'Mois suivant', shift);
-        const weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j) => h('span', { class: 'cal__wd', 'aria-hidden': 'true' }, j));
-        const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi en premier
-        const blanks = Array.from({ length: offset }, () => h('span'));
-        const days = Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, i) => {
-          const day = i + 1;
-          const selected = !!current && current.getFullYear() === year && current.getMonth() === month && current.getDate() === day;
-          return pickerOpt(String(day), selected, () => { close(); onPick(year, month, day); },
-            { 'aria-label': new Date(year, month, day).toLocaleDateString('fr-FR', { dateStyle: 'full' }) });
-        });
-        list.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
-        list.replaceChildren(nav, ...weekdays, ...blanks, ...days);
-        const el = focusSel ? $(focusSel, list) : days.find((b) => b.getAttribute('aria-pressed') === 'true') || days[0];
-        el.focus();
-        return el;
-      };
-      return drawDays();
-    }, { compact: true });
-  }
-
-  /** Choix d'une heure chiffre par chiffre : dizaine et unité de l'heure,
-      dizaine et unité des minutes, chacune encadrée de flèches ±1 (en boucle,
-      l'heure restant entre 0 et 23), puis Valider. onPick(heures, minutes). */
-  function pickTime(current, onPick) {
-    const ref = current || new Date();
-    // Chiffres : [dizaine heure, unité heure, dizaine minutes, unité minutes].
-    const digits = [Math.floor(ref.getHours() / 10), ref.getHours() % 10, Math.floor(ref.getMinutes() / 10), ref.getMinutes() % 10];
-    const max = (i) => [2, digits[0] === 2 ? 3 : 9, 5, 9][i];
-    const CHEVRON = (up) => `<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="${up ? 'M4 10l4-4 4 4' : 'M4 6l4 4 4-4'}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    const LABELS = ['Dizaine des heures', 'Unité des heures', 'Dizaine des minutes', 'Unité des minutes'];
-    openPicker('Choisir l’heure', (list, close) => {
-      const valueEls = digits.map(() => h('span', { class: 'time-spin__value' }));
-      /** Affiche le chiffre i ; dir (+1/−1) le fait rouler comme la molette
-          d'un cadenas : +1 descend (le nouveau chiffre arrive par le haut),
-          −1 monte. Sans dir (ou mouvements réduits) : changement direct. */
-      const roll = (i, dir = 0) => {
-        const box = valueEls[i];
-        const next = h('span', { class: 'time-spin__digit' }, String(digits[i]));
-        if (!dir || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          box.replaceChildren(next);
-          return;
-        }
-        const way = dir > 0 ? 'down' : 'up';
-        // Chiffres sortants (plusieurs si clics rapides) : retirés en fin d'animation.
-        for (const old of [...box.children]) {
-          old.className = `time-spin__digit time-spin__digit--out-${way}`;
-          old.addEventListener('animationend', () => old.remove(), { once: true });
-        }
-        next.classList.add(`time-spin__digit--in-${way}`);
-        box.append(next);
-      };
-      const step = (i, delta) => {
-        const m = max(i);
-        digits[i] = (digits[i] + delta + m + 1) % (m + 1);
-        roll(i, delta);
-        // Passage à 2x heures : l'unité ne peut dépasser 3 (23 h max).
-        if (i === 0 && digits[1] > max(1)) {
-          digits[1] = max(1);
-          roll(1, -1);
-        }
-      };
-      const arrow = (i, up) => {
-        const btn = h('button', {
-          type: 'button', class: 'icon-btn time-spin__arrow', 'aria-label': `${LABELS[i]} ${up ? '+1' : '−1'}`,
-          onclick: () => step(i, up ? 1 : -1)
-        });
-        btn.innerHTML = CHEVRON(up);
-        return btn;
-      };
-      const col = (i) => h('div', { class: 'time-spin__col' }, arrow(i, true), valueEls[i], arrow(i, false));
-      const ok = h('button', {
-        type: 'button', class: 'btn time-spin__ok',
-        onclick: () => { close(); onPick(digits[0] * 10 + digits[1], digits[2] * 10 + digits[3]); }
-      }, 'Valider');
-      list.style.gridTemplateColumns = '1fr';
-      list.replaceChildren(
-        h('div', { class: 'time-spin' }, col(0), col(1), h('span', { class: 'time-spin__sep' }, 'h'), col(2), col(3)),
-        ok);
-      digits.forEach((_, i) => roll(i));
-      return ok;
-    });
-  }
 
   /** Bouton de cellule affichant la catégorie d'une ligne ; ouvre pickCategory. */
   function categoryCell(item, cats) {
@@ -388,92 +110,7 @@
     btn.addEventListener('click', () => pickCategory(cats, input.value, (cat) => { set(cat); btn.focus(); }));
   }
 
-  /** Pop-up d'ajout guidé, un champ à la fois (Retour/Suivant), plus
-      pratique qu'une ligne de formulaire à plusieurs champs côte à côte au
-      clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape. */
-  function bindAddWizard(cfg) {
-    const overlay = $(cfg.overlay);
-    const openBtn = $(cfg.openBtn);
-    const form = $(cfg.form);
-    if (!overlay || !openBtn || !form) return;
-
-    const closeBtn = $(cfg.closeBtn);
-    const backBtn = $(cfg.backBtn);
-    const nextBtn = $(cfg.nextBtn);
-    const finishBtn = $(cfg.finishBtn);
-    const stepLabel = $(cfg.stepLabel);
-    // Étapes cherchées dans la pop-up, ou dans cfg.stepsRoot si elles n'y sont
-    // pas toujours (formulaire Exporter, déplacé selon la largeur d'écran).
-    const steps = cfg.steps.map((sel) => $(sel, cfg.stepsRoot || overlay));
-    const total = steps.length;
-    let current = 0;
-
-    const showStep = (i) => {
-      current = i;
-      steps.forEach((el, idx) => { el.hidden = idx !== i; });
-      backBtn.hidden = i === 0;
-      nextBtn.hidden = i === total - 1;
-      finishBtn.hidden = i !== total - 1;
-      if (stepLabel) stepLabel.textContent = `Étape ${i + 1} / ${total}`;
-      $(cfg.fields[i])?.focus();
-    };
-
-    const close = () => {
-      overlay.hidden = true;
-      document.removeEventListener('keydown', onKey);
-    };
-    // Échap ne ferme que la pop-up du dessus (ex. Exemples ouverte depuis le
-    // wizard Placement : seule celle-ci se ferme).
-    const onKey = (e) => {
-      if (e.key !== 'Escape') return;
-      const top = [...document.querySelectorAll('.modal-overlay:not([hidden])')].pop();
-      if (top === overlay) close();
-    };
-    const open = () => {
-      showStep(0);
-      overlay.hidden = false;
-      document.addEventListener('keydown', onKey);
-    };
-    const goNext = () => {
-      const field = $(cfg.fields[current]);
-      if (field && !field.reportValidity()) return;
-      showStep(Math.min(current + 1, total - 1));
-    };
-
-    openBtn.addEventListener('click', open);
-    closeBtn.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-    nextBtn.addEventListener('click', goNext);
-    backBtn.addEventListener('click', () => showStep(Math.max(current - 1, 0)));
-    // Entrée dans un champ texte/nombre = Suivant (ou Terminer sur la
-    // dernière étape), comme la touche "suivant" d'un clavier mobile.
-    form.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
-      e.preventDefault();
-      (current === total - 1 ? finishBtn : nextBtn).click();
-    });
-    // La validation du formulaire (bindForm) gère déjà preventDefault + ajout
-    // + reset ; ce listener, ajouté après, ferme juste la pop-up une fois
-    // l'ajout effectué.
-    form.addEventListener('submit', close);
-  }
-
-  /** Déplace un bouton d'ajout entre deux emplacements selon la largeur
-      d'écran : conteneur mobile (au-dessus de la carte) en dessous de
-      MOBILE_QUERY, sinon dans l'en-tête de carte donné (à droite du titre,
-      via .card__head .btn). Le conteneur mobile se masque tout seul une
-      fois vidé (voir .add-trigger--center:empty). */
-  function bindResponsiveTrigger(btnSel, mobileSlotSel, headSel) {
-    const btn = $(btnSel);
-    const mobileSlot = $(mobileSlotSel);
-    const head = $(headSel);
-    if (!btn || !mobileSlot || !head) return;
-    const place = () => (MOBILE_QUERY.matches ? mobileSlot : head).append(btn);
-    place();
-    MOBILE_QUERY.addEventListener('change', place);
-  }
-
-  /* ---------- Stockage local (avec repli en mémoire) ---------- */
+  /* ---------- Stockage local ---------- */
 
   const store = {
     get(key) {
@@ -486,178 +123,10 @@
 
   /* ---------- État ---------- */
 
-  function exampleState() {
-    const loyer = { id: uid(), categorie: 'Loyer', nom: 'Loyer', mensuel: 1200 };
-    const elec = { id: uid(), categorie: 'Factures', nom: 'Électricité', mensuel: 120 };
-    const inter = { id: uid(), categorie: 'Factures', nom: 'Internet + mobile', mensuel: 90 };
-    const courses = { id: uid(), categorie: 'Courses', nom: 'Courses alimentaires', mensuel: 400 };
-    const transport = { id: uid(), categorie: 'Transport', nom: 'Pass transport', mensuel: 90 };
-    const assurance = { id: uid(), categorie: 'Assurance', nom: 'Assurance habitation', mensuel: 25 };
-    const abos = { id: uid(), categorie: 'Abonnements', nom: 'Netflix + Spotify', mensuel: 30 };
-    const livret = { id: uid(), categorie: 'Épargne', nom: 'Livret A', mensuel: 150 };
-
-    // Dépenses datées par rapport à aujourd'hui : mois en cours (jours déjà
-    // passés uniquement) et deux mois précédents, archivés dans l'historique.
-    const now = new Date();
-    const depense = (monthsAgo, day, categorie, nom, montant) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1, 12);
-      d.setDate(monthsAgo ? day : Math.min(day, now.getDate()));
-      return { id: uid(), categorie, nom, montant, ajout: d.toISOString() };
-    };
-    const archive = (monthsAgo, items) => ({
-      mois: monthKey(new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1)),
-      total: items.reduce((sum, d) => sum + d.montant, 0),
-      items
-    });
-
-    return {
-      revenus: [
-        { id: uid(), categorie: 'Salaire', nom: 'Salaire net', mensuel: 2300 },
-        { id: uid(), categorie: 'Aide', nom: 'Aide enfant', mensuel: 150 }
-      ],
-      charges: [loyer, elec, inter, courses, transport, assurance, abos, livret],
-      depenses: [
-        depense(0, 2, 'Alimentaire', 'Boulangerie', 8.4),
-        depense(0, 4, 'Transport', 'Essence', 55),
-        depense(0, 6, 'Restaurant', 'Pizzeria', 32.5),
-        depense(0, 9, 'Shopping', 'Zara', 49.99),
-        depense(0, 12, 'Divertissement', 'Jeu Steam', 19.99),
-        depense(0, 15, 'Santé', 'Pharmacie', 14.2),
-        depense(0, 18, 'Sortie', 'Cinéma', 22),
-        depense(0, 21, 'Cadeau', 'Anniversaire de Léa', 35),
-        depense(0, 24, 'Entretien ménager', 'Lessive, éponges', 12.8)
-      ],
-      depensesHistorique: [
-        archive(1, [
-          depense(1, 3, 'Alimentaire', 'Marché', 23.6),
-          depense(1, 5, 'Transport', 'Essence', 60),
-          depense(1, 8, 'Restaurant', 'Fast-food', 14.9),
-          depense(1, 11, 'Famille / Proche', 'Sortie en famille', 45),
-          depense(1, 14, 'Équipement', 'Bouilloire', 29.99),
-          depense(1, 19, 'Sortie', 'Bowling', 18),
-          depense(1, 22, 'Amende', 'Stationnement', 35),
-          depense(1, 27, 'Shopping', 'Amazon', 24.5)
-        ]),
-        archive(2, [
-          depense(2, 2, 'Alimentaire', 'Boulangerie', 6.9),
-          depense(2, 6, 'Transport', 'Péage', 12.4),
-          depense(2, 9, 'Imprévu', 'Garage, plaquettes de frein', 180),
-          depense(2, 13, 'Restaurant', 'Restaurant japonais', 41),
-          depense(2, 17, 'Santé', 'Médecin', 30),
-          depense(2, 20, 'Divertissement', 'Place de concert', 55),
-          depense(2, 25, 'Cadeau', 'Fleurs', 25)
-        ])
-      ],
-      depensesMoisCourant: monthKey(now),
-      cashbackRate: 1,
-      roundUpTo: 1,
-      scenarios: [
-        { id: uid(), chargeId: elec.id, option: 'Fournisseur moins cher', nouveau: 52 },
-        { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 },
-        { id: uid(), chargeId: abos.id, option: 'Offre duo partagée', nouveau: 18 }
-      ],
-      yield: { capital: 3000, versement: 150, annees: 15, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 5 },
-      view: 'mois'
-    };
-  }
-
-  /** Date d'ajout enregistrée (ISO) si valide, sinon null (anciennes lignes). */
-  const validDate = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
-
-  /** Éléments d'une liste enregistrée ou importée qui sont bien des objets : une
-      valeur null ou un nombre dans la liste ferait sinon planter la page. */
-  const records = (list) => (Array.isArray(list) ? list : [])
-    .filter((x) => x !== null && typeof x === 'object' && !Array.isArray(x));
-
-  function loadState() {
-    const saved = store.get(STORAGE_KEY);
-    if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios)
-      || saved.yield === null || typeof saved.yield !== 'object') {
-      return exampleState();
-    }
-    return {
-      charges: records(saved.charges).map((c) => ({
-        id: String(c.id || uid()),
-        categorie: CATEGORIES.includes(c.categorie) ? c.categorie : 'Autre',
-        nom: String(c.nom || 'Sans nom').slice(0, 60),
-        mensuel: num(c.mensuel),
-        cashbackOn: c.cashbackOn !== false,
-        roundUpOn: c.roundUpOn !== false,
-        ajout: validDate(c.ajout)
-      })),
-      revenus: records(saved.revenus).map((r) => ({
-        id: String(r.id || uid()),
-        categorie: REV_CATEGORIES.includes(r.categorie) ? r.categorie : 'Salaire',
-        nom: String(r.nom || 'Sans nom').slice(0, 60),
-        mensuel: num(r.mensuel),
-        ajout: validDate(r.ajout)
-      })),
-      depenses: records(saved.depenses).map((d) => ({
-        id: String(d.id || uid()),
-        categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
-        nom: String(d.nom || 'Sans nom').slice(0, 60),
-        montant: num(d.montant),
-        cashbackOn: d.cashbackOn !== false,
-        roundUpOn: d.roundUpOn !== false,
-        ajout: validDate(d.ajout)
-      })),
-      depensesHistorique: records(saved.depensesHistorique).map((m) => ({
-        mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
-        total: num(m.total),
-        items: records(m.items).map((d) => ({
-          id: String(d.id || uid()),
-          categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
-          nom: String(d.nom || 'Sans nom').slice(0, 60),
-          montant: num(d.montant),
-          ajout: validDate(d.ajout)
-        }))
-      })).slice(0, 12),
-      depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
-      cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
-      roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,
-      scenarios: records(saved.scenarios).map((x) => ({
-        id: String(x.id || uid()),
-        chargeId: String(x.chargeId),
-        option: String(x.option || '').slice(0, 60),
-        nouveau: num(x.nouveau)
-      })),
-      view: saved.view === 'an' ? 'an' : 'mois',
-      yield: (() => {
-        const annees = clamp(Math.round(num(saved.yield.annees)) || 10, 1, 50);
-        return {
-          capital: num(saved.yield.capital),
-          versement: num(saved.yield.versement),
-          annees,
-          taux1: readRate(saved.yield.taux1, DEFAULT_RATES[0]),
-          taux2: readRate(saved.yield.taux2, DEFAULT_RATES[1]),
-          anneeGain: clamp(Math.round(num(saved.yield.anneeGain)) || 1, 1, annees)
-        };
-      })()
-    };
-  }
-
-  const state = loadState();
-  state.scenarios = state.scenarios.filter((x) => state.charges.some((c) => c.id === x.chargeId));
-
+  const state = BudgetState.load(store.get(STORAGE_KEY));
   const save = () => store.set(STORAGE_KEY, state);
-
-  /* Archive les dépenses du mois précédent dès qu'on change de mois (ex. premier
-     chargement de l'app en un nouveau mois) : la liste en cours repart à zéro,
-     l'ancienne reste consultable dans l'historique (12 mois glissants max). */
-  (() => {
-    const nowKey = monthKey(new Date());
-    if (state.depensesMoisCourant !== nowKey) {
-      if (state.depenses.length) {
-        state.depensesHistorique = [
-          { mois: state.depensesMoisCourant, total: state.depenses.reduce((sum, d) => sum + d.montant, 0), items: state.depenses },
-          ...state.depensesHistorique
-        ].slice(0, 12);
-      }
-      state.depenses = [];
-      state.depensesMoisCourant = nowKey;
-      save();
-    }
-  })();
+  // Nouveau mois : les dépenses du mois précédent passent dans l'historique.
+  if (BudgetState.archiveMonth(state)) save();
 
   /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
 
@@ -722,7 +191,6 @@
   const EYE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 
   /** « Vendredi 13 Octobre 2026 » : jour et mois avec majuscule. */
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
   const fmtAjoutDate = (d) => {
     const jour = capitalize(d.toLocaleDateString('fr-FR', { weekday: 'long' }));
     const mois = capitalize(d.toLocaleDateString('fr-FR', { month: 'long' }));
@@ -873,34 +341,22 @@
       if (e.key === 'Enter' && draft && e.target.tagName === 'INPUT') { e.preventDefault(); onSave(); }
     };
 
-    const close = () => {
-      overlay.hidden = true;
-      editBtn.removeEventListener('click', onEdit);
-      cancelBtn.removeEventListener('click', onCancel);
-      saveBtn.removeEventListener('click', onSave);
-      closeBtn.removeEventListener('click', close);
-      $('#detailList').removeEventListener('keydown', onListKey);
-      overlay.removeEventListener('click', onOverlayClick);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOverlayClick = (e) => { if (e.target === overlay) close(); };
-    // Échap ne ferme que la pop-up du dessus (choix de catégorie ouvert depuis
-    // le mode Modifier : seule celle-ci se ferme).
-    const onKey = (e) => {
-      if (e.key !== 'Escape') return;
-      const top = [...document.querySelectorAll('.modal-overlay:not([hidden])')].pop();
-      if (top === overlay) close();
-    };
     editBtn.addEventListener('click', onEdit);
     cancelBtn.addEventListener('click', onCancel);
     saveBtn.addEventListener('click', onSave);
-    closeBtn.addEventListener('click', close);
     $('#detailList').addEventListener('keydown', onListKey);
-    overlay.addEventListener('click', onOverlayClick);
-    document.addEventListener('keydown', onKey);
     setEditing(false);
-    overlay.hidden = false;
-    closeBtn.focus();
+    const close = openModal(overlay, {
+      focus: closeBtn,
+      onClose: () => {
+        editBtn.removeEventListener('click', onEdit);
+        cancelBtn.removeEventListener('click', onCancel);
+        saveBtn.removeEventListener('click', onSave);
+        closeBtn.removeEventListener('click', close);
+        $('#detailList').removeEventListener('keydown', onListKey);
+      }
+    });
+    closeBtn.addEventListener('click', close);
   }
 
   /** Bouton œil d'une charge ou d'une dépense : toutes ses informations, cashback
@@ -1923,16 +1379,6 @@
 
   /* ---------- Graphique SVG ---------- */
 
-  function niceScale(max, ticks) {
-    if (max <= 0) return { max: 100, step: 25 };
-    const raw = max / ticks;
-    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-    const f = raw / pow;
-    const nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
-    const step = nice * pow;
-    return { max: Math.ceil(max / step - 1e-9) * step, step };
-  }
-
   function renderChart() {
     if (!chartData) return;
     const box = $('#chart');
@@ -2248,17 +1694,6 @@
 
   /* ---------- Camembert (donut) ---------- */
 
-  function arcPath(cx, cy, r0, r1, a0, a1) {
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const pt = (r, a) => `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
-    return `M${pt(r1, a0)} A${r1} ${r1} 0 ${large} 1 ${pt(r1, a1)} L${pt(r0, a1)} A${r0} ${r0} 0 ${large} 0 ${pt(r0, a0)} Z`;
-  }
-
-  function ringPath(cx, cy, r0, r1) {
-    const circle = (r) => `M${cx - r} ${cy} A${r} ${r} 0 1 1 ${cx + r} ${cy} A${r} ${r} 0 1 1 ${cx - r} ${cy} Z`;
-    return `${circle(r1)} ${circle(r0)}`;
-  }
-
   function renderPie(m) {
     const box = $('#pie');
     const tip = $('#pieTip');
@@ -2529,436 +1964,6 @@
   }
 
   /* ==========================================================================
-     Export (page Exporter) : un même rapport, rendu en HTML pour le PDF et
-     l'impression (fenêtre d'impression du navigateur), ou en fichier .docx
-     pour Word et Google Docs (docx.js). Format du rapport : voir docx.js.
-     ========================================================================== */
-
-  const EXPORT_MODELS = {
-    simple: { label: 'Simple', sections: ['synthese', 'depenses'] },
-    standard: { label: 'Standard', sections: ['synthese', 'revenus', 'depenses', 'charges', 'placement'] },
-    complet: {
-      label: 'Complet',
-      sections: ['synthese', 'revenus', 'depenses', 'charges', 'historique', 'economie', 'placement', 'cashback', 'roundup']
-    }
-  };
-
-  const fmtDay = (iso) => (iso ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(new Date(iso)) : '–');
-  /** Tableau du rapport, ou une phrase si la liste est vide. */
-  const reportTable = (head, rows, extra = {}) => (rows.length
-    ? { type: 'table', head, rows, align: head.map((_, i) => (i >= (extra.textCols || 1) ? 'right' : 'left')), ...extra }
-    : { type: 'p', text: 'Aucune donnée pour le moment.' });
-  /* Graphiques du rapport (PDF / impression uniquement, ignorés par docx.js) :
-     un bloc table peut porter un champ `chart` (camembert qui remplace le
-     tableau, ou courbe de capital affichée au-dessus) et un bloc kv un champ
-     `tiles` (tuiles affichées à la place des lignes). Couleurs fixes, celles
-     du thème clair, pour rester lisibles sur papier. */
-  const REPORT_CAT_COLORS = {
-    salaire: '#1baf7a', aide: '#008300', loyer: '#2a78d6', factures: '#eb6834', courses: '#eda100',
-    transport: '#e87ba4', abonnements: '#4a3aa7', activite: '#9a6a3a', plaisir: '#7a9a0e', autre: '#e34948'
-  };
-  const REPORT_PALETTE = ['#2a78d6', '#eb6834', '#eda100', '#1baf7a', '#e87ba4', '#4a3aa7', '#9a6a3a',
-    '#7a9a0e', '#e34948', '#0f8b8d', '#b04fb5', '#5b6b7a', '#c2185b', '#00838f', '#8d6e63'];
-  const RESTE_LABEL = 'Reste à épargner';
-  /** Une couleur par libellé : celle de la catégorie quand elle existe, sinon une couleur libre de la palette. */
-  const reportColors = (labels) => {
-    const fixed = labels.map((l) => (l === RESTE_LABEL ? '#d6ccb6' : REPORT_CAT_COLORS[CAT_KEY[l]] || null));
-    const free = REPORT_PALETTE.filter((c) => !fixed.includes(c));
-    let next = 0;
-    return fixed.map((c) => c || free[next++ % free.length]);
-  };
-  /** Répartition (montant et part du total), de la plus grosse à la plus petite, « Reste à épargner » en dernier. */
-  const breakdownTable = (entries, centerLabel) => {
-    const kept = entries.filter((e) => e.value > 0)
-      .sort((a, b) => (a.label === RESTE_LABEL) - (b.label === RESTE_LABEL) || b.value - a.value);
-    const total = kept.reduce((sum, e) => sum + e.value, 0);
-    const block = reportTable(['Catégorie', 'Montant', 'Part'],
-      kept.map((e) => [e.label, eur2.format(e.value), pct1.format(e.value / total)]));
-    if (block.type === 'table') {
-      const colors = reportColors(kept.map((e) => e.label));
-      block.chart = {
-        kind: 'donut', centerLabel, centerValue: eur0.format(total),
-        slices: kept.map((e, i) => ({ label: e.label, value: e.value, share: e.value / total, color: colors[i] }))
-      };
-    }
-    return block;
-  };
-  const categoryTable = (cats, items, key, centerLabel) => breakdownTable(
-    cats.map((cat) => ({ label: cat, value: items.filter((x) => x.categorie === cat).reduce((sum, x) => sum + x[key], 0) })),
-    centerLabel);
-  /** Bloc kv doublé de tuiles : [libellé, valeur, sous-titre?, ton ('good' | 'bad')?]. */
-  const tilesBlock = (tiles) => ({
-    type: 'kv',
-    rows: tiles.map(([label, value, sub]) => [label, sub ? `${value} · ${sub}` : value]),
-    tiles: tiles.map(([label, value, sub, tone]) => ({ label, value, sub, tone }))
-  });
-  const toneOf = (v) => (v > 0.004 ? 'good' : v < -0.004 ? 'bad' : null);
-  const lineTable = (lines) => reportTable(['Catégorie', 'Libellé', 'Mensuel', 'Annuel'],
-    lines.map((l) => [l.categorie, l.nom, eur2.format(l.mensuel), eur2.format(annual(l.mensuel))]),
-    { textCols: 2, foot: ['Total', '', eur2.format(lines.reduce((sum, l) => sum + l.mensuel, 0)), eur2.format(annual(lines.reduce((sum, l) => sum + l.mensuel, 0)))] });
-  const depenseTable = (items) => reportTable(['Date', 'Catégorie', 'Libellé', 'Montant'],
-    [...items].sort((a, b) => String(a.ajout).localeCompare(String(b.ajout)))
-      .map((d) => [fmtDay(d.ajout), d.categorie, d.nom, eur2.format(d.montant)]),
-    { textCols: 3, foot: ['Total', '', '', eur2.format(items.reduce((sum, d) => sum + d.montant, 0))] });
-  /** Tableau CashBack / RoundUp : lignes concernées (charges puis dépenses du mois). */
-  const extraTable = (flag, amountOf, label) => {
-    const rows = [
-      ...state.charges.filter((c) => c[flag] !== false).map((c) => [c.nom, eur2.format(c.mensuel), eur2.format(amountOf(c.mensuel))]),
-      ...state.depenses.filter((d) => d[flag] !== false).map((d) => [d.nom, eur2.format(d.montant), eur2.format(amountOf(d.montant))])
-    ];
-    return reportTable(['Libellé', 'Montant', label], rows);
-  };
-  const extraTotals = (flag, amountOf) => {
-    const charges = state.charges.reduce((sum, c) => sum + (c[flag] !== false ? amountOf(c.mensuel) : 0), 0);
-    const depenses = state.depenses.reduce((sum, d) => sum + (d[flag] !== false ? amountOf(d.montant) : 0), 0);
-    return [
-      ['Sur les charges', `${eur2.format(charges)} par mois · ${eur2.format(annual(charges))} par an`],
-      [`Sur les dépenses ${currentMonthWithPreposition()}`, eur2.format(depenses)]
-    ];
-  };
-
-  const REPORT_SECTIONS = {
-    synthese() {
-      const rev = totalRevenus();
-      const ch = totalMonthly();
-      const solde = rev - ch;
-      const eco = computeSavings().monthly;
-      const { years, results: [low, high] } = computeYield();
-      // Même répartition que le camembert de la Synthèse : charges par catégorie + reste à épargner.
-      const entries = CATEGORIES.map((cat) => ({
-        label: cat, value: state.charges.filter((c) => c.categorie === cat).reduce((sum, c) => sum + c.mensuel, 0)
-      }));
-      if (solde > 0.004) entries.push({ label: RESTE_LABEL, value: solde });
-      return {
-        title: 'Synthèse',
-        blocks: [
-          tilesBlock([
-            ['Revenus par mois', eur2.format(rev), `${eur2.format(annual(rev))} par an`],
-            ['Charges par mois', eur2.format(ch), `${eur2.format(annual(ch))} par an`],
-            ['Solde par mois (revenus − charges)', eur2.format(solde), `${eur2.format(annual(solde))} par an`, toneOf(solde)],
-            ['Taux d\'épargne', rev > 0 ? pct1.format(solde / rev) : '–', 'solde ÷ revenus', toneOf(solde)],
-            ['Économie possible', `${eur2.format(eco)} par mois`, eco > 0 ? `solde après économies : ${eur2.format(solde + eco)}` : null],
-            [`Capital dans ${years} an${years > 1 ? 's' : ''}`, `${eur0.format(high.pts[years].balance)} à ${fmtRate(high.rate)}`,
-              `${eur0.format(low.pts[years].balance)} à ${fmtRate(low.rate)}`]
-          ]),
-          { type: 'h3', text: 'Où va votre argent ?' },
-          breakdownTable(entries, rev >= ch && rev > 0 ? 'Revenus par mois' : 'Charges par mois')
-        ]
-      };
-    },
-    revenus: () => ({
-      title: 'Revenus',
-      blocks: [lineTable(state.revenus), { type: 'h3', text: 'Répartition par catégorie' },
-        categoryTable(REV_CATEGORIES, state.revenus, 'mensuel', 'Revenus par mois')]
-    }),
-    charges: () => ({
-      title: 'Charges',
-      blocks: [lineTable(state.charges), { type: 'h3', text: 'Répartition par catégorie' },
-        categoryTable(CATEGORIES, state.charges, 'mensuel', 'Charges par mois')]
-    }),
-    depenses() {
-      const total = state.depenses.reduce((sum, d) => sum + d.montant, 0);
-      const n = state.depenses.length;
-      return {
-        title: `Dépenses de ${monthLabel(state.depensesMoisCourant)}`,
-        blocks: [
-          tilesBlock([
-            ['Total dépensé', eur2.format(total)],
-            ['Nombre de dépenses', String(n)],
-            ['Montant moyen', n ? eur2.format(total / n) : '–']
-          ]),
-          depenseTable(state.depenses),
-          { type: 'h3', text: 'Répartition par catégorie' },
-          categoryTable(DEP_CATEGORIES, state.depenses, 'montant', 'Total dépensé')
-        ]
-      };
-    },
-    historique: () => ({
-      title: 'Historique des dépenses',
-      blocks: state.depensesHistorique.length
-        ? state.depensesHistorique.flatMap((m) => [
-          { type: 'h3', text: `${capitalize(monthLabel(m.mois))} · ${eur2.format(m.total)}` },
-          depenseTable(m.items)
-        ])
-        : [{ type: 'p', text: 'Aucun mois archivé pour le moment.' }]
-    }),
-    economie() {
-      const { rows, monthly, annual: yearly } = computeSavings();
-      return {
-        title: 'Économie',
-        blocks: [
-          reportTable(['Charge', 'Alternative', 'Actuel', 'Nouveau', 'Économie / mois'],
-            rows.map((r) => [r.charge.nom, r.sc.option || '–', eur2.format(r.charge.mensuel), eur2.format(r.sc.nouveau), eur2.format(r.eco)]),
-            { textCols: 2 }),
-          { type: 'kv', rows: [['Économie possible (meilleure option par charge)', `${eur2.format(monthly)} par mois · ${eur2.format(yearly)} par an`]] }
-        ]
-      };
-    },
-    placement() {
-      const { years, results: [low, high] } = computeYield();
-      const table = reportTable(['Année', 'Total versé', `Capital à ${fmtRate(low.rate)}`, `Capital à ${fmtRate(high.rate)}`],
-        low.pts.slice(1).map((p, i) => [String(p.year), eur0.format(p.deposited), eur0.format(p.balance), eur0.format(high.pts[i + 1].balance)]));
-      if (table.type === 'table') {
-        table.chart = {
-          kind: 'growth',
-          years: low.pts.map((p) => p.year),
-          series: [
-            { label: 'Total versé', color: '#9a9283', dashed: true, values: low.pts.map((p) => p.deposited) },
-            { label: `Capital à ${fmtRate(low.rate)}`, color: '#2a78d6', values: low.pts.map((p) => p.balance) },
-            { label: `Capital à ${fmtRate(high.rate)}`, color: '#1baf7a', values: high.pts.map((p) => p.balance) }
-          ]
-        };
-      }
-      return {
-        title: 'Placement',
-        blocks: [
-          tilesBlock([
-            ['Épargne mensuelle', eur2.format(state.yield.versement)],
-            ['Capital de départ', eur2.format(state.yield.capital)],
-            ['Durée', `${years} an${years > 1 ? 's' : ''}`],
-            [`Capital à ${fmtRate(low.rate)}`, eur0.format(low.pts[years].balance), `dont ${eur0.format(low.pts[years].deposited)} versés`],
-            [`Capital à ${fmtRate(high.rate)}`, eur0.format(high.pts[years].balance), `dont ${eur0.format(high.pts[years].deposited)} versés`, 'good']
-          ]),
-          table
-        ]
-      };
-    },
-    cashback: () => ({
-      title: `CashBack (${fmtRate(state.cashbackRate)})`,
-      blocks: [extraTable('cashbackOn', (m) => m * cashbackFraction(), 'Cashback'),
-        { type: 'kv', rows: extraTotals('cashbackOn', (m) => m * cashbackFraction()) }]
-    }),
-    roundup: () => ({
-      title: `RoundUp (x${state.roundUpTo})`,
-      blocks: [extraTable('roundUpOn', roundUpAmount, 'Arrondi'),
-        { type: 'kv', rows: extraTotals('roundUpOn', roundUpAmount) }]
-    })
-  };
-
-  /** Contenu de chaque chapitre, affiché sous son titre dans le sommaire (PDF / impression). */
-  const SECTION_SUMMARIES = {
-    synthese: 'Chiffres clés et répartition de vos revenus',
-    revenus: 'Détail des revenus et répartition par catégorie',
-    depenses: 'Dépenses du mois et répartition par catégorie',
-    charges: 'Détail des charges fixes et répartition par catégorie',
-    historique: 'Dépenses des mois précédents',
-    economie: 'Comparaisons et économies possibles',
-    placement: 'Simulation d\'épargne et évolution du capital',
-    cashback: 'Cashback estimé sur les charges et dépenses',
-    roundup: 'Arrondi automatique mis de côté'
-  };
-
-  function buildReport(modelKey) {
-    const model = EXPORT_MODELS[modelKey] || EXPORT_MODELS.simple;
-    const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date());
-    const profile = Profiles.active().nom;
-    return {
-      title: `Gestion budget · modèle ${model.label}`,
-      subtitle: `Profil « ${profile} » · exporté le ${date}`,
-      // Page de garde (PDF / impression uniquement, ignorée par docx.js).
-      cover: { model: model.label, profile },
-      sections: model.sections.map((key) => ({ ...REPORT_SECTIONS[key](), summary: SECTION_SUMMARIES[key] }))
-    };
-  }
-
-  /** Camembert du rapport + légende (libellé, montant, part et barre de proportion). */
-  function reportDonut(c) {
-    const SIZE = 180, C = SIZE / 2, R1 = 86, R0 = 56;
-    const svg = s('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, width: SIZE, height: SIZE, 'aria-hidden': 'true' });
-    let a = -Math.PI / 2;
-    for (const sl of c.slices) {
-      const a1 = a + sl.share * 2 * Math.PI;
-      svg.append(s('path', {
-        d: sl.share >= 0.9999 ? ringPath(C, C, R0, R1) : arcPath(C, C, R0, R1, a, a1),
-        'fill-rule': 'evenodd', fill: sl.color, stroke: '#fff', 'stroke-width': 1.5
-      }));
-      a = a1;
-    }
-    svg.append(
-      s('text', { class: 'report__c1', x: C, y: C - 5, 'text-anchor': 'middle' }, c.centerLabel),
-      s('text', { class: 'report__c2', x: C, y: C + 17, 'text-anchor': 'middle' }, c.centerValue)
-    );
-    const max = Math.max(...c.slices.map((sl) => sl.share));
-    return h('div', { class: 'report__chart' },
-      svg,
-      h('ul', { class: 'report__legend' }, c.slices.map((sl) => h('li', {},
-        h('span', { class: 'sw', style: `--c:${sl.color}` }),
-        h('span', { class: 'rl-name' }, sl.label),
-        h('span', { class: 'rl-val' }, eur2.format(sl.value)),
-        h('span', { class: 'rl-pct' }, pct1.format(sl.share)),
-        h('span', { class: 'rl-bar' }, h('span', { style: `width:${(sl.share / max) * 100}%;background:${sl.color}` }))
-      ))));
-  }
-
-  /** Courbes du rapport (capital année par année), au-dessus du tableau du placement. */
-  function reportGrowth(c) {
-    const W = 640, H = 220, m0 = { t: 14, r: 12, b: 26, l: 58 };
-    const iw = W - m0.l - m0.r, ih = H - m0.t - m0.b;
-    const last = c.years.length - 1;
-    const { max: yMax, step } = niceScale(Math.max(1, ...c.series.flatMap((sr) => sr.values)), 4);
-    const X = (i) => m0.l + (last ? (i / last) * iw : iw / 2);
-    const Y = (v) => m0.t + ih - (v / yMax) * ih;
-    const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', 'aria-hidden': 'true' });
-    for (let v = 0; v <= yMax + 1e-9; v += step) {
-      svg.append(
-        s('line', { class: v === 0 ? 'report__axis' : 'report__grid', x1: m0.l, x2: W - m0.r, y1: Y(v), y2: Y(v) }),
-        s('text', { class: 'report__tick', x: m0.l - 8, y: Y(v) + 4, 'text-anchor': 'end' }, eurCompact.format(v))
-      );
-    }
-    const every = Math.max(1, Math.ceil(c.years.length / 10));
-    c.years.forEach((year, i) => {
-      // Dernière année toujours affichée ; la graduation précédente saute si elle la chevauche.
-      if (i === last || (i % every === 0 && last - i > every / 2)) {
-        svg.append(s('text', { class: 'report__tick', x: X(i), y: H - 8, 'text-anchor': 'middle' }, year ? `${year} an${year > 1 ? 's' : ''}` : 'Départ'));
-      }
-    });
-    for (const sr of c.series) {
-      svg.append(s('polyline', {
-        points: sr.values.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' '),
-        fill: 'none', stroke: sr.color, 'stroke-width': sr.dashed ? 1.5 : 2.5,
-        'stroke-dasharray': sr.dashed ? '5 4' : 'none', 'stroke-linejoin': 'round'
-      }));
-    }
-    return h('div', { class: 'report__growth' },
-      svg,
-      h('ul', { class: 'report__keys' }, c.series.map((sr) => h('li', {},
-        h('span', { class: `sw${sr.dashed ? ' sw--dashed' : ''}`, style: `--c:${sr.color}` }), sr.label))));
-  }
-
-  /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Exporter).
-      dataUrl : lien « Gestion budget » de la page de garde, qui porte les
-      données du profil pour l'import du PDF (pdflink.js). */
-  function renderReportHtml(report, box, { dataUrl } = {}) {
-    const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
-    const block = (b) => {
-      if (b.type === 'h3') return h('h3', {}, b.text);
-      if (b.type === 'p') return h('p', {}, b.text);
-      if (b.type === 'kv' && b.tiles) {
-        return h('div', { class: 'report__tiles' }, b.tiles.map((t) => h('div', { class: `report__tile${t.tone ? ` is-${t.tone}` : ''}` },
-          h('span', {}, t.label), h('strong', {}, t.value), t.sub ? h('small', {}, t.sub) : null)));
-      }
-      if (b.type === 'kv') {
-        return h('table', { class: 'report__kv' },
-          h('tbody', {}, b.rows.map(([k, v]) => h('tr', {}, h('th', { scope: 'row' }, k), h('td', { class: 'num' }, v)))));
-      }
-      if (b.chart?.kind === 'donut') return reportDonut(b.chart);
-      return [
-        b.chart?.kind === 'growth' ? reportGrowth(b.chart) : null,
-        h('table', {},
-          h('thead', {}, h('tr', {}, cells('th', b.head, b.align))),
-          h('tbody', {}, b.rows.map((r) => h('tr', {}, cells('td', r, b.align)))),
-          b.foot ? h('tfoot', {}, h('tr', {}, cells('td', b.foot, b.align))) : null)
-      ];
-    };
-    const num = (i) => String(i + 1).padStart(2, '0');
-    const { cover } = report;
-    box.replaceChildren(
-      // Page de garde
-      h('div', { class: 'report__cover' },
-        h('p', { class: 'report__brand' }, dataUrl ? h('a', { href: dataUrl }, 'Gestion budget') : 'Gestion budget'),
-        h('div', { class: 'report__cover-main' },
-          h('p', { class: 'report__kicker' }, `Modèle ${cover.model}`),
-          h('h1', {}, 'Rapport de compte'),
-          h('p', { class: 'report__sub' }, `Profil « ${cover.profile} »`))),
-      // Sommaire
-      h('nav', { class: 'report__toc', 'aria-label': 'Sommaire' },
-        h('h2', {}, 'Sommaire'),
-        h('ol', {}, report.sections.map((sec, i) => h('li', {},
-          h('a', { href: `#report-ch-${i + 1}` },
-            h('span', { class: 'toc-num' }, num(i)),
-            h('span', { class: 'toc-text' }, h('strong', {}, sec.title), sec.summary ? h('small', {}, sec.summary) : null)))))),
-      // Chapitres
-      ...report.sections.map((sec, i) => h('section', { class: 'report__chapter', id: `report-ch-${i + 1}` },
-        h('header', { class: 'report__chapter-head' },
-          h('span', { class: 'report__chapter-num' }, `Chapitre ${num(i)}`),
-          h('h2', {}, sec.title),
-          sec.summary ? h('p', {}, sec.summary) : null),
-        sec.blocks.flatMap(block)))
-    );
-  }
-
-  function downloadFile(bytes, mime, filename) {
-    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
-    const link = h('a', { href: url, download: filename });
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  /** Exporter sur mobile : sous MOBILE_QUERY, le formulaire passe dans une
-      pop-up guidée, une étape par choix (Format, Modèle, Données du profil),
-      comme « Nouvelle dépense » ; il revient dans la page au-delà. Un seul
-      formulaire, donc une seule logique d'export. */
-  function bindExportWizard(form, status) {
-    const overlay = $('#exportWizardOverlay');
-    const slot = $('#exportWizardSlot');
-    if (!overlay || !slot) return;
-    const steps = ['#exportStepFormat', '#exportStepModele', '#exportStepDonnees'];
-    bindAddWizard({
-      overlay: '#exportWizardOverlay',
-      openBtn: '#btnOpenExportWizard',
-      form: '#exportForm',
-      closeBtn: '#exportWizardClose',
-      backBtn: '#exportWizardBack',
-      nextBtn: '#exportWizardNext',
-      finishBtn: '#exportWizardFinish',
-      stepLabel: '#exportWizardStepLabel',
-      steps,
-      stepsRoot: form,
-      fields: ['input[name="format"]:checked', 'input[name="modele"]:checked', 'input[name="donnees"]:checked']
-    });
-    // Nouvelle pop-up : le message du dernier export est effacé.
-    $('#btnOpenExportWizard').addEventListener('click', () => { status.textContent = ''; });
-    const place = () => {
-      if (MOBILE_QUERY.matches) {
-        slot.append(form);
-        return;
-      }
-      status.before(form);
-      // En bureau, toutes les étapes sont visibles et la pop-up n'a plus lieu d'être.
-      steps.forEach((sel) => { $(sel, form).hidden = false; });
-      if (!overlay.hidden) $('#exportWizardClose').click();
-    };
-    place();
-    MOBILE_QUERY.addEventListener('change', place);
-  }
-
-  /** Pages Exporter et Imprimer : même formulaire, la page Imprimer fixe le
-      format à « print » (champ caché) et ne propose que le choix du modèle. */
-  function bindExport() {
-    const form = $('#exportForm');
-    if (!form) return;
-    const status = $('#exportStatus');
-    // Avant l'export : la pop-up mobile se ferme d'abord, pour ne pas être imprimée.
-    bindExportWizard(form, status);
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const format = form.elements.format.value;
-      const modelKey = form.elements.modele.value;
-      const report = buildReport(modelKey);
-      // Données du profil jointes seulement sur demande : un rapport partagé
-      // (modèle Simple, par exemple) ne doit pas emporter tout le budget.
-      const data = form.elements.donnees.value === 'oui' ? Profiles.exportData(state) : null;
-      if (format === 'print' || format === 'pdf') {
-        // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
-        // navigateur propose « Enregistrer au format PDF » comme destination.
-        status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
-        renderReportHtml(report, $('#printReport'), { dataUrl: data && PdfLink.url(data) });
-        window.print();
-        return;
-      }
-      // Avec les données jointes, le fichier s'importe sur la page Profil.
-      downloadFile(Docx.build(report, { data }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
-      // Google Docs : aucune connexion n'est possible depuis l'application,
-      // le même fichier .docx s'importe dans Google Drive.
-      status.textContent = format === 'gdocs'
-        ? 'Fichier .docx téléchargé. Pour l\'ouvrir dans Google Docs : sur Google Drive, Nouveau → Importer un fichier, puis « Ouvrir avec Google Docs ».'
-        : 'Fichier Word (.docx) téléchargé.';
-    });
-  }
-
-  /* ==========================================================================
      Résumé (tuiles du haut)
      ========================================================================== */
 
@@ -3021,7 +2026,8 @@
     bindInfoModal('#wBtnExemple', '#exampleOverlay', '#exampleClose');
     bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
-    bindExport();
+    // Pages Exporter et Imprimer uniquement (report.js n'est chargé que là).
+    window.Report?.bindExport({ state, totalRevenus, totalMonthly, computeSavings, computeYield, cashbackFraction, roundUpAmount, CAT_KEY });
     syncYieldInputs();
     renderLines('revenus');
     renderLines('charges');

@@ -8,15 +8,7 @@
   const list = document.getElementById('profilList');
   if (!list) return;
 
-  const h = (tag, attrs = {}, ...children) => {
-    const node = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs)) {
-      if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
-      else node.setAttribute(k, v);
-    }
-    node.append(...children);
-    return node;
-  };
+  const { h, openModal, closeModal } = UI;
 
   /** Le nouveau profil devient actif, puis on ouvre la page où continuer ; elle
       affiche la confirmation dans une pop-up (Flash, nav.js). */
@@ -31,30 +23,21 @@
      formulaire de la page et la pop-up guidée (mobile). */
   const DEPARTS = { vide: 'Vide', exemple: 'Pré-rempli avec l\'exemple' };
   const departOverlay = document.getElementById('departPickerOverlay');
-  let departTarget = null; // { btn, input } du bouton qui a ouvert le choix
   const setDepart = ({ btn, input }, value) => {
     input.value = value;
     btn.textContent = DEPARTS[value];
   };
-  const closeDepart = () => {
-    departOverlay.hidden = true;
-    document.removeEventListener('keydown', onDepartKey);
-    departTarget.btn.focus();
-  };
-  const onDepartKey = (e) => { if (e.key === 'Escape') closeDepart(); };
+  // Le focus revient tout seul sur le bouton qui a ouvert le choix (openModal).
+  const closeDepart = () => closeModal(departOverlay);
   const bindDepart = (target) => target.btn.addEventListener('click', () => {
-    departTarget = target;
     const buttons = Object.entries(DEPARTS).map(([value, label]) => h('button', {
       type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(value === target.input.value),
       onclick: () => { setDepart(target, value); closeDepart(); }
     }, label));
     document.getElementById('departPickerList').replaceChildren(...buttons);
-    departOverlay.hidden = false;
-    document.addEventListener('keydown', onDepartKey);
-    buttons.find((b) => b.getAttribute('aria-pressed') === 'true').focus();
+    openModal(departOverlay, { focus: buttons.find((b) => b.getAttribute('aria-pressed') === 'true') });
   });
   document.getElementById('departPickerClose').addEventListener('click', closeDepart);
-  departOverlay.addEventListener('click', (e) => { if (e.target === departOverlay) closeDepart(); });
 
   const pageDepart = { btn: document.getElementById('profilDepartBtn'), input: document.getElementById('profilDepart') };
   const wizardDepart = { btn: document.getElementById('wProfilDepartBtn'), input: document.getElementById('wProfilDepart') };
@@ -80,28 +63,30 @@
 
   const eur = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 
-  /* Montants masqués profil par profil (bouton œil à droite du nom) : ids des
-     profils masqués, retenus dans ce navigateur. */
-  const HIDE_KEY = 'gestion-budget-montants-masques';
-  let hidden = new Set();
-  try {
-    const saved = JSON.parse(localStorage.getItem(HIDE_KEY));
-    if (Array.isArray(saved)) hidden = new Set(saved.filter((id) => typeof id === 'string'));
-  } catch { /* stockage indisponible */ }
-  const toggleHidden = (id) => {
-    if (!hidden.delete(id)) hidden.add(id);
-    try { localStorage.setItem(HIDE_KEY, JSON.stringify([...hidden])); } catch { /* stockage indisponible */ }
+  /* Montants masqués profil par profil (bouton œil à droite du nom), retenus
+     dans le registre des profils (profiles.js) : supprimés avec le profil. */
+  (() => {
+    // Reprise de l'ancien réglage (v1.14.0 à v1.14.4), gardé à part dans localStorage.
+    const OLD_KEY = 'gestion-budget-montants-masques';
+    try {
+      const old = JSON.parse(localStorage.getItem(OLD_KEY));
+      if (Array.isArray(old)) old.forEach((id) => Profiles.setMasked(id, true));
+      localStorage.removeItem(OLD_KEY);
+    } catch { /* stockage indisponible */ }
+  })();
+  const toggleHidden = (p) => {
+    Profiles.setMasked(p.id, !p.masque);
     render();
     // La liste est redessinée : le focus revient sur le bouton œil de ce profil.
-    [...list.querySelectorAll('.eye-btn')].find((b) => b.dataset.id === id)?.focus();
+    [...list.querySelectorAll('.eye-btn')].find((b) => b.dataset.id === p.id)?.focus();
   };
 
   function eyeButton(p) {
-    const masked = hidden.has(p.id);
+    const masked = !!p.masque;
     const label = `${masked ? 'Afficher' : 'Masquer'} les montants de « ${p.nom} »`;
     const btn = h('button', {
       type: 'button', class: 'info-btn eye-btn', 'data-id': p.id, 'aria-pressed': String(masked), 'aria-label': label, title: label,
-      onclick: () => toggleHidden(p.id)
+      onclick: () => toggleHidden(p)
     });
     btn.append(document.getElementById('eyeIcons').content.cloneNode(true));
     return btn;
@@ -144,7 +129,7 @@
       if (profils.length > 1) {
         actions.append(h('button', {
           type: 'button', class: 'btn btn--ghost btn--sm',
-          onclick: () => confirmDialog(`Supprimer le profil « ${p.nom} » ?`, [
+          onclick: () => UI.confirmDialog(`Supprimer le profil « ${p.nom} » ?`, [
             ['Êtes-vous sûr ?', '']
           ], () => { Profiles.remove(p.id); render(); }, { center: true })
         }, 'Supprimer'));
@@ -156,7 +141,7 @@
             ...(p.exemple ? [h('span', { class: 'pill' }, 'Exemple')] : []),
             // Œil à droite du nom : masque / affiche les montants du profil.
             ...(summary ? [eyeButton(p)] : [])),
-          renderStats(summary, hidden.has(p.id))),
+          renderStats(summary, !!p.masque)),
         actions
       );
       list.append(item);
@@ -206,12 +191,7 @@
     document.getElementById('profilWizardStepLabel').textContent = `Étape ${i + 1} / ${wizardSteps.length}`;
     wizardFields[i].focus();
   };
-  const closeWizard = () => {
-    wizard.hidden = true;
-    document.removeEventListener('keydown', onWizardKey);
-  };
-  // Échap ferme seulement la pop-up du dessus (le choix du point de départ s'il est ouvert).
-  const onWizardKey = (e) => { if (e.key === 'Escape' && departOverlay.hidden) closeWizard(); };
+  const closeWizard = () => closeModal(wizard);
   const wizardGoNext = () => {
     if (!wizardFields[wizardStep].reportValidity()) return;
     showWizardStep(Math.min(wizardStep + 1, wizardSteps.length - 1));
@@ -219,12 +199,10 @@
   document.getElementById('btnOpenProfilWizard').addEventListener('click', () => {
     wizardForm.reset();
     setDepart(wizardDepart, 'vide');
-    wizard.hidden = false;
-    document.addEventListener('keydown', onWizardKey);
+    openModal(wizard);
     showWizardStep(0);
   });
   document.getElementById('profilWizardClose').addEventListener('click', closeWizard);
-  wizard.addEventListener('click', (e) => { if (e.target === wizard) closeWizard(); });
   wizardNext.addEventListener('click', wizardGoNext);
   wizardBack.addEventListener('click', () => showWizardStep(Math.max(wizardStep - 1, 0)));
   // Entrée dans le champ Nom = Suivant, comme la touche « suivant » d'un clavier mobile.
@@ -322,17 +300,11 @@
   const renameForm = document.getElementById('importRenameForm');
   const renameInput = document.getElementById('importRenameInput');
   const renameError = document.getElementById('importRenameError');
-  const closeRename = () => {
-    renameOverlay.hidden = true;
-    document.removeEventListener('keydown', onRenameKey);
-  };
-  const onRenameKey = (e) => { if (e.key === 'Escape') closeRename(); };
+  const closeRename = () => closeModal(renameOverlay);
   function openRename(nom) {
     renameInput.value = nom;
     renameError.textContent = '';
-    renameOverlay.hidden = false;
-    document.addEventListener('keydown', onRenameKey);
-    renameInput.focus();
+    openModal(renameOverlay, { focus: renameInput });
     renameInput.select();
   }
   renameForm.addEventListener('submit', (e) => {
@@ -346,7 +318,6 @@
   });
   renameInput.addEventListener('input', () => { renameError.textContent = ''; });
   document.getElementById('importRenameCancel').addEventListener('click', closeRename);
-  renameOverlay.addEventListener('click', (e) => { if (e.target === renameOverlay) closeRename(); });
 
   // Glisser-déposer (zone visible sur bureau) : le fichier déposé remplit le champ.
   const hasFile = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
@@ -371,18 +342,8 @@
   // Pop-up « Quels fichiers peut-on importer ? »
   const infoOverlay = document.getElementById('importInfoOverlay');
   const infoClose = document.getElementById('importInfoClose');
-  const closeInfo = () => {
-    infoOverlay.hidden = true;
-    document.removeEventListener('keydown', onInfoKey);
-  };
-  const onInfoKey = (e) => { if (e.key === 'Escape') closeInfo(); };
-  document.getElementById('importInfoBtn').addEventListener('click', () => {
-    infoOverlay.hidden = false;
-    document.addEventListener('keydown', onInfoKey);
-    infoClose.focus();
-  });
-  infoClose.addEventListener('click', closeInfo);
-  infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) closeInfo(); });
+  document.getElementById('importInfoBtn').addEventListener('click', () => openModal(infoOverlay, { focus: infoClose }));
+  infoClose.addEventListener('click', () => closeModal(infoOverlay));
 
   /* ---------- Importer un profil sur mobile : pop-up ----------
      Sous 640px, le formulaire d'import de la page (et son message) est déplacé
@@ -393,12 +354,7 @@
   const importSlot = document.getElementById('importModalSlot');
   const importHome = document.querySelector('.profil-import');
   importSlot.append(infoOverlay.querySelector('.modal__text').cloneNode(true));
-  const closeImport = () => {
-    importOverlay.hidden = true;
-    document.removeEventListener('keydown', onImportKey);
-  };
-  // Échap ferme seulement la pop-up du dessus (« nom déjà pris » si elle est ouverte).
-  const onImportKey = (e) => { if (e.key === 'Escape' && renameOverlay.hidden) closeImport(); };
+  const closeImport = () => closeModal(importOverlay);
   // Dans la pop-up, le message (refus en rouge) passe au-dessus du bouton, et
   // le bouton d'envoi, affiché une fois le fichier reconnu, devient « Valider ».
   const importSubmit = importForm.querySelector('button[type="submit"]');
@@ -418,9 +374,7 @@
   document.getElementById('btnOpenImport').addEventListener('click', () => {
     fileInput.value = '';
     checkFile(); // repart d'un choix vide : message et « Valider » effacés
-    importOverlay.hidden = false;
-    document.addEventListener('keydown', onImportKey);
-    document.getElementById('importClose').focus();
+    openModal(importOverlay, { focus: '#importClose' });
   });
   // Annuler (fichier reconnu) : retour au texte et à « Sélectionner le fichier ».
   document.getElementById('importCancel').addEventListener('click', () => {
@@ -429,7 +383,6 @@
     fileInput.focus();
   });
   document.getElementById('importClose').addEventListener('click', closeImport);
-  importOverlay.addEventListener('click', (e) => { if (e.target === importOverlay) closeImport(); });
 
   render();
 })();

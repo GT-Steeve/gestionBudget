@@ -1,6 +1,6 @@
 /* ==========================================================================
    Gestion budget — chrome partagé entre les pages (thème, taille, menu mobile)
-   Inclus par toutes les pages, après profiles.js et avant script.js s'il est présent.
+   Inclus par toutes les pages, après profiles.js et ui.js, avant script.js s'il est présent.
    ========================================================================== */
 'use strict';
 
@@ -98,51 +98,8 @@
   /* ---------- Bouton « Pour tout effacer » du footer ----------
      Sur les pages avec script.js (body[data-app]), c'est lui qui gère déjà ce bouton :
      on ne s'en occupe que sur les pages qui n'ont pas le tableau de bord (ex. À propos,
-     Annexe). Même pop-up de confirmation que script.js (#confirmOverlay), pas l'alerte
+     Annexe). Même pop-up de confirmation que script.js (UI.confirmDialog), pas l'alerte
      native du navigateur, pour une expérience cohérente sur toutes les pages. */
-
-  /** opts.center : pop-up étroit, titre, texte et boutons centrés (comme script.js). */
-  function confirmDeleteFooter(title, details, onConfirm, opts = {}) {
-    const overlay = $('#confirmOverlay');
-    if (!overlay) { onConfirm(); return; }
-    const center = !!opts.center;
-    $('#confirmTitle').textContent = title;
-    $('#confirmTitle').classList.toggle('modal__title--center', center);
-    $('#confirmOverlay .modal').classList.toggle('modal--narrow', center);
-    $('#confirmOverlay .modal__actions').classList.toggle('modal__actions--center', center);
-    const detailsEl = $('#confirmDetails');
-    detailsEl.classList.toggle('modal__details--center', center);
-    detailsEl.replaceChildren();
-    for (const [label, value] of details) {
-      const dt = document.createElement('dt');
-      dt.textContent = label;
-      const dd = document.createElement('dd');
-      dd.textContent = value;
-      detailsEl.append(dt, dd);
-    }
-
-    const okBtn = $('#confirmOk');
-    const cancelBtn = $('#confirmCancel');
-    const close = () => {
-      overlay.hidden = true;
-      okBtn.removeEventListener('click', onOk);
-      cancelBtn.removeEventListener('click', onCancel);
-      overlay.removeEventListener('click', onOverlayClick);
-      document.removeEventListener('keydown', onKey);
-    };
-    const onOk = () => { close(); onConfirm(); };
-    const onCancel = () => close();
-    const onOverlayClick = (e) => { if (e.target === overlay) onCancel(); };
-    const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
-
-    okBtn.addEventListener('click', onOk);
-    cancelBtn.addEventListener('click', onCancel);
-    overlay.addEventListener('click', onOverlayClick);
-    document.addEventListener('keydown', onKey);
-
-    overlay.hidden = false;
-    okBtn.focus();
-  }
 
   function initClearFooter() {
     const btn = $('#btnClearFooter');
@@ -155,7 +112,7 @@
       const scenarios = Array.isArray(saved.scenarios) ? saved.scenarios : [];
       const depenses = Array.isArray(saved.depenses) ? saved.depenses : [];
       const depensesHistorique = Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : [];
-      confirmDeleteFooter('Êtes-vous sûr de tout effacer ?', [
+      UI.confirmDialog('Êtes-vous sûr de tout effacer ?', [
         ['Revenus', `${revenus.length}`],
         ['Charges', `${charges.length}`],
         ['Comparaisons', `${scenarios.length}`],
@@ -275,20 +232,11 @@
     modal.append(title, text, actions);
     overlay.append(modal);
 
-    const close = () => {
-      overlay.remove();
-      document.removeEventListener('keydown', onKey);
-    };
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
-    ok.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-    document.addEventListener('keydown', onKey);
     document.body.append(overlay);
-    ok.focus();
+    // Pop-up créée pour l'occasion : retirée de la page une fois fermée.
+    ok.addEventListener('click', UI.openModal(overlay, { focus: ok, onClose: () => overlay.remove() }));
   }
 
-  // Même pop-up de confirmation, réutilisée par la page Profil (profil.js).
-  window.confirmDialog = confirmDeleteFooter;
   window.Prefs = Prefs;
   window.Flash = Flash;
 
