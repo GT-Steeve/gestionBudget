@@ -700,6 +700,8 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .import-pick:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .import-drop.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .import-status:empty { display: none; }
+/* Annuler de l'import : n'existe que dans la pop-up mobile (voir #importModalSlot). */
+#importCancel { display: none; }
 .import-status.is-error { color: var(--bad); }
 /* Pop-up de confirmation après redirection (Flash, nav.js) : texte centré, masqué s'il est vide. */
 .success-text { text-align: center; }
@@ -932,6 +934,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Sur tablette/bureau, le JS vide ce conteneur (bouton déplacé dans
    .card__head) : :empty le masque pour ne pas laisser un espace vide. */
 .add-trigger:empty { display: none; }
+/* Profil : bloc « Ajouter un profil » (boutons Créer / Importer, chacun
+   ouvrant sa pop-up) réservé au mobile ; les formulaires en ligne restent sur
+   tablette/bureau. */
+.profil-add-mobile { display: none; }
+.profil-add-mobile__btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .modal--wizard { max-width: 360px; }
 .wizard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .wizard__head .modal__title { margin-bottom: 0; }
@@ -1221,6 +1228,21 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 /* Mobile */
 @media (max-width: 640px) {
+  .profil-create, .profil-import { display: none; }
+  .profil-add-mobile { display: block; }
+  /* Pop-up d'import : avertissement puis formulaire, sans marge en trop. */
+  #importModalSlot .import-form { margin-top: 0; }
+  /* Pop-up d'import : Sélectionner le fichier centré, sans bouton d'envoi ;
+     une fois le fichier reconnu (.is-ready, profil.js), le message vert passe
+     au-dessus et le bouton laisse la place à « Annuler » + « Valider ». Le message rouge de
+     refus est placé au-dessus du formulaire par profil.js. */
+  #importModalSlot .import-form { justify-content: center; }
+  #importModalSlot .import-form > .btn { display: none; width: auto; }
+  #importModalSlot .import-drop { flex-direction: column; }
+  #importModalSlot .import-drop__file { order: -1; text-align: center; }
+  #importModalSlot .import-status { text-align: center; margin: 0 0 12px; }
+  #importModalSlot .import-form.is-ready .import-pick { display: none; }
+  #importModalSlot .import-form.is-ready > .btn { display: inline-flex; }
   .wrap { padding: 0 12px; }
   .about-head .lead--center { text-align: justify; }
   /* Paramètres : les choix (taille, thème) restent côte à côte, en cartes plus compactes. */

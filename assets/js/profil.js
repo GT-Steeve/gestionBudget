@@ -27,25 +27,26 @@
   };
 
   /* Point de départ d'un nouveau profil : choix en pop-up plutôt que la liste
-     native du navigateur. */
+     native du navigateur. Deux couples bouton + champ caché l'utilisent : le
+     formulaire de la page et la pop-up guidée (mobile). */
   const DEPARTS = { vide: 'Vide', exemple: 'Pré-rempli avec l\'exemple' };
-  const departInput = document.getElementById('profilDepart');
-  const departBtn = document.getElementById('profilDepartBtn');
   const departOverlay = document.getElementById('departPickerOverlay');
-  const setDepart = (value) => {
-    departInput.value = value;
-    departBtn.textContent = DEPARTS[value];
+  let departTarget = null; // { btn, input } du bouton qui a ouvert le choix
+  const setDepart = ({ btn, input }, value) => {
+    input.value = value;
+    btn.textContent = DEPARTS[value];
   };
   const closeDepart = () => {
     departOverlay.hidden = true;
     document.removeEventListener('keydown', onDepartKey);
-    departBtn.focus();
+    departTarget.btn.focus();
   };
   const onDepartKey = (e) => { if (e.key === 'Escape') closeDepart(); };
-  departBtn.addEventListener('click', () => {
+  const bindDepart = (target) => target.btn.addEventListener('click', () => {
+    departTarget = target;
     const buttons = Object.entries(DEPARTS).map(([value, label]) => h('button', {
-      type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(value === departInput.value),
-      onclick: () => { setDepart(value); closeDepart(); }
+      type: 'button', class: 'cat-picker__opt', 'aria-pressed': String(value === target.input.value),
+      onclick: () => { setDepart(target, value); closeDepart(); }
     }, label));
     document.getElementById('departPickerList').replaceChildren(...buttons);
     departOverlay.hidden = false;
@@ -54,6 +55,11 @@
   });
   document.getElementById('departPickerClose').addEventListener('click', closeDepart);
   departOverlay.addEventListener('click', (e) => { if (e.target === departOverlay) closeDepart(); });
+
+  const pageDepart = { btn: document.getElementById('profilDepartBtn'), input: document.getElementById('profilDepart') };
+  const wizardDepart = { btn: document.getElementById('wProfilDepartBtn'), input: document.getElementById('wProfilDepart') };
+  bindDepart(pageDepart);
+  bindDepart(wizardDepart);
 
   function renderNameEditor(item, p) {
     const input = h('input', { type: 'text', maxlength: Profiles.MAX_NAME, value: p.nom, 'aria-label': 'Nouveau nom du profil' });
@@ -157,12 +163,10 @@
     }
   }
 
-  document.getElementById('profilForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const preRempli = departInput.value === 'exemple';
-    const profil = Profiles.create(document.getElementById('profilNom').value, { preRempli });
-    e.target.reset();
-    setDepart('vide');
+  /** Crée le profil, puis ouvre la page où continuer. */
+  function createProfile(nom, depart) {
+    const preRempli = depart === 'exemple';
+    const profil = Profiles.create(nom, { preRempli });
     // Profil vide : on commence par saisir ses revenus ; pré-rempli : on le découvre depuis la Synthèse.
     profileAdded(profil.id, preRempli ? '../index.html' : 'revenus.html', {
       title: 'Profil créé avec succès',
@@ -171,6 +175,68 @@
         : 'Vous pouvez maintenant saisir les valeurs du nouveau profil, en commençant par ses revenus.',
       action: 'Commencer'
     });
+  }
+
+  document.getElementById('profilForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const depart = pageDepart.input.value;
+    const nom = document.getElementById('profilNom').value;
+    e.target.reset();
+    setDepart(pageDepart, 'vide');
+    createProfile(nom, depart);
+  });
+
+  /* ---------- Créer un profil sur mobile : pop-up guidée ----------
+     Une étape à la fois (Nom, puis Point de départ), avec Retour/Suivant,
+     comme « Ajouter un revenu » (bindAddWizard, script.js). */
+  const wizard = document.getElementById('profilWizardOverlay');
+  const wizardForm = document.getElementById('profilWizardForm');
+  const wizardSteps = [...wizard.querySelectorAll('.wizard__step')];
+  const wizardFields = [document.getElementById('wProfilNom'), wizardDepart.btn];
+  const wizardBack = document.getElementById('profilWizardBack');
+  const wizardNext = document.getElementById('profilWizardNext');
+  const wizardFinish = document.getElementById('profilWizardFinish');
+  let wizardStep = 0;
+  const showWizardStep = (i) => {
+    wizardStep = i;
+    wizardSteps.forEach((el, idx) => { el.hidden = idx !== i; });
+    wizardBack.hidden = i === 0;
+    wizardNext.hidden = i === wizardSteps.length - 1;
+    wizardFinish.hidden = i !== wizardSteps.length - 1;
+    document.getElementById('profilWizardStepLabel').textContent = `Étape ${i + 1} / ${wizardSteps.length}`;
+    wizardFields[i].focus();
+  };
+  const closeWizard = () => {
+    wizard.hidden = true;
+    document.removeEventListener('keydown', onWizardKey);
+  };
+  // Échap ferme seulement la pop-up du dessus (le choix du point de départ s'il est ouvert).
+  const onWizardKey = (e) => { if (e.key === 'Escape' && departOverlay.hidden) closeWizard(); };
+  const wizardGoNext = () => {
+    if (!wizardFields[wizardStep].reportValidity()) return;
+    showWizardStep(Math.min(wizardStep + 1, wizardSteps.length - 1));
+  };
+  document.getElementById('btnOpenProfilWizard').addEventListener('click', () => {
+    wizardForm.reset();
+    setDepart(wizardDepart, 'vide');
+    wizard.hidden = false;
+    document.addEventListener('keydown', onWizardKey);
+    showWizardStep(0);
+  });
+  document.getElementById('profilWizardClose').addEventListener('click', closeWizard);
+  wizard.addEventListener('click', (e) => { if (e.target === wizard) closeWizard(); });
+  wizardNext.addEventListener('click', wizardGoNext);
+  wizardBack.addEventListener('click', () => showWizardStep(Math.max(wizardStep - 1, 0)));
+  // Entrée dans le champ Nom = Suivant, comme la touche « suivant » d'un clavier mobile.
+  wizardForm.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.target.tagName === 'BUTTON') return;
+    e.preventDefault();
+    (wizardStep === wizardSteps.length - 1 ? wizardFinish : wizardNext).click();
+  });
+  wizardForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    closeWizard();
+    createProfile(document.getElementById('wProfilNom').value, wizardDepart.input.value);
   });
 
   /** Ouvre le profil d'exemple ; le bouton « Fermer l'exemple » (nav.js) ramène ici. */
@@ -210,6 +276,7 @@
 
   async function checkFile() {
     pending = null;
+    importForm.classList.remove('is-ready');
     const file = fileInput.files[0];
     fileName.textContent = '';
     setStatus('');
@@ -223,6 +290,8 @@
     }
     pending = { file, payload };
     fileName.textContent = `Fichier reconnu : ${file.name}`;
+    // Pop-up mobile : « Sélectionner le fichier » laisse la place à « Valider ».
+    importForm.classList.add('is-ready');
   }
 
   fileInput.addEventListener('change', checkFile);
@@ -314,6 +383,53 @@
   });
   infoClose.addEventListener('click', closeInfo);
   infoOverlay.addEventListener('click', (e) => { if (e.target === infoOverlay) closeInfo(); });
+
+  /* ---------- Importer un profil sur mobile : pop-up ----------
+     Sous 640px, le formulaire d'import de la page (et son message) est déplacé
+     dans une pop-up, sous l'avertissement de la bulle d'info ; il revient dans
+     la page au-delà. Un seul formulaire, donc une seule logique d'import. */
+  const MOBILE_QUERY = window.matchMedia('(max-width: 640px)');
+  const importOverlay = document.getElementById('importOverlay');
+  const importSlot = document.getElementById('importModalSlot');
+  const importHome = document.querySelector('.profil-import');
+  importSlot.append(infoOverlay.querySelector('.modal__text').cloneNode(true));
+  const closeImport = () => {
+    importOverlay.hidden = true;
+    document.removeEventListener('keydown', onImportKey);
+  };
+  // Échap ferme seulement la pop-up du dessus (« nom déjà pris » si elle est ouverte).
+  const onImportKey = (e) => { if (e.key === 'Escape' && renameOverlay.hidden) closeImport(); };
+  // Dans la pop-up, le message (refus en rouge) passe au-dessus du bouton, et
+  // le bouton d'envoi, affiché une fois le fichier reconnu, devient « Valider ».
+  const importSubmit = importForm.querySelector('button[type="submit"]');
+  const placeImport = () => {
+    if (MOBILE_QUERY.matches) {
+      importSlot.append(status, importForm);
+      importSubmit.textContent = 'Valider';
+    } else {
+      importHome.append(importForm, status);
+      importSubmit.textContent = 'Importer';
+      closeImport();
+    }
+  };
+  placeImport();
+  MOBILE_QUERY.addEventListener('change', placeImport);
+
+  document.getElementById('btnOpenImport').addEventListener('click', () => {
+    fileInput.value = '';
+    checkFile(); // repart d'un choix vide : message et « Valider » effacés
+    importOverlay.hidden = false;
+    document.addEventListener('keydown', onImportKey);
+    document.getElementById('importClose').focus();
+  });
+  // Annuler (fichier reconnu) : retour au texte et à « Sélectionner le fichier ».
+  document.getElementById('importCancel').addEventListener('click', () => {
+    fileInput.value = '';
+    checkFile();
+    fileInput.focus();
+  });
+  document.getElementById('importClose').addEventListener('click', closeImport);
+  importOverlay.addEventListener('click', (e) => { if (e.target === importOverlay) closeImport(); });
 
   render();
 })();

@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.120">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.128">
 </head>
 <body>
 
@@ -105,6 +105,10 @@
       </svg>
     </template>
 
+    <!-- Sur mobile, ce bloc est remplacé par le bouton « Créer » (Ajouter un
+         profil, plus bas), qui ouvre la même saisie dans une pop-up guidée
+         (profil.js), comme « Ajouter un revenu ». -->
+    <div class="profil-create">
     <h3 class="h3 h3--gap">Créer un profil</h3>
     <form id="profilForm" class="form-row">
       <label class="grow">Nom du profil
@@ -117,7 +121,12 @@
       <input type="hidden" id="profilDepart" value="vide">
       <button type="submit" class="btn">Créer le profil</button>
     </form>
+    </div>
 
+    <!-- Sur mobile, ce bloc est remplacé par le bouton « Importer » (Ajouter un
+         profil, ci-dessous) et le formulaire d'import est déplacé dans sa
+         pop-up (profil.js). -->
+    <div class="profil-import">
     <div class="h3-with-info h3--gap">
       <h3 class="h3">Importer un profil</h3>
       <button type="button" id="importInfoBtn" class="info-btn" aria-label="Quels fichiers peut-on importer ?" title="En savoir plus">
@@ -138,9 +147,21 @@
         </label>
         <span id="importFileName" class="import-drop__file"></span>
       </div>
+      <!-- Pop-up mobile uniquement, une fois le fichier reconnu : revient au choix du fichier (profil.js). -->
+      <button type="button" id="importCancel" class="btn btn--ghost">Annuler</button>
       <button type="submit" class="btn">Importer</button>
     </form>
     <p id="importStatus" class="note import-status" role="status" aria-live="polite"></p>
+    </div>
+    <!-- Mobile uniquement : remplace les blocs Créer / Importer ci-dessus par
+         deux boutons côte à côte, chacun ouvrant sa pop-up (profil.js). -->
+    <div class="profil-add-mobile">
+      <h3 class="h3 h3--gap">Ajouter un profil</h3>
+      <div class="profil-add-mobile__btns">
+        <button type="button" id="btnOpenProfilWizard" class="btn">Créer</button>
+        <button type="button" id="btnOpenImport" class="btn">Importer</button>
+      </div>
+    </div>
   </section>
 
   <section class="card example-card">
@@ -150,7 +171,7 @@
     <p class="lead">Des valeurs fictives (salaire, loyer, factures, comparaisons…) pour découvrir
       chaque page de l'application. Il s'ouvre dans son propre profil : vos données ne sont pas touchées.</p>
     <div class="btn-group profile-example">
-      <button type="button" id="btnOpenExample" class="btn">Ouvrir l'exemple</button>
+      <button type="button" id="btnOpenExample" class="btn">Visualiser</button>
     </div>
   </section>
 
@@ -183,6 +204,38 @@
   </div>
 </div>
 
+<!-- Création d'un profil sur mobile, guidée étape par étape (profil.js) :
+     même principe que la pop-up « Ajouter un revenu ». -->
+<div id="profilWizardOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="profilWizardTitle">
+    <div class="wizard__head">
+      <p id="profilWizardTitle" class="modal__title">Créer un profil</p>
+      <button type="button" id="profilWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="profilWizardForm" autocomplete="off">
+      <div class="wizard__step" data-step="1">
+        <label for="wProfilNom">Nom du profil
+          <input id="wProfilNom" type="text" maxlength="40" placeholder="Ex. Marie, Budget vacances" required>
+        </label>
+      </div>
+      <div class="wizard__step" data-step="2" hidden>
+        <label for="wProfilDepartBtn">Point de départ
+          <button type="button" id="wProfilDepartBtn" class="select-btn">Vide</button>
+        </label>
+        <input type="hidden" id="wProfilDepart" value="vide">
+      </div>
+      <p id="profilWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 2</p>
+      <div class="modal__actions">
+        <button type="button" id="profilWizardBack" class="btn btn--ghost" hidden>Retour</button>
+        <button type="button" id="profilWizardNext" class="btn">Suivant</button>
+        <button type="submit" id="profilWizardFinish" class="btn" hidden>Créer le profil</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Choix du point de départ d'un nouveau profil (profil.js). -->
 <div id="departPickerOverlay" class="modal-overlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="departPickerTitle">
@@ -193,6 +246,20 @@
       </button>
     </div>
     <div id="departPickerList" class="cat-picker"></div>
+  </div>
+</div>
+
+<!-- Import d'un profil sur mobile (profil.js) : l'avertissement de la bulle
+     d'info, puis le formulaire d'import de la page, déplacé ici. -->
+<div id="importOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+    <div class="wizard__head">
+      <p id="importTitle" class="modal__title">Importer un profil</p>
+      <button type="button" id="importClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="importModalSlot"></div>
   </div>
 </div>
 
@@ -212,10 +279,10 @@
   </form>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.120"></script>
-<script src="../assets/js/docx.js?v=1.01.120"></script>
-<script src="../assets/js/pdflink.js?v=1.01.120"></script>
-<script src="../assets/js/nav.js?v=1.01.120"></script>
-<script src="../assets/js/profil.js?v=1.01.120"></script>
+<script src="../assets/js/profiles.js?v=1.01.128"></script>
+<script src="../assets/js/docx.js?v=1.01.128"></script>
+<script src="../assets/js/pdflink.js?v=1.01.128"></script>
+<script src="../assets/js/nav.js?v=1.01.128"></script>
+<script src="../assets/js/profil.js?v=1.01.128"></script>
 </body>
 </html>

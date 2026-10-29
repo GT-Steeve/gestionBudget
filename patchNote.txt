@@ -44,10 +44,11 @@ v1.13.1 = polish apparence document exporter / imprimer
 v1.13.2 = finish exporter / imprimer
 v1.14.0 = ajout import profil + taille 130%
 v1.14.1 = polish selection taille et theme dans paramètre sur mobile
+v1.14.2 = polish UI ajout profil sur mobile
 
 ** Next idea **
-Mode guide 
-    - lorsque la data est vide pour détecté un nouvelle utilisateur pour démarrer le tuto
+Mode guide
+    - bienvenue dans Gestion budget, choisir entre exemple pré-remplie exemple où 
     - feature simuler un budget pour que l'user ajuste en modifiant pour apprendre
 calendrier solde dans la page synthèse, revenu, dépense, charge
 réfléchir un don soutien où placement pub
