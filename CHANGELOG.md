@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.31.0...v1.32.0) (2026-10-29)
+
+
+### Features
+
+* **profil:** pop-ups pour créer et importer un profil sur mobile ([438d2e2](https://github.com/GT-Steeve/gestionBudget/commit/438d2e262f834246f9eeaaba9c5b45e0bf04c305))
+
 # [1.31.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.30.0...v1.31.0) (2026-10-28)
 
 
