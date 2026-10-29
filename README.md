@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.14.3 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.14.4 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -56,9 +56,12 @@ placement, exemples de produits financiers et synthèse visuelle,
   importer dans Google Drive : aucune connexion n'est faite). Trois modèles :
   **Simple** (synthèse + dépenses du mois), **Standard** (+ revenus, charges,
   placement) et **Complet** (+ historique des dépenses, économie, cashback,
-  RoundUp). Le `.docx` et le PDF embarquent aussi toutes les données du profil
-  (quel que soit le modèle), pour pouvoir les réimporter : partie JSON dans le
-  `.docx`, lien « Gestion budget » de la page de garde dans le PDF.
+  RoundUp). Option **Rapport + données** (désactivée par défaut, pour qu'un
+  rapport partagé n'emporte pas tout le budget) : le `.docx` et le PDF
+  embarquent alors toutes les données du profil, quel que soit le modèle, pour
+  pouvoir les réimporter : partie JSON dans le `.docx`, lien « Gestion
+  budget » de la page de garde dans le PDF (lu en clair ou dans un flux
+  d'objets compressé).
 - **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
   directement le rapport. Les boutons « Exporter » et « Imprimer » restent
   aussi disponibles sous la synthèse.
@@ -69,7 +72,7 @@ placement, exemples de produits financiers et synthèse visuelle,
   masquer ses montants. Création d'un profil vide ou pré-rempli (point de
   départ choisi dans une pop-up), changement, renommage et suppression depuis
   la page Profil. **Import** d'un profil à partir du `.docx` ou du PDF exporté
-  par l'application (glisser-déposer sur bureau) ; tout autre fichier est
+  par l'application avec l'option « Rapport + données » (glisser-déposer sur bureau) ; tout autre fichier est
   refusé (autre application, export modifié ou réenregistré), et un nom déjà
   pris doit être changé. Après une création ou un import, l'application ouvre
   la page où continuer et y confirme l'action dans une pop-up.

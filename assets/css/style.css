@@ -730,6 +730,14 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .export-actions { display: flex; justify-content: center; margin-top: 24px; }
 .export-status { text-align: center; margin: 12px auto 0; }
 .export-status:empty { display: none; }
+/* Mobile uniquement : bouton « Commencer » qui ouvre la pop-up guidée. */
+.export-start { display: none; text-align: center; margin: 20px 0 8px; }
+.export-lead--mobile { display: none; }
+/* Dans la pop-up : un choix par étape, sans le bouton Exporter de la page
+   (remplacé par celui de la dernière étape). */
+#exportWizardSlot .export-step { margin-top: 20px; }
+#exportWizardSlot .export-step .h3 { margin-top: 0; }
+#exportWizardSlot .export-actions { display: none; }
 
 /* Rapport généré par la page Exporter : invisible à l'écran, seul contenu
    imprimé (voir @media print). Couleurs fixes, lisibles sur papier quel que
@@ -1230,6 +1238,10 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 @media (max-width: 640px) {
   .profil-create, .profil-import { display: none; }
   .profil-add-mobile { display: block; }
+  .export-start { display: block; }
+  /* Texte d'introduction propre au mobile (les choix sont dans la pop-up). */
+  .export-lead--desk { display: none; }
+  .export-lead--mobile { display: block; }
   /* Pop-up d'import : avertissement puis formulaire, sans marge en trop. */
   #importModalSlot .import-form { margin-top: 0; }
   /* Pop-up d'import : Sélectionner le fichier centré, sans bouton d'envoi ;

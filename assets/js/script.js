@@ -402,7 +402,9 @@
     const nextBtn = $(cfg.nextBtn);
     const finishBtn = $(cfg.finishBtn);
     const stepLabel = $(cfg.stepLabel);
-    const steps = cfg.steps.map((sel) => $(sel, overlay));
+    // Étapes cherchées dans la pop-up, ou dans cfg.stepsRoot si elles n'y sont
+    // pas toujours (formulaire Exporter, déplacé selon la largeur d'écran).
+    const steps = cfg.steps.map((sel) => $(sel, cfg.stepsRoot || overlay));
     const total = steps.length;
     let current = 0;
 
@@ -562,13 +564,19 @@
   /** Date d'ajout enregistrée (ISO) si valide, sinon null (anciennes lignes). */
   const validDate = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
 
+  /** Éléments d'une liste enregistrée ou importée qui sont bien des objets : une
+      valeur null ou un nombre dans la liste ferait sinon planter la page. */
+  const records = (list) => (Array.isArray(list) ? list : [])
+    .filter((x) => x !== null && typeof x === 'object' && !Array.isArray(x));
+
   function loadState() {
     const saved = store.get(STORAGE_KEY);
-    if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios) || !saved.yield) {
+    if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios)
+      || saved.yield === null || typeof saved.yield !== 'object') {
       return exampleState();
     }
     return {
-      charges: saved.charges.map((c) => ({
+      charges: records(saved.charges).map((c) => ({
         id: String(c.id || uid()),
         categorie: CATEGORIES.includes(c.categorie) ? c.categorie : 'Autre',
         nom: String(c.nom || 'Sans nom').slice(0, 60),
@@ -577,14 +585,14 @@
         roundUpOn: c.roundUpOn !== false,
         ajout: validDate(c.ajout)
       })),
-      revenus: (Array.isArray(saved.revenus) ? saved.revenus : []).map((r) => ({
+      revenus: records(saved.revenus).map((r) => ({
         id: String(r.id || uid()),
         categorie: REV_CATEGORIES.includes(r.categorie) ? r.categorie : 'Salaire',
         nom: String(r.nom || 'Sans nom').slice(0, 60),
         mensuel: num(r.mensuel),
         ajout: validDate(r.ajout)
       })),
-      depenses: (Array.isArray(saved.depenses) ? saved.depenses : []).map((d) => ({
+      depenses: records(saved.depenses).map((d) => ({
         id: String(d.id || uid()),
         categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
         nom: String(d.nom || 'Sans nom').slice(0, 60),
@@ -593,10 +601,10 @@
         roundUpOn: d.roundUpOn !== false,
         ajout: validDate(d.ajout)
       })),
-      depensesHistorique: (Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : []).map((m) => ({
+      depensesHistorique: records(saved.depensesHistorique).map((m) => ({
         mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(new Date()),
         total: num(m.total),
-        items: (Array.isArray(m.items) ? m.items : []).map((d) => ({
+        items: records(m.items).map((d) => ({
           id: String(d.id || uid()),
           categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
           nom: String(d.nom || 'Sans nom').slice(0, 60),
@@ -607,7 +615,7 @@
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(new Date()),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,
-      scenarios: saved.scenarios.map((x) => ({
+      scenarios: records(saved.scenarios).map((x) => ({
         id: String(x.id || uid()),
         chargeId: String(x.chargeId),
         option: String(x.option || '').slice(0, 60),
@@ -2878,27 +2886,70 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /** Exporter sur mobile : sous MOBILE_QUERY, le formulaire passe dans une
+      pop-up guidée, une étape par choix (Format, Modèle, Données du profil),
+      comme « Nouvelle dépense » ; il revient dans la page au-delà. Un seul
+      formulaire, donc une seule logique d'export. */
+  function bindExportWizard(form, status) {
+    const overlay = $('#exportWizardOverlay');
+    const slot = $('#exportWizardSlot');
+    if (!overlay || !slot) return;
+    const steps = ['#exportStepFormat', '#exportStepModele', '#exportStepDonnees'];
+    bindAddWizard({
+      overlay: '#exportWizardOverlay',
+      openBtn: '#btnOpenExportWizard',
+      form: '#exportForm',
+      closeBtn: '#exportWizardClose',
+      backBtn: '#exportWizardBack',
+      nextBtn: '#exportWizardNext',
+      finishBtn: '#exportWizardFinish',
+      stepLabel: '#exportWizardStepLabel',
+      steps,
+      stepsRoot: form,
+      fields: ['input[name="format"]:checked', 'input[name="modele"]:checked', 'input[name="donnees"]:checked']
+    });
+    // Nouvelle pop-up : le message du dernier export est effacé.
+    $('#btnOpenExportWizard').addEventListener('click', () => { status.textContent = ''; });
+    const place = () => {
+      if (MOBILE_QUERY.matches) {
+        slot.append(form);
+        return;
+      }
+      status.before(form);
+      // En bureau, toutes les étapes sont visibles et la pop-up n'a plus lieu d'être.
+      steps.forEach((sel) => { $(sel, form).hidden = false; });
+      if (!overlay.hidden) $('#exportWizardClose').click();
+    };
+    place();
+    MOBILE_QUERY.addEventListener('change', place);
+  }
+
   /** Pages Exporter et Imprimer : même formulaire, la page Imprimer fixe le
       format à « print » (champ caché) et ne propose que le choix du modèle. */
   function bindExport() {
     const form = $('#exportForm');
     if (!form) return;
     const status = $('#exportStatus');
+    // Avant l'export : la pop-up mobile se ferme d'abord, pour ne pas être imprimée.
+    bindExportWizard(form, status);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const format = form.elements.format.value;
       const modelKey = form.elements.modele.value;
       const report = buildReport(modelKey);
+      // Données du profil jointes seulement sur demande : un rapport partagé
+      // (modèle Simple, par exemple) ne doit pas emporter tout le budget.
+      const data = form.elements.donnees.value === 'oui' ? Profiles.exportData(state) : null;
       if (format === 'print' || format === 'pdf') {
         // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
         // navigateur propose « Enregistrer au format PDF » comme destination.
         status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
-        renderReportHtml(report, $('#printReport'), { dataUrl: PdfLink.url(Profiles.exportData(state)) });
+        renderReportHtml(report, $('#printReport'), { dataUrl: data && PdfLink.url(data) });
         window.print();
         return;
       }
-      // Les données du profil sont embarquées : le fichier s'importe sur la page Profil.
-      downloadFile(Docx.build(report, { data: Profiles.exportData(state) }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
+      // Avec les données jointes, le fichier s'importe sur la page Profil.
+      downloadFile(Docx.build(report, { data }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
       // Google Docs : aucune connexion n'est possible depuis l'application,
       // le même fichier .docx s'importe dans Google Drive.
       status.textContent = format === 'gdocs'

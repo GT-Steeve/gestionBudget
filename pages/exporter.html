@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.130">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.134">
 </head>
 <body data-app="true">
 
@@ -84,12 +84,23 @@
     <div class="card__head">
       <div class="about-head">
         <h2 class="about-title">Exporter</h2>
-        <p class="lead">Choisissez un format et un modèle : le document reprend les valeurs du profil
-          actif. Tout est généré dans votre navigateur, rien n'est envoyé.</p>
+        <p class="lead export-lead--desk">Choisissez un format et un modèle : le document reprend les valeurs du profil
+          actif. Tout est généré dans votre navigateur.</p>
+        <!-- Mobile uniquement : les choix sont dans la pop-up, le texte présente
+             plutôt ce que permet l'export. -->
+        <p class="lead export-lead--mobile">Transférez vos données vers un autre appareil, ou créez un
+          rapport à partir des valeurs saisies dans le profil actif. Tout est généré dans votre
+          navigateur.</p>
       </div>
+    </div>
+    <!-- Mobile uniquement : le formulaire ci-dessous passe dans une pop-up
+         guidée (#exportWizardOverlay), ouverte par ce bouton (script.js). -->
+    <div class="export-start">
+      <button type="button" id="btnOpenExportWizard" class="btn">Commencer</button>
     </div>
 
     <form id="exportForm">
+    <div class="export-step" id="exportStepFormat">
     <h3 class="h3 h3--gap">Format</h3>
     <div class="choices choices--list" role="radiogroup" aria-label="Format">
       <label class="choice">
@@ -108,7 +119,9 @@
         <span class="choice__sub">Fichier .docx à importer dans Google Drive</span>
       </label>
     </div>
+    </div>
 
+    <div class="export-step" id="exportStepModele">
     <h3 class="h3 h3--gap">Modèle</h3>
     <div class="choices choices--list" role="radiogroup" aria-label="Modèle">
       <label class="choice">
@@ -127,12 +140,29 @@
         <span class="choice__sub">Synthèse, revenus, dépenses, charges, historique des dépenses, économie, placement, cashback et RoundUp</span>
       </label>
     </div>
+    </div>
+
+    <div class="export-step" id="exportStepDonnees">
+    <h3 class="h3 h3--gap">Données du profil</h3>
+    <div class="choices choices--list" role="radiogroup" aria-label="Données du profil">
+      <label class="choice">
+        <input type="radio" name="donnees" value="non" checked>
+        <span class="choice__label">Rapport seul</span>
+        <span class="choice__sub">Pour partager : le fichier ne contient que ce qu'affiche le rapport</span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="donnees" value="oui">
+        <span class="choice__label">Rapport + données</span>
+        <span class="choice__sub">Pour sauvegarder ou changer d'appareil : toutes les données du profil sont jointes, réimportables depuis la page Profil</span>
+      </label>
+    </div>
+    </div>
 
     <div class="btn-group export-actions">
       <button type="submit" class="btn">Exporter</button>
     </div>
-    <p id="exportStatus" class="note export-status" aria-live="polite"></p>
     </form>
+    <p id="exportStatus" class="note export-status" aria-live="polite"></p>
   </section>
 
   <section id="printReport" class="report" aria-hidden="true"></section>
@@ -142,6 +172,26 @@
 <footer class="wrap foot">
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
+
+<!-- Exporter sur mobile : pop-up guidée, une étape par choix (Format, Modèle,
+     Données du profil). Le formulaire de la page y est déplacé (script.js). -->
+<div id="exportWizardOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="exportWizardTitle">
+    <div class="wizard__head">
+      <p id="exportWizardTitle" class="modal__title">Exporter</p>
+      <button type="button" id="exportWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="exportWizardSlot"></div>
+    <p id="exportWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 3</p>
+    <div class="modal__actions">
+      <button type="button" id="exportWizardBack" class="btn btn--ghost" hidden>Retour</button>
+      <button type="button" id="exportWizardNext" class="btn">Suivant</button>
+      <button type="submit" id="exportWizardFinish" class="btn" form="exportForm" hidden>Exporter</button>
+    </div>
+  </div>
+</div>
 
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -154,11 +204,11 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.130"></script>
-<script src="../assets/js/nav.js?v=1.01.130"></script>
-<script src="../assets/js/calc.js?v=1.01.130"></script>
-<script src="../assets/js/docx.js?v=1.01.130"></script>
-<script src="../assets/js/pdflink.js?v=1.01.130"></script>
-<script src="../assets/js/script.js?v=1.01.130"></script>
+<script src="../assets/js/profiles.js?v=1.01.134"></script>
+<script src="../assets/js/nav.js?v=1.01.134"></script>
+<script src="../assets/js/calc.js?v=1.01.134"></script>
+<script src="../assets/js/docx.js?v=1.01.134"></script>
+<script src="../assets/js/pdflink.js?v=1.01.134"></script>
+<script src="../assets/js/script.js?v=1.01.134"></script>
 </body>
 </html>

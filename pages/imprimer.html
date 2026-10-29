@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.130">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.134">
 </head>
 <body data-app="true">
 
@@ -111,6 +111,20 @@
       </label>
     </div>
 
+    <h3 class="h3 h3--gap">Données du profil</h3>
+    <div class="choices choices--list" role="radiogroup" aria-label="Données du profil">
+      <label class="choice">
+        <input type="radio" name="donnees" value="non" checked>
+        <span class="choice__label">Rapport seul</span>
+        <span class="choice__sub">Pour partager : le fichier ne contient que ce qu'affiche le rapport</span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="donnees" value="oui">
+        <span class="choice__label">Rapport + données</span>
+        <span class="choice__sub">Si vous enregistrez en PDF : toutes les données du profil sont jointes, réimportables depuis la page Profil</span>
+      </label>
+    </div>
+
     <div class="btn-group export-actions">
       <button type="submit" class="btn">Imprimer</button>
     </div>
@@ -137,11 +151,11 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.130"></script>
-<script src="../assets/js/nav.js?v=1.01.130"></script>
-<script src="../assets/js/calc.js?v=1.01.130"></script>
-<script src="../assets/js/docx.js?v=1.01.130"></script>
-<script src="../assets/js/pdflink.js?v=1.01.130"></script>
-<script src="../assets/js/script.js?v=1.01.130"></script>
+<script src="../assets/js/profiles.js?v=1.01.134"></script>
+<script src="../assets/js/nav.js?v=1.01.134"></script>
+<script src="../assets/js/calc.js?v=1.01.134"></script>
+<script src="../assets/js/docx.js?v=1.01.134"></script>
+<script src="../assets/js/pdflink.js?v=1.01.134"></script>
+<script src="../assets/js/script.js?v=1.01.134"></script>
 </body>
 </html>

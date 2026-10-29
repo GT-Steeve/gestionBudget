@@ -46,6 +46,7 @@ v1.14.0 = ajout import profil + taille 130%
 v1.14.1 = polish selection taille et theme dans paramètre sur mobile
 v1.14.2 = polish UI ajout profil sur mobile
 v1.14.3 = correctif UI exporter sur mobile
+v1.14.4 = polish UX exporter sur mobile + renforcement export
 
 ** Next idea **
 Mode guide
@@ -56,3 +57,4 @@ réfléchir un don soutien où placement pub
 
 ** A VERIFIER **
 Blocage des connexions : une règle de sécurité (Content-Security-Policy) dans chaque page qui interdit au navigateur toute connexion sortante. Même un futur bug ou un script ajouté par erreur ne pourrait rien envoyer. Le principe passerait d'une promesse à une garantie technique.
+vérifier la précision de export - import pour le transfert de profil

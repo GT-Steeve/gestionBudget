@@ -270,7 +270,7 @@
   async function readExport(file) {
     const read = READERS[file.name.split('.').pop().toLowerCase()];
     if (!read || file.size > MAX_IMPORT_SIZE) return null;
-    const payload = read(new Uint8Array(await file.arrayBuffer()));
+    const payload = await read(new Uint8Array(await file.arrayBuffer()));
     return Profiles.exportName(payload) ? payload : null;
   }
 
