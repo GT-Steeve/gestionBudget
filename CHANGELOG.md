@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.33.0...v1.34.0) (2026-10-29)
+
+
+### Features
+
+* **architecture:** script.js en modules, pop-ups communes et bouton Revenus sous le texte ([b1621ae](https://github.com/GT-Steeve/gestionBudget/commit/b1621ae9440c74da8841084a2fc9d8ccfaae7c6d))
+
 # [1.33.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.32.1...v1.33.0) (2026-10-29)
 
 
