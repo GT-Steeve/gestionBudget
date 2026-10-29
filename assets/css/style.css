@@ -1251,6 +1251,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .choice__label { font-size: 14px; }
   .choice__preview { height: 52px; margin-bottom: 8px; }
   .choice__preview--light, .choice__preview--dark { padding: 8px 10px; }
+  /* Exporter/Imprimer : choix à texte long (format, modèle), illisibles sur trois
+     colonnes étroites ; un choix par ligne, et bouton pleine largeur. */
+  .choices--list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
+  .choices--list .choice { padding: 12px 14px; }
+  .export-actions .btn { width: 100%; }
   /* Totaux d'un profil sur deux lignes : Revenus · Charges, puis Solde · Dépenses. */
   .profile-stats { display: grid; grid-template-columns: auto auto; justify-content: start; }
   .profile-stat--solde { order: 3; }
