@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.32.1...v1.33.0) (2026-10-29)
+
+
+### Features
+
+* **export:** pop-up guidée sur mobile, données du profil jointes sur demande et import renforcé ([110fb94](https://github.com/GT-Steeve/gestionBudget/commit/110fb94eeae29acf2be8cb403c445c34869f60c0))
+
 ## [1.32.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.32.0...v1.32.1) (2026-10-29)
 
 
