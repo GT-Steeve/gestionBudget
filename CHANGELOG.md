@@ -1,3 +1,15 @@
+# [1.36.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.35.0...v1.36.0) (2026-10-30)
+
+
+### Bug Fixes
+
+* **stockage:** recharger la page au retour arrière et entre onglets ([07fd2d8](https://github.com/GT-Steeve/gestionBudget/commit/07fd2d8ce2adb045f968338028e7c5f087c63551))
+
+
+### Features
+
+* **theme:** thème sombre vert foncé et couleurs des nouvelles catégories ([0aea730](https://github.com/GT-Steeve/gestionBudget/commit/0aea730bd763b023bb6a0f49970227cf510beaef))
+
 # [1.35.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.34.0...v1.35.0) (2026-10-30)
 
 
