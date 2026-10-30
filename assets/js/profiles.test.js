@@ -124,6 +124,27 @@ describe('Profiles', () => {
     expect(Profiles.setMasked('inconnu', true)).toBe(false);
   });
 
+  it('marks pre-filled profiles and tells whether a profile has data', () => {
+    const vide = Profiles.create('Vide');
+    const plein = Profiles.create('Plein', { preRempli: true });
+    expect(vide).not.toHaveProperty('preRempli');
+    expect(Profiles.list().find((p) => p.id === plein.id).preRempli).toBe(true);
+    expect(Profiles.hasData(vide.id)).toBe(false);
+    expect(Profiles.hasData(plein.id)).toBe(false);
+    storage.setItem(Profiles.dataKey(vide.id), JSON.stringify({ revenus: [{ mensuel: 1 }], charges: [], scenarios: [] }));
+    expect(Profiles.hasData(vide.id)).toBe(true);
+  });
+
+  it('stores the guide progress per profile', () => {
+    expect(Profiles.active()).not.toHaveProperty('guide');
+    expect(Profiles.setGuide('principal', 'charges')).toBe(true);
+    expect(Profiles.active().guide).toBe('charges');
+    expect(Profiles.setGuide('principal', 'inconnue')).toBe(false);
+    expect(Profiles.active().guide).toBe('charges');
+    Profiles.setGuide('principal', null);
+    expect(Profiles.active()).not.toHaveProperty('guide');
+  });
+
   it('never reuses an existing id, nor an empty one', () => {
     // Math.random renvoie deux fois la même valeur, puis 0 (identifiant vide sans padEnd).
     const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0.5).mockReturnValueOnce(0.5).mockReturnValueOnce(0);

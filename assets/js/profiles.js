@@ -28,6 +28,9 @@
   const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'depensesMoisCourant',
     'scenarios', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
   const MAX_ITEMS = 5000;
+  // Avancement du guide (page Guide) : étape en cours, ou « fini » une fois le
+  // guide suivi, quitté ou remplacé par un budget simulé.
+  const GUIDE_STEPS = ['revenus', 'charges', 'depenses', 'economie', 'placement', 'fini'];
 
   /** Repli en mémoire si localStorage est indisponible (navigation privée stricte…). */
   const memory = new Map();
@@ -65,7 +68,12 @@
     const saved = readJson(REGISTRY_KEY);
     const profils = (saved && Array.isArray(saved.profils) ? saved.profils : [])
       .filter((p) => p && typeof p.id === 'string' && /^[\w-]{1,20}$/.test(p.id))
-      .map((p) => ({ id: p.id, nom: cleanName(p.nom), exemple: p.exemple === true, ...(p.masque === true ? { masque: true } : {}) }));
+      .map((p) => ({
+        id: p.id, nom: cleanName(p.nom), exemple: p.exemple === true,
+        ...(p.masque === true ? { masque: true } : {}),
+        ...(p.preRempli === true ? { preRempli: true } : {}),
+        ...(GUIDE_STEPS.includes(p.guide) ? { guide: p.guide } : {})
+      }));
     if (!profils.length) profils.push({ id: MAIN_ID, nom: 'Mon budget', exemple: false });
     const active = profils.some((p) => p.id === saved?.active) ? saved.active : profils[0].id;
     // Profil à retrouver en fermant l'exemple.
@@ -108,10 +116,10 @@
       return true;
     },
     /** Crée un profil vide, ou pré-rempli avec l'exemple si preRempli = true
-        (aucune donnée enregistrée : script.js charge alors l'exemple). */
+        (marqué, sans données : script.js charge l'exemple à sa première ouverture). */
     create(nom, { preRempli = false } = {}) {
       const reg = readRegistry();
-      const profil = { id: newId(reg), nom: cleanName(nom), exemple: false };
+      const profil = { id: newId(reg), nom: cleanName(nom), exemple: false, ...(preRempli ? { preRempli: true } : {}) };
       reg.profils.push(profil);
       writeRegistry(reg);
       if (!preRempli) raw.set(dataKey(profil.id), JSON.stringify(emptyState()));
@@ -184,6 +192,21 @@
       reg.retour = null;
       writeRegistry(reg);
       raw.remove(dataKey(exemple.id));
+      return true;
+    },
+    /** Le profil a-t-il au moins une ligne (revenu, charge, dépense, mois archivé, comparaison) ? */
+    hasData(id) {
+      const data = readJson(dataKey(id));
+      return isObject(data) && ['revenus', 'charges', 'depenses', 'depensesHistorique', 'scenarios']
+        .some((k) => Array.isArray(data[k]) && data[k].length > 0);
+    },
+    /** Avancement du guide d'un profil : une étape de GUIDE_STEPS, ou null pour l'effacer. */
+    setGuide(id, step) {
+      const reg = readRegistry();
+      const profil = reg.profils.find((p) => p.id === id);
+      if (!profil || (step !== null && !GUIDE_STEPS.includes(step))) return false;
+      if (step) profil.guide = step; else delete profil.guide;
+      writeRegistry(reg);
       return true;
     },
     /** Masque ou affiche les montants d'un profil dans la liste (page Profil). */

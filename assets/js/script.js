@@ -123,7 +123,11 @@
 
   /* ---------- État ---------- */
 
-  const state = BudgetState.load(store.get(STORAGE_KEY));
+  const saved = store.get(STORAGE_KEY);
+  const profil = Profiles.active();
+  // Profil d'exemple, ou profil créé « pré-rempli » jamais ouvert : budget fictif.
+  // Sinon un budget vide (premier usage : la page Guide propose de le remplir).
+  const state = !saved && (profil.exemple || profil.preRempli) ? BudgetState.exampleState() : BudgetState.load(saved);
   const save = () => store.set(STORAGE_KEY, state);
   // Nouveau mois : les dépenses du mois précédent passent dans l'historique.
   if (BudgetState.archiveMonth(state)) save();
@@ -593,6 +597,12 @@
         renderLines('charges');
         renderDepenses();
         refresh();
+        // Budget entièrement vidé : on repart de zéro, guide de démarrage compris
+        // (sinon un guide déjà « fini » ne se redéclenche jamais).
+        if (!profil.exemple) {
+          Profiles.setGuide(profil.id, null);
+          location.href = location.pathname.includes('/pages/') ? 'guide.html' : 'pages/guide.html';
+        }
       });
     };
     const clearRevenus = () => {

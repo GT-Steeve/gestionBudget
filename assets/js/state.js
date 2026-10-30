@@ -1,6 +1,6 @@
 /* ==========================================================================
    Gestion budget — état de l'application (partagé navigateur + Node/tests) :
-   catégories, budget d'exemple, lecture des données enregistrées ou
+   catégories, budget vide ou d'exemple, lecture des données enregistrées ou
    importées (nettoyées champ par champ) et archivage mensuel des dépenses.
    Sans DOM ni stockage : script.js lit et écrit localStorage.
    ========================================================================== */
@@ -112,13 +112,21 @@
   const records = (list) => (Array.isArray(list) ? list : [])
     .filter((x) => x !== null && typeof x === 'object' && !Array.isArray(x));
 
+  /** Budget vide (nouveau profil, première utilisation). */
+  const emptyState = (now = new Date()) => ({
+    revenus: [], charges: [], depenses: [], depensesHistorique: [], depensesMoisCourant: monthKey(now),
+    cashbackRate: 1, roundUpTo: 1, scenarios: [], view: 'mois',
+    yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
+  });
+
   /** État de l'application à partir des données enregistrées ou importées
-      (saved), nettoyées champ par champ ; l'exemple si elles sont absentes ou
-      illisibles. Les comparaisons dont la charge n'existe plus sont retirées. */
+      (saved), nettoyées champ par champ ; un budget vide si elles sont
+      absentes ou illisibles. Les comparaisons dont la charge n'existe plus
+      sont retirées. */
   function load(saved, now = new Date()) {
     if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios)
       || saved.yield === null || typeof saved.yield !== 'object') {
-      return exampleState(now);
+      return emptyState(now);
     }
     const state = {
       charges: records(saved.charges).map((c) => ({
@@ -204,6 +212,6 @@
 
   return {
     CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, DEFAULT_RATES, MAX_RATE, ROUND_UP_OPTIONS,
-    uid, num, clamp, monthKey, readRate, exampleState, load, archiveMonth
+    uid, num, clamp, monthKey, readRate, emptyState, exampleState, load, archiveMonth
   };
 });

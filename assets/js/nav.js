@@ -125,7 +125,12 @@
         saved.depenses = [];
         saved.depensesHistorique = [];
         store.set(STORAGE_KEY, saved);
-        location.href = 'index.html';
+        // Budget entièrement vidé : le guide de démarrage repart de zéro (comme script.js).
+        // Ces pages sont toutes dans /pages/ : la Synthèse est un niveau au-dessus.
+        const profil = Profiles.active();
+        if (profil.exemple) { location.href = '../index.html'; return; }
+        Profiles.setGuide(profil.id, null);
+        location.href = 'guide.html';
       });
     });
   }

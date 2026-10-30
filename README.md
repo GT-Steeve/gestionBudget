@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.15.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.16.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -76,6 +76,14 @@ placement, exemples de produits financiers et synthèse visuelle,
   refusé (autre application, export modifié ou réenregistré), et un nom déjà
   pris doit être changé. Après une création ou un import, l'application ouvre
   la page où continuer et y confirme l'action dans une pop-up.
+- **Guide** — au premier lancement, ou à l'ouverture d'un profil créé vide,
+  l'application démarre vide et ouvre la page Guide : présentation des étapes
+  (revenus, charges, dépenses, économies, placement), puis deux choix.
+  **Simuler un budget** charge un budget fictif dans le profil, à modifier pour
+  apprendre sur le tas ; **Suivre le guide** accompagne pas à pas, avec en haut
+  de chaque page l'étape en cours (Revenus → Charges → Dépenses → Économie →
+  Placement) et un bouton qui ouvre l'ajout. L'avancement est gardé par profil ;
+  la page reste accessible depuis le menu.
 - **Profil d'exemple** — un budget fictif complet (dépenses du mois et des
   deux mois précédents, comparaisons, placement) pour découvrir chaque page.
   Il s'ouvre à part et le bouton « Fermer l'exemple » le supprime en ramenant
@@ -111,13 +119,14 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
-  Économie, Placement, Produits financiers, Annexe, Exporter, Imprimer,
+  Économie, Placement, Produits financiers, Guide, Annexe, Exporter, Imprimer,
   Profil, Paramètres, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
 - `assets/js/script.js` — logique des pages du tableau de bord (rendu, saisie, stockage local)
 - `assets/js/state.js` — état de l'application : catégories, profil d'exemple, lecture des données enregistrées ou importées et archivage mensuel, partagé avec les tests
 - `assets/js/ui.js` — outils d'interface partagés : formats, éléments DOM, pop-ups (pile, Échap, focus), choix en boutons, ajout guidé, tracés SVG
 - `assets/js/report.js` — rapport d'export et d'impression (pages Exporter et Imprimer)
+- `assets/js/guide.js` — guide de démarrage : page Guide, premier usage, étape en cours sur les pages
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests

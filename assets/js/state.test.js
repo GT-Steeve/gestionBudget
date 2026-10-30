@@ -6,12 +6,15 @@ const NOW = new Date(2026, 9, 15, 12); // 15 octobre 2026
 const saved = (extra = {}) => ({ charges: [], scenarios: [], yield: {}, ...extra });
 
 describe('BudgetState.load', () => {
-  it('falls back to the example when nothing usable is saved', () => {
+  it('starts from an empty budget when nothing usable is saved', () => {
     for (const bad of [null, {}, { charges: [], scenarios: [] }, saved({ yield: null }), saved({ yield: 'x' }), saved({ charges: 'x' })]) {
-      const state = BudgetState.load(bad, NOW);
-      expect(state.charges.length).toBeGreaterThan(0);
-      expect(state.depensesMoisCourant).toBe('2026-10');
+      expect(BudgetState.load(bad, NOW)).toEqual(BudgetState.emptyState(NOW));
     }
+    const empty = BudgetState.emptyState(NOW);
+    expect([empty.revenus, empty.charges, empty.depenses, empty.depensesHistorique, empty.scenarios].every((l) => l.length === 0)).toBe(true);
+    expect(empty.depensesMoisCourant).toBe('2026-10');
+    // Le budget vide relu tel quel reste identique (rien ne change au rechargement).
+    expect(BudgetState.load(JSON.parse(JSON.stringify(empty)), NOW)).toEqual(empty);
   });
 
   it('ignores list items that are not objects', () => {

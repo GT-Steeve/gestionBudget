@@ -152,12 +152,13 @@
   function createProfile(nom, depart) {
     const preRempli = depart === 'exemple';
     const profil = Profiles.create(nom, { preRempli });
-    // Profil vide : on commence par saisir ses revenus ; pré-rempli : on le découvre depuis la Synthèse.
-    profileAdded(profil.id, preRempli ? '../index.html' : 'revenus.html', {
+    // Profil vide : page Guide (simuler un budget ou suivre le guide) ;
+    // pré-rempli : on le découvre depuis la Synthèse.
+    profileAdded(profil.id, preRempli ? '../index.html' : 'guide.html', {
       title: 'Profil créé avec succès',
       text: preRempli
         ? 'Il est pré-rempli avec l\'exemple : vous pouvez maintenant remplacer ses valeurs par les vôtres.'
-        : 'Vous pouvez maintenant saisir les valeurs du nouveau profil, en commençant par ses revenus.',
+        : 'Choisissez comment le remplir : simuler un budget pour apprendre, ou suivre le guide pas à pas.',
       action: 'Commencer'
     });
   }

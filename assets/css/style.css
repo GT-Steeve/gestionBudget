@@ -725,6 +725,29 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 .has-example-close .foot { padding-bottom: 100px; }
 
+/* ---------- Guide (guide.js) ---------- */
+
+/* Page Guide : les cinq étapes, puis les deux façons de commencer. */
+.guide-steps { font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 70ch; margin: 10px auto 0; padding-left: 22px; }
+.guide-steps li { margin-top: 8px; padding-left: 4px; }
+.guide-steps strong { color: var(--ink); }
+.guide-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 70ch; margin: 14px auto 0; }
+.guide-choice {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--wash);
+}
+.guide-choice__title { font-size: 16px; font-weight: 650; color: var(--ink); }
+.guide-choice__text { flex: 1; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+/* Encart de l'étape en cours, en haut des pages du tableau de bord. */
+.guide-step { border-color: var(--accent); text-align: center; }
+.guide-step__count { font-size: 12px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
+.guide-step__title { margin-top: 4px; }
+.guide-step__text { font-size: 14px; line-height: 1.5; color: var(--ink-2); max-width: 62ch; margin: 6px auto 0; }
+.guide-step__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+.guide-step__actions a.btn { text-decoration: none; }
+.guide-step__note { font-size: 13px; color: var(--muted); margin: 8px auto 0; }
+.guide-step__quit { display: block; margin: 12px auto 0; font-size: 13px; }
+
 /* ---------- Exporter ---------- */
 
 .export-actions { display: flex; justify-content: center; margin-top: 24px; }
@@ -1195,7 +1218,8 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .nav-scroll-wrap { flex: 1 1 auto; min-height: 0; display: flex; overflow-y: auto; }
   .nav { flex: 1 0 auto; flex-direction: column; gap: 2px; }
   .nav a { padding: 8px 12px; }
-  /* Profil puis À propos (qui le suit dans le HTML) sont poussés en bas du menu. */
+  /* Profil, puis Paramètres, Guide et À propos (qui le suivent dans le HTML), sont
+     poussés en bas du menu. En mobile, seul À propos reste en onglet. */
   .nav a[href$="profil.html"] { margin-top: auto; }
   .nav a[aria-current="page"] { background: var(--wash); color: var(--accent); font-weight: 650; }
   .nav-icon { display: inline-flex; }
@@ -1240,6 +1264,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .profil-create, .profil-import { display: none; }
   .profil-add-mobile { display: block; }
   .export-start { display: block; }
+  /* Guide : les deux choix l'un sous l'autre, boutons de l'étape pleine largeur. */
+  .guide-choices { grid-template-columns: minmax(0, 1fr); }
+  .guide-step__actions .btn { width: 100%; }
   /* Texte d'introduction propre au mobile (les choix sont dans la pop-up). */
   .export-lead--desk { display: none; }
   .export-lead--mobile { display: block; }
@@ -1302,8 +1329,9 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
      place habituelle dans le menu. */
   .nav a.nav-home { display: none; }
   /* Même principe pour Profil et Paramètres : icônes en haut à droite
-     (.top-actions) plutôt qu'onglets. */
-  .nav a[href$="profil.html"], .nav a[href$="parametres.html"] { display: none; }
+     (.top-actions) plutôt qu'onglets. Guide aussi : accessible depuis la
+     page Profil (« Revoir le guide »). */
+  .nav a[href$="profil.html"], .nav a[href$="parametres.html"], .nav a[href$="guide.html"] { display: none; }
   /* display: contents fait passer .nav et .top-actions comme des enfants directs de
      .topbar__in, pour pouvoir les placer via grid-area. */
   .site-menu { display: contents; }
@@ -1487,7 +1515,7 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 }
 
 @media print {
-  .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot, .example-close { display: none !important; }
+  .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot, .example-close, .guide-step { display: none !important; }
   /* À l'export/impression, seule la Synthèse (camembert + bilan) est utile :
      les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
   .kpis, .chart-head--gap, .chart-scroll-wrap { display: none !important; }
