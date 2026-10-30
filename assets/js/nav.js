@@ -242,8 +242,19 @@
     ok.addEventListener('click', UI.openModal(overlay, { focus: ok, onClose: () => overlay.remove() }));
   }
 
+  /* ---------- Retour arrière ---------- */
+
+  /** Page réaffichée depuis le cache du navigateur (bouton Retour/Avance) :
+      ses données en mémoire datent d'avant les saisies faites ailleurs, et
+      la prochaine modification les écraserait. On la recharge. */
+  function initBackCache() {
+    window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
+  }
+
   window.Prefs = Prefs;
   window.Flash = Flash;
+
+  initBackCache();
 
   initPrefs();
   initMenu();

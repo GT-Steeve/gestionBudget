@@ -131,6 +131,13 @@
   const save = () => store.set(STORAGE_KEY, state);
   // Nouveau mois : les dépenses du mois précédent passent dans l'historique.
   if (BudgetState.archiveMonth(state)) save();
+  // Autre onglet qui modifie ce profil ou change de profil actif : on recharge,
+  // sinon la prochaine saisie ici écraserait ses changements. Une écriture
+  // identique à l'état affiché est ignorée (pas de rechargements en boucle).
+  window.addEventListener('storage', (e) => {
+    if (e.key === null || (e.key === STORAGE_KEY && e.newValue !== JSON.stringify(state))
+      || STORAGE_KEY !== Profiles.dataKey()) location.reload();
+  });
 
   /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
 
@@ -1615,7 +1622,8 @@
   const CAT_KEY = {
     Salaire: 'salaire', Aide: 'aide',
     Loyer: 'loyer', Factures: 'factures', Courses: 'courses',
-    Transport: 'transport', Abonnements: 'abonnements', 'Activité': 'activite', Plaisir: 'plaisir', Autre: 'autre'
+    Transport: 'transport', Abonnements: 'abonnements', 'Activité': 'activite', Plaisir: 'plaisir', Autre: 'autre',
+    Assurance: 'assurance', 'Épargne': 'epargne', 'Prêt': 'pret', 'Famille / Proche': 'famille'
   };
   const catColor = (key) => (key === 'reste' ? 'var(--neutral-fill)' : `var(--cat-${key})`);
   const factor = () => (state.view === 'an' ? MONTHS : 1);

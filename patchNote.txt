@@ -49,6 +49,7 @@ v1.14.3 = correctif UI exporter sur mobile
 v1.14.4 = polish UX exporter sur mobile + renforcement export
 v1.15.0 = polish revenu.html + ** MAJ architecture **
 v1.16.0 = ajoute Guide
+v1.16.1 = polish dark theme noir -> vert foncé + ** Check Up Bug **
 
 ** Next idea **
 calendrier solde dans la page synthèse, revenu, dépense, charge
