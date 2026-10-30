@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.34.0...v1.35.0) (2026-10-30)
+
+
+### Features
+
+* **guide:** page Guide au premier usage, démarrage vide et guide pas à pas ([5a86d26](https://github.com/GT-Steeve/gestionBudget/commit/5a86d260920f2776117935001425894f19492a49))
+
 # [1.34.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.33.0...v1.34.0) (2026-10-29)
 
 
