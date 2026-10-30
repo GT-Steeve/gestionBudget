@@ -34,28 +34,32 @@
   --cat-activite: #9a6a3a;
   --cat-plaisir: #7a9a0e;
   --cat-autre: #e34948;
+  --cat-assurance: #0f8b8d;
+  --cat-epargne: #b04fb5;
+  --cat-pret: #5b6b7a;
+  --cat-famille: #b0285f;
   --neutral-fill: #d6ccb6;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --muted: #898781;
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.10);
-    --wash: rgba(255, 255, 255, 0.05);
+    --page: #0b1719;
+    --surface: #122427;
+    --ink: #eef5f5;
+    --ink-2: #c3d4d5;
+    --muted: #8aa4a6;
+    --grid: #1d3336;
+    --axis: #2a4447;
+    --border: rgba(214, 240, 240, 0.10);
+    --wash: rgba(214, 240, 240, 0.05);
     --series-1: #3987e5;
     --series-2: #d95926;
-    --good: #0ca30c;
+    --good: #3ccf8e;
     --bad: #e66767;
     --shadow: none;
     --cat-salaire: #199e70;
-    --cat-aide: #008300;
+    --cat-aide: #2fae4a;
     --cat-loyer: #3987e5;
     --cat-factures: #d95926;
     --cat-courses: #c98500;
@@ -64,28 +68,32 @@
     --cat-activite: #b7834f;
     --cat-plaisir: #9dbb2b;
     --cat-autre: #e66767;
-    --neutral-fill: #4b4b47;
+    --cat-assurance: #2bb0b2;
+    --cat-epargne: #c98ad0;
+    --cat-pret: #93a3b3;
+    --cat-famille: #e0608f;
+    --neutral-fill: #2c4649;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #0d0d0d;
-  --surface: #1a1a19;
-  --ink: #ffffff;
-  --ink-2: #c3c2b7;
-  --muted: #898781;
-  --grid: #2c2c2a;
-  --axis: #383835;
-  --border: rgba(255, 255, 255, 0.10);
-  --wash: rgba(255, 255, 255, 0.05);
+  --page: #0b1719;
+  --surface: #122427;
+  --ink: #eef5f5;
+  --ink-2: #c3d4d5;
+  --muted: #8aa4a6;
+  --grid: #1d3336;
+  --axis: #2a4447;
+  --border: rgba(214, 240, 240, 0.10);
+  --wash: rgba(214, 240, 240, 0.05);
   --series-1: #3987e5;
   --series-2: #d95926;
-  --good: #0ca30c;
+  --good: #3ccf8e;
   --bad: #e66767;
   --shadow: none;
   --cat-salaire: #199e70;
-  --cat-aide: #008300;
+  --cat-aide: #2fae4a;
   --cat-loyer: #3987e5;
   --cat-factures: #d95926;
   --cat-courses: #c98500;
@@ -94,7 +102,11 @@
   --cat-activite: #b7834f;
   --cat-plaisir: #9dbb2b;
   --cat-autre: #e66767;
-  --neutral-fill: #4b4b47;
+  --cat-assurance: #2bb0b2;
+  --cat-epargne: #c98ad0;
+  --cat-pret: #93a3b3;
+  --cat-famille: #e0608f;
+  --neutral-fill: #2c4649;
 }
 
 /* ---------- Base ---------- */
@@ -879,10 +891,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Aperçus de thème : couleurs fixes (celles du thème représenté, pas du thème actif). */
 .choice__preview--light, .choice__preview--dark { flex-direction: column; align-items: stretch; gap: 5px; padding: 10px 14px; }
 .choice__preview--light { background: #ece6d8; }
-.choice__preview--dark { background: #0d0d0d; }
+/* Un ton plus clair que le fond réel (#0b1719), qui paraît noir à cette taille. */
+.choice__preview--dark { background: #1d3d40; }
 .choice__preview--light span, .choice__preview--dark span { display: block; height: 8px; border-radius: 4px; }
 .choice__preview--light span { background: #2a251c; }
-.choice__preview--dark span { background: #ffffff; }
+.choice__preview--dark span { background: #eef5f5; }
 .choice__preview span:first-child { width: 45%; height: 10px; }
 .choice__preview span:nth-child(2) { width: 85%; opacity: 0.45; }
 .choice__preview span:nth-child(3) { width: 30%; background: #256abf; }
