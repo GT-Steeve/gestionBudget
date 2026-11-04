@@ -1117,6 +1117,135 @@
     }
   }
 
+  /** Pop-up de détails d'une comparaison (bouton œil), avec mode Modifier :
+      poste de charge, option alternative et nouveau montant deviennent des
+      champs ; l'actuel et les écarts suivent la saisie. Seules les
+      comparaisons pas encore appliquées passent par ici : les économies
+      appliquées ne se modifient pas (Annuler, puis refaire la comparaison). */
+  function showScenarioDetails(sc) {
+    const overlay = $('#detailOverlay');
+    if (!overlay) return;
+    const editBtn = $('#detailEdit');
+    const closeBtn = $('#detailClose');
+    const cancelBtn = $('#detailCancel');
+    const saveBtn = $('#detailSave');
+    let draft = null; // { chargeId, option, nouveau } pendant la modification
+
+    $('#detailTitle').textContent = 'Détail de la comparaison';
+    $('#detailStamp').hidden = true;
+
+    const fmtEcart = (eco) => {
+      const sign = eco > 0 ? '+' : eco < 0 ? '−' : '';
+      const label = eco > 0 ? 'économie' : eco < 0 ? 'surcoût' : 'identique';
+      return `${sign}${eur2.format(Math.abs(eco))} (${label})`;
+    };
+    /** Valeurs calculées (lecture seule) pour une charge et un nouveau montant. */
+    const computed = (charge, nouveau) => {
+      const eco = charge ? charge.mensuel - nouveau : 0;
+      return [
+        ['Actuel / mois', charge ? eur2.format(charge.mensuel) : '–'],
+        ['Écart / mois', fmtEcart(eco)],
+        ['Écart / an', fmtEcart(annual(eco))]
+      ];
+    };
+    const row = ([label, value]) => [h('dt', {}, label), h('dd', {}, value)];
+
+    const render = () => {
+      const list = $('#detailList');
+      if (!draft) {
+        const charge = state.charges.find((c) => c.id === sc.chargeId);
+        list.replaceChildren(...[
+          ['Ligne', charge ? charge.nom : '–'],
+          ['Option alternative', sc.option || '–'],
+          ['Nouveau / mois', eur2.format(sc.nouveau)],
+          ...computed(charge, sc.nouveau)
+        ].flatMap(row));
+        return;
+      }
+      const computedDds = [];
+      const draftCharge = () => state.charges.find((c) => c.id === draft.chargeId);
+      const updateComputed = () => computed(draftCharge(), draft.nouveau).forEach(([, v], i) => { computedDds[i].textContent = v; });
+      const ligneBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field', 'aria-label': 'Ligne',
+        onclick: () => pickCharge(draft.chargeId, (id) => {
+          draft.chargeId = id;
+          ligneBtn.textContent = draftCharge()?.nom || '–';
+          updateComputed();
+          ligneBtn.focus();
+        })
+      }, draftCharge()?.nom || '–');
+      const optionInput = h('input', {
+        type: 'text', class: 'detail-field', maxlength: '60', required: true, 'aria-label': 'Option alternative',
+        oninput: (e) => { draft.option = e.target.value; }
+      });
+      optionInput.value = draft.option;
+      const montantInput = h('input', {
+        type: 'number', class: 'detail-field detail-field--num', min: '0', step: '0.01', inputmode: 'decimal',
+        'aria-label': 'Nouveau / mois',
+        oninput: (e) => { draft.nouveau = num(e.target.value); fitWidth(); updateComputed(); }
+      });
+      // Largeur ajustée au contenu : nombre de caractères saisis + 2.
+      const fitWidth = () => { montantInput.style.width = `calc(${montantInput.value.length + 2}ch + 24px)`; };
+      montantInput.value = String(draft.nouveau);
+      fitWidth();
+      const computedRows = computed(draftCharge(), draft.nouveau).map(([label, value]) => {
+        const dd = h('dd', {}, value);
+        computedDds.push(dd);
+        return [h('dt', {}, label), dd];
+      });
+      list.replaceChildren(
+        h('dt', {}, 'Ligne'), h('dd', {}, ligneBtn),
+        h('dt', {}, 'Option alternative'), h('dd', {}, optionInput),
+        h('dt', {}, 'Nouveau / mois'), h('dd', {}, montantInput),
+        ...computedRows.flat()
+      );
+      optionInput.focus();
+    };
+
+    const setEditing = (on) => {
+      draft = on ? { chargeId: sc.chargeId, option: sc.option || '', nouveau: sc.nouveau } : null;
+      editBtn.hidden = on;
+      closeBtn.hidden = on;
+      cancelBtn.hidden = !on;
+      saveBtn.hidden = !on;
+      render();
+      if (!on) editBtn.focus();
+    };
+    const onEdit = () => setEditing(true);
+    const onCancel = () => setEditing(false);
+    const onSave = () => {
+      const option = draft.option.trim();
+      if (!option) { $('input.detail-field', overlay)?.reportValidity(); return; }
+      if (!state.charges.some((c) => c.id === draft.chargeId)) return;
+      sc.chargeId = draft.chargeId;
+      sc.option = option.slice(0, 60);
+      sc.nouveau = draft.nouveau;
+      refresh();
+      setEditing(false);
+    };
+    // Entrée dans un champ = Valider.
+    const onListKey = (e) => {
+      if (e.key === 'Enter' && draft && e.target.tagName === 'INPUT') { e.preventDefault(); onSave(); }
+    };
+
+    editBtn.addEventListener('click', onEdit);
+    cancelBtn.addEventListener('click', onCancel);
+    saveBtn.addEventListener('click', onSave);
+    $('#detailList').addEventListener('keydown', onListKey);
+    setEditing(false);
+    const close = openModal(overlay, {
+      focus: closeBtn,
+      onClose: () => {
+        editBtn.removeEventListener('click', onEdit);
+        cancelBtn.removeEventListener('click', onCancel);
+        saveBtn.removeEventListener('click', onSave);
+        closeBtn.removeEventListener('click', close);
+        $('#detailList').removeEventListener('keydown', onListKey);
+      }
+    });
+    closeBtn.addEventListener('click', close);
+  }
+
   function renderScenarios() {
     if (!$('#ecoMois')) return;
     renderAppliquees();
@@ -1141,10 +1270,6 @@
       const kind = eco > 0 ? 'good' : eco < 0 ? 'bad' : '';
       const sign = eco > 0 ? '+' : eco < 0 ? '−' : '';
       const label = eco > 0 ? 'économie' : eco < 0 ? 'surcoût' : 'identique';
-
-      const optionCell = h('td', {}, sc.option || '–');
-      if (isBest) optionCell.append(h('span', { class: 'pill pill--good' }, 'Retenue'));
-      else if (eco > 0) optionCell.append(h('span', { class: 'pill', title: 'Une option plus économique est déjà retenue pour cette ligne' }, 'Non cumulée'));
 
       const apply = h('button', {
         class: 'btn btn--ghost btn--sm', type: 'button',
@@ -1181,12 +1306,41 @@
       });
       del.innerHTML = TRASH_ICON;
 
-      const ligneCell = h('td', {}, charge.nom, h('span', { class: 'sub' }, charge.categorie));
-      const actuelCell = h('td', { class: 'num' }, eur2.format(charge.mensuel));
-      const nouveauCell = h('td', { class: 'num' }, eur2.format(sc.nouveau));
+      const view = h('button', {
+        class: 'icon-btn icon-btn--view', type: 'button', 'aria-label': `Voir le détail de ${sc.option || charge.nom}`, title: 'Voir le détail',
+        onclick: () => showScenarioDetails(sc)
+      });
+      view.innerHTML = EYE_ICON;
+
+      /* Cellules modifiables comme sur les pages Revenus / Charges / Dépenses.
+         Enregistrées au changement (sortie du champ ou Entrée), pas à chaque
+         frappe : refresh() redessine ce tableau, le champ perdrait le focus.
+         Actuel / mois modifie la charge elle-même ; les écarts sont calculés. */
+      const ligneBtn = h('button', {
+        type: 'button', class: 'cell cell--pick', 'aria-label': `Ligne : ${charge.nom}`,
+        onclick: () => pickCharge(sc.chargeId, (id) => { sc.chargeId = id; refresh(); })
+      }, charge.nom);
+      const ligneCell = h('td', {}, ligneBtn, h('span', { class: 'sub' }, charge.categorie));
+      const optionInput = h('input', {
+        class: 'cell', type: 'text', maxlength: 60, value: sc.option || '', 'aria-label': 'Option alternative',
+        onchange: (e) => {
+          sc.option = e.target.value.trim().slice(0, 60) || sc.option;
+          refresh();
+        }
+      });
+      const optionCell = h('td', {}, optionInput);
+      if (isBest) optionCell.append(h('span', { class: 'pill pill--good' }, 'Retenue'));
+      else if (eco > 0) optionCell.append(h('span', { class: 'pill', title: 'Une option plus économique est déjà retenue pour cette ligne' }, 'Non cumulée'));
+      const amountInput = (value, label, onSet) => h('input', {
+        class: 'cell num', type: 'number', min: 0, step: '0.01', inputmode: 'decimal',
+        value: value.toFixed(2), 'aria-label': label,
+        onchange: (e) => { onSet(num(e.target.value)); refresh(); }
+      });
+      const actuelCell = h('td', { class: 'num' }, amountInput(charge.mensuel, `Montant actuel mensuel de ${charge.nom}`, (v) => { charge.mensuel = v; }));
+      const nouveauCell = h('td', { class: 'num' }, amountInput(sc.nouveau, `Nouveau montant mensuel de ${sc.option || charge.nom}`, (v) => { sc.nouveau = v; }));
       const ecartMoisCell = h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(eco))}`, h('small', {}, label));
       const ecartAnCell = h('td', { class: `num delta delta--${kind}` }, `${sign}${eur2.format(Math.abs(annual(eco)))}`, h('small', {}, label));
-      const actionsCell = h('td', { class: 'num' }, eco > 0 ? apply : null, del);
+      const actionsCell = h('td', { class: 'num row-actions' }, eco > 0 ? apply : null, view, del);
 
       body.append(MOBILE_QUERY.matches
         ? h('tr', {}, ligneCell, optionCell, ecartMoisCell, actuelCell, nouveauCell, ecartAnCell, actionsCell)
