@@ -1,3 +1,10 @@
+## [1.40.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.40.0...v1.40.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **parametres:** retire les pourcentages et descriptions des choix ([9f57b62](https://github.com/GT-Steeve/gestionBudget/commit/9f57b62207e38b28943b7174839e5e1cbff3304d))
+
 # [1.40.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.39.0...v1.40.0) (2026-11-04)
 
 
