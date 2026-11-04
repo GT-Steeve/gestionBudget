@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.17.3 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.17.4 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -36,6 +36,9 @@ placement, exemples de produits financiers et synthèse visuelle,
   montant déjà rond est arrondi au multiple suivant (x1 → 1,00 €, x2 → 2,00 €).
 - **Économie potentielle** — comparez une charge à une alternative
   (fournisseur moins cher, autre offre…) et voyez l'économie mensuelle/annuelle.
+  Avant de l'appliquer, chaque comparaison se modifie en ligne (poste de
+  charge, option, montant actuel et nouveau) ou via le bouton œil
+  (**Modifier**) ; les économies déjà appliquées ne se modifient pas.
 - **Simulation de placement** — intérêts composés sur deux rendements annuels
   modifiables (2 % et 10 % par défaut), via une pop-up guidée (épargne
   mensuelle, capital, durée, rendements) ou directement dans le formulaire.

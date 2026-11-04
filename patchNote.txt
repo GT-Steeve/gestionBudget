@@ -53,6 +53,7 @@ v1.16.1 = polish dark theme noir -> vert foncé + ** Check Up Bug **
 v1.17.0 = ajout tableau économie appliqué
 v1.17.1 = ajout animation transition + impression modèle personalisé
 v1.17.3 = écran de chargement pile de pièces + arrivée du contenu en cascade
+v1.17.4 = l'user peut modifier les économie avant application
 
 ** Next idea **
 calendrier solde dans la page synthèse, revenu, dépense, charge
