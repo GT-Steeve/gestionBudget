@@ -781,21 +781,24 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .guide-step__note { font-size: 13px; color: var(--muted); margin: 8px auto 0; }
 .guide-step__quit { display: block; margin: 12px auto 0; font-size: 13px; }
 
-/* ---------- Exporter ---------- */
+/* ---------- Sauvegarder (page exporter.html) ---------- */
 
 .export-actions { display: flex; justify-content: center; margin-top: 24px; }
 .export-status { text-align: center; margin: 12px auto 0; }
 .export-status:empty { display: none; }
-/* Mobile uniquement : bouton « Commencer » qui ouvre la pop-up guidée. */
-.export-start { display: none; text-align: center; margin: 20px 0 8px; }
-.export-lead--mobile { display: none; }
+/* Étape 1 : « Dans un document » / « Votre profil », tuiles-boutons (report.js). */
+.choices.save-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
+button.choice { display: flex; flex-direction: column; align-items: flex-start; width: 100%; font: inherit; text-align: left; }
+.save-choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+/* « Votre profil » : tuile unique, toujours choisie (rien d'autre à cliquer). */
+#saveProfilPanel .choice { cursor: default; }
 /* Dans la pop-up : un choix par étape, sans le bouton Exporter de la page
    (remplacé par celui de la dernière étape). */
 #exportWizardSlot .export-step { margin-top: 20px; }
 #exportWizardSlot .export-step .h3 { margin-top: 0; }
 #exportWizardSlot .export-actions { display: none; }
 
-/* Rapport généré par la page Exporter : invisible à l'écran, seul contenu
+/* Rapport généré par la page Sauvegarder : invisible à l'écran, seul contenu
    imprimé (voir @media print). Couleurs fixes, lisibles sur papier quel que
    soit le thème. */
 .report {
@@ -1377,13 +1380,11 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 @media (max-width: 640px) {
   .profil-create, .profil-import { display: none; }
   .profil-add-mobile { display: block; }
-  .export-start { display: block; }
   /* Guide : les deux choix l'un sous l'autre, boutons de l'étape pleine largeur. */
   .guide-choices { grid-template-columns: minmax(0, 1fr); }
   .guide-step__actions .btn { width: 100%; }
-  /* Texte d'introduction propre au mobile (les choix sont dans la pop-up). */
-  .export-lead--desk { display: none; }
-  .export-lead--mobile { display: block; }
+  /* Sauvegarder : les deux choix de l'étape 1 l'un sous l'autre. */
+  .choices.save-choices { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); }
   /* Pop-up d'import : avertissement puis formulaire, sans marge en trop. */
   #importModalSlot .import-form { margin-top: 0; }
   /* Pop-up d'import : Sélectionner le fichier centré, sans bouton d'envoi ;

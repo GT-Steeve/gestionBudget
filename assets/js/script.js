@@ -1,6 +1,6 @@
 /* ==========================================================================
    Gestion budget — pages du tableau de bord (Synthèse, Revenus, Charges,
-   Dépenses, Économie, Placement, CashBack, RoundUp, Exporter, Imprimer).
+   Dépenses, Économie, Placement, CashBack, RoundUp, Sauvegarder, Imprimer).
    S'appuie sur state.js (état), ui.js (interface), calc.js (calculs) et,
    pour l'export, report.js.
    1. Charges mensuelles / annuelles (annuel = mensuel × 12)
@@ -2256,7 +2256,7 @@
     bindInfoModal('#wBtnExemple', '#exampleOverlay', '#exampleClose');
     bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
-    // Pages Exporter et Imprimer uniquement (report.js n'est chargé que là).
+    // Pages Sauvegarder et Imprimer uniquement (report.js n'est chargé que là).
     window.Report?.bindExport({ state, totalRevenus, totalMonthly, computeSavings, computeYield, cashbackFraction, roundUpAmount, CAT_KEY });
     syncYieldInputs();
     renderLines('revenus');

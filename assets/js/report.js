@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Gestion budget — export (pages Exporter et Imprimer) : un même rapport,
+   Gestion budget — export (pages Sauvegarder et Imprimer) : un même rapport,
    rendu en HTML pour le PDF et l'impression (fenêtre d'impression du
    navigateur), ou en fichier .docx pour Word et Google Docs (docx.js).
    Format du rapport : voir docx.js. Chargé seulement par ces deux pages,
@@ -348,7 +348,7 @@
           h('span', { class: `sw${sr.dashed ? ' sw--dashed' : ''}`, style: `--c:${sr.color}` }), sr.label))));
     }
 
-    /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Exporter).
+    /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Sauvegarder).
         dataUrl : lien « Gestion budget » de la page de garde, qui porte les
         données du profil pour l'import du PDF (pdflink.js). */
     function renderReportHtml(report, box, { dataUrl } = {}) {
@@ -409,15 +409,18 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    /** Exporter sur mobile : sous MOBILE_QUERY, le formulaire passe dans une
-        pop-up guidée, une étape par choix (Format, Modèle, Données du profil),
-        comme « Nouvelle dépense » ; il revient dans la page au-delà. Un seul
-        formulaire, donc une seule logique d'export. */
+    /** Document sur mobile : sous MOBILE_QUERY, le formulaire passe dans une
+        pop-up guidée, une étape par choix (Format, Modèle), comme « Nouvelle
+        dépense » ; il revient dans la page au-delà. Un seul formulaire, donc
+        une seule logique d'export. */
     function bindExportWizard(form, status) {
       const overlay = $('#exportWizardOverlay');
       const slot = $('#exportWizardSlot');
       if (!overlay || !slot) return;
-      const steps = ['#exportStepFormat', '#exportStepModele', '#exportStepDonnees'];
+      const STEPS = { '#exportStepFormat': 'format', '#exportStepModele': 'modele', '#exportStepDonnees': 'donnees' };
+      // Étapes présentes dans la page (la page Sauvegarder n'a plus « Données du profil »).
+      const steps = Object.keys(STEPS).filter((sel) => $(sel, form));
+      const home = $('#saveDocPanel') || form.parentNode;
       bindAddWizard({
         overlay: '#exportWizardOverlay',
         openBtn: '#btnOpenExportWizard',
@@ -429,7 +432,7 @@
         stepLabel: '#exportWizardStepLabel',
         steps,
         stepsRoot: form,
-        fields: ['input[name="format"]:checked', 'input[name="modele"]:checked', 'input[name="donnees"]:checked']
+        fields: steps.map((sel) => `input[name="${STEPS[sel]}"]:checked`)
       });
       // Nouvelle pop-up : le message du dernier export est effacé.
       $('#btnOpenExportWizard').addEventListener('click', () => { status.textContent = ''; });
@@ -438,7 +441,7 @@
           slot.append(form);
           return;
         }
-        status.before(form);
+        home.append(form);
         // En bureau, toutes les étapes sont visibles et la pop-up n'a plus lieu d'être.
         steps.forEach((sel) => { $(sel, form).hidden = false; });
         closeModal(overlay);
@@ -447,7 +450,45 @@
       MOBILE_QUERY.addEventListener('change', place);
     }
 
-    /** Pages Exporter et Imprimer : même formulaire, la page Imprimer fixe le
+    /** Page Sauvegarder, étape 1 : chaque choix affiche sa suite et masque
+        l'autre. « Dans un document » : formulaire du rapport (pop-up guidée sur
+        mobile). « Votre profil » : la tuile Rapport + données, seule et déjà
+        choisie, et le bouton qui télécharge le fichier .gbudget, qui ne sert
+        qu'à recharger le profil sur un autre appareil (page Profil → Importer). */
+    function bindSaveChoice() {
+      const docBtn = $('#saveDoc');
+      const profilBtn = $('#saveProfil');
+      if (!docBtn || !profilBtn) return;
+      const docPanel = $('#saveDocPanel');
+      const profilPanel = $('#saveProfilPanel');
+      const status = $('#exportStatus');
+      const show = (doc) => {
+        status.textContent = '';
+        docBtn.setAttribute('aria-pressed', String(doc));
+        profilBtn.setAttribute('aria-pressed', String(!doc));
+        docPanel.hidden = !doc;
+        profilPanel.hidden = doc;
+      };
+
+      docBtn.addEventListener('click', () => {
+        show(true);
+        if (MOBILE_QUERY.matches) $('#btnOpenExportWizard').click();
+        else $('input[name="format"]:checked', docPanel)?.focus();
+      });
+
+      profilBtn.addEventListener('click', () => {
+        show(false);
+        $('#saveProfilName').textContent = `« ${Profiles.active().nom} »`;
+        $('#saveProfilOk').focus();
+      });
+      $('#saveProfilOk').addEventListener('click', () => {
+        const file = Profiles.profileFile(state);
+        downloadFile(file.text, file.mime, file.name);
+        status.textContent = `Fichier « ${file.name} » téléchargé. Sur l'autre appareil, ouvrez la page Profil puis « Importer un profil ».`;
+      });
+    }
+
+    /** Pages Sauvegarder et Imprimer : même formulaire, la page Imprimer fixe le
         format à « print » (champ caché) et ne propose que le choix du modèle. */
     function bindExportForm() {
       const form = $('#exportForm');
@@ -460,9 +501,9 @@
         const format = form.elements.format.value;
         const modelKey = form.elements.modele.value;
         const report = buildReport(modelKey);
-        // Données du profil jointes seulement sur demande : un rapport partagé
-        // (modèle Simple, par exemple) ne doit pas emporter tout le budget.
-        const data = form.elements.donnees.value === 'oui' ? Profiles.exportData(state) : null;
+        // Les documents ne contiennent que le rapport (champ caché « non ») : les
+        // données du profil se sauvegardent à part, en fichier .gbudget.
+        const data = form.elements.donnees?.value === 'oui' ? Profiles.exportData(state) : null;
         if (format === 'print' || format === 'pdf') {
           // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
           // navigateur propose « Enregistrer au format PDF » comme destination.
@@ -471,7 +512,6 @@
           window.print();
           return;
         }
-        // Avec les données jointes, le fichier s'importe sur la page Profil.
         downloadFile(Docx.build(report, { data }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
         // Google Docs : aucune connexion n'est possible depuis l'application,
         // le même fichier .docx s'importe dans Google Drive.
@@ -483,6 +523,7 @@
 
     bindExportForm();
     bindPersoModel();
+    bindSaveChoice();
   }
 
   window.Report = { bindExport };

@@ -75,6 +75,18 @@ describe('Profiles', () => {
     expect(Profiles.importProfile(payload).nom).toBe('Mon budget');
   });
 
+  it('saves the active profile to a .gbudget file that imports back', () => {
+    const data = { charges: [{ nom: 'Loyer', mensuel: 900 }], scenarios: [], yield: { capital: 0 } };
+    Profiles.rename('principal', 'Budget Élodie & Co');
+    const file = Profiles.profileFile(data, new Date(2026, 10, 4));
+    expect(file.name).toBe('gestion-budget-budget-elodie-co-2026-11-04.gbudget');
+    const payload = Profiles.readProfileFile(file.text);
+    expect(Profiles.exportName(payload)).toBe('Budget Élodie & Co');
+    const p = Profiles.importProfile(payload, 'Copie');
+    expect(JSON.parse(storage.getItem(Profiles.dataKey(p.id)))).toEqual(data);
+    expect(Profiles.readProfileFile('pas du json')).toBeNull();
+  });
+
   it('refuses files that do not come from the application', () => {
     const data = { charges: [], scenarios: [], yield: {} };
     const refused = [

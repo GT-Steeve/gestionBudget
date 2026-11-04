@@ -19,12 +19,17 @@
   const REGISTRY_KEY = 'gestion-epargne-profils';
   const MAIN_ID = 'principal';
   const MAX_NAME = 40;
-  // Marque des données exportées (fichier .docx de la page Exporter) : seul un
+  // Marque des données exportées (fichier .gbudget de la page Sauvegarder, ou
+  // .docx / PDF « Rapport + données » des anciennes versions) : seul un
   // fichier qui la porte peut être importé. Ce n'est pas une signature (tout
   // le code est public) ; les valeurs importées sont de toute façon nettoyées
   // une à une par script.js (loadState) avant d'être affichées.
   const EXPORT_APP = 'gestion-budget';
   const EXPORT_FORMAT = 1;
+  const PROFILE_EXT = 'gbudget';
+  // Type JSON plutôt qu'un type inventé : mieux pris en charge au téléchargement
+  // et dans les sélecteurs de fichiers mobiles (l'extension .gbudget reste).
+  const PROFILE_MIME = 'application/json';
   const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'depensesMoisCourant',
     'scenarios', 'appliquees', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
   const MAX_ITEMS = 5000;
@@ -125,11 +130,27 @@
       if (!preRempli) raw.set(dataKey(profil.id), JSON.stringify(emptyState()));
       return profil;
     },
-    /** Données du profil actif, marquées pour l'export (embarquées dans le .docx). */
+    /** Données du profil actif, marquées pour l'export. */
     exportData(data) {
       const reg = readRegistry();
       const nom = reg.profils.find((p) => p.id === reg.active).nom;
       return { app: EXPORT_APP, format: EXPORT_FORMAT, nom, exporte: new Date().toISOString(), data };
+    },
+    /** Extension du fichier de sauvegarde d'un profil (page Sauvegarder → page
+        Profil d'un autre appareil) : un fichier propre à l'application, qui ne
+        sert qu'à la recharger, contrairement aux rapports PDF / Word. */
+    PROFILE_EXT,
+    /** Fichier de sauvegarde du profil actif : { name, text, mime }. */
+    profileFile(data, now = new Date()) {
+      const payload = this.exportData(data);
+      const slug = payload.nom.normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'profil';
+      const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      return { name: `gestion-budget-${slug}-${day}.${PROFILE_EXT}`, text: JSON.stringify(payload), mime: PROFILE_MIME };
+    },
+    /** Contenu d'un fichier de sauvegarde (texte), ou null s'il n'est pas lisible. */
+    readProfileFile(text) {
+      try { return JSON.parse(text); } catch { return null; }
     },
     /** Totaux mensuels d'un profil (page Profil), ou null s'il n'a pas encore de
         données (profil pré-rempli jamais ouvert). Mêmes calculs que la Synthèse :

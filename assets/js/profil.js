@@ -226,13 +226,23 @@
   document.getElementById('btnOpenExample').addEventListener('click', openExample);
 
   /* ---------- Importer un profil ----------
-     Seul un .docx ou un PDF exporté par l'application (page Exporter ou
-     Imprimer) est accepté : données embarquées par docx.js ou pdflink.js et
-     marquées par profiles.js. */
+     Fichier de sauvegarde .gbudget de la page Sauvegarder (« Votre profil »),
+     marqué par profiles.js. Les .docx / PDF « Rapport + données » des
+     anciennes versions restent acceptés (données embarquées par docx.js ou
+     pdflink.js), pour ne pas perdre les sauvegardes déjà faites. */
 
   const MAX_IMPORT_SIZE = 10 * 1024 * 1024;
-  const REFUSED = 'Fichier refusé : seul un fichier Word (.docx) ou PDF exporté par Gestion budget peut être importé.';
-  const READERS = { docx: Docx.readData, pdf: PdfLink.readData };
+  const REFUSED = `Fichier refusé : seul un fichier de sauvegarde .${Profiles.PROFILE_EXT} créé par Gestion budget peut être importé.`;
+  const readSave = (bytes) => {
+    try { return Profiles.readProfileFile(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { return null; }
+  };
+  const READERS = {
+    [Profiles.PROFILE_EXT]: readSave,
+    // Certains téléphones ajoutent « .json » au nom du fichier téléchargé.
+    json: readSave,
+    docx: Docx.readData,
+    pdf: PdfLink.readData
+  };
   const importForm = document.getElementById('importForm');
   const fileInput = document.getElementById('importFichier');
   const fileName = document.getElementById('importFileName');

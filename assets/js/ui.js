@@ -353,7 +353,7 @@
     const finishBtn = $(cfg.finishBtn);
     const stepLabel = $(cfg.stepLabel);
     // Étapes cherchées dans la pop-up, ou dans cfg.stepsRoot si elles n'y sont
-    // pas toujours (formulaire Exporter, déplacé selon la largeur d'écran).
+    // pas toujours (formulaire Sauvegarder, déplacé selon la largeur d'écran).
     const steps = cfg.steps.map((sel) => $(sel, cfg.stepsRoot || overlay));
     const total = steps.length;
     let current = 0;
