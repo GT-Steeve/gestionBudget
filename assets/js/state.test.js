@@ -63,6 +63,23 @@ describe('BudgetState.load', () => {
     expect(state.scenarios.map((x) => x.id)).toEqual(['s1']);
     expect(state.depensesHistorique).toHaveLength(12);
   });
+
+  it('cleans applied savings and drops those whose charge no longer exists', () => {
+    const state = BudgetState.load(saved({
+      charges: [{ id: 'c1', nom: 'Box moins chère', mensuel: 20 }],
+      appliquees: [
+        { id: 'a1', chargeId: 'c1', ancienNom: 'Box', ancienMensuel: '40', nom: 'Box moins chère', nouveau: 20,
+          scenarios: [{ id: 's1', chargeId: 'c1', option: 'Box moins chère', nouveau: 20 }, null] },
+        { id: 'a2', chargeId: 'disparue', ancienNom: 'X', ancienMensuel: 10, nom: 'Y', nouveau: 5 },
+        'pas un objet'
+      ]
+    }), NOW);
+    expect(state.appliquees).toEqual([{
+      id: 'a1', chargeId: 'c1', ancienNom: 'Box', ancienMensuel: 40, nom: 'Box moins chère', nouveau: 20,
+      scenarios: [{ id: 's1', chargeId: 'c1', option: 'Box moins chère', nouveau: 20 }]
+    }]);
+    expect(BudgetState.load(saved(), NOW).appliquees).toEqual([]);
+  });
 });
 
 describe('BudgetState.archiveMonth', () => {

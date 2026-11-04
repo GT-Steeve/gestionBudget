@@ -431,7 +431,10 @@
             ['Valeur', `${eur2.format(c.mensuel)} / mois`]
           ], () => {
             state[type] = state[type].filter((x) => x.id !== c.id);
-            if (type === 'charges') state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
+            if (type === 'charges') {
+              state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
+              state.appliquees = state.appliquees.filter((x) => x.chargeId !== c.id);
+            }
             renderLines(type);
             refresh();
           });
@@ -583,6 +586,7 @@
         const ids = new Set(state.charges.map((c) => c.id));
         state.charges = [];
         state.scenarios = state.scenarios.filter((x) => !ids.has(x.chargeId));
+        state.appliquees = state.appliquees.filter((x) => !ids.has(x.chargeId));
         renderLines('charges');
         refresh();
       }, { center: true });
@@ -598,6 +602,7 @@
         state.revenus = [];
         state.charges = [];
         state.scenarios = [];
+        state.appliquees = [];
         state.depenses = [];
         state.depensesHistorique = [];
         renderLines('revenus');
@@ -711,7 +716,8 @@
 
     const moisNom = currentMonthName();
     if ($('#depMoisTitre')) $('#depMoisTitre').textContent = moisNom;
-    if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
+    // Juste le mois en cours, avec une majuscule (« Novembre »).
+    if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = moisNom.charAt(0).toUpperCase() + moisNom.slice(1);
 
     renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
       'Ajoutez des dépenses pour voir leur répartition.');
@@ -1113,6 +1119,7 @@
 
   function renderScenarios() {
     if (!$('#ecoMois')) return;
+    renderAppliquees();
     const { rows, best, monthly, annual: yearly } = computeSavings();
     const m = totalMonthly();
 
@@ -1143,6 +1150,12 @@
         class: 'btn btn--ghost btn--sm', type: 'button',
         title: 'Remplacer la ligne par cette option dans vos charges',
         onclick: () => {
+          // Gardé pour Annuler (Économies appliquées) : la charge d'avant et ses comparaisons.
+          state.appliquees.unshift({
+            id: uid(), chargeId: charge.id, ancienNom: charge.nom, ancienMensuel: charge.mensuel,
+            nom: sc.option || charge.nom, nouveau: sc.nouveau,
+            scenarios: state.scenarios.filter((x) => x.chargeId === charge.id)
+          });
           charge.mensuel = sc.nouveau;
           if (sc.option) charge.nom = sc.option;
           state.scenarios = state.scenarios.filter((x) => x.chargeId !== charge.id);
@@ -1182,9 +1195,54 @@
     updateScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
   }
 
+  /** Économies appliquées, sous les comparaisons. Annuler rend à la charge son
+      libellé et son montant d'avant, et remet ses comparaisons dans le tableau.
+      Seule la plus récente d'une même charge peut être annulée : une plus
+      ancienne écraserait sinon celle appliquée par-dessus. */
+  function renderAppliquees() {
+    const block = $('#appliqueesBlock');
+    if (!block) return;
+    block.hidden = !state.appliquees.length;
+    const body = $('#appBody');
+    body.replaceChildren();
+    const seen = new Set();
+    for (const a of state.appliquees) {
+      const charge = state.charges.find((c) => c.id === a.chargeId);
+      if (!charge) continue;
+      const latest = !seen.has(a.chargeId);
+      seen.add(a.chargeId);
+      const eco = a.ancienMensuel - a.nouveau;
+      const undo = h('button', {
+        class: 'btn btn--ghost btn--sm', type: 'button', disabled: !latest,
+        title: latest ? 'Revenir à la charge d\'avant et remettre ses comparaisons'
+          : 'Annulez d\'abord l\'économie plus récente appliquée sur cette ligne',
+        onclick: () => {
+          charge.nom = a.ancienNom;
+          charge.mensuel = a.ancienMensuel;
+          const ids = new Set(state.scenarios.map((x) => x.id));
+          state.scenarios.push(...a.scenarios.filter((x) => !ids.has(x.id)));
+          state.appliquees = state.appliquees.filter((x) => x.id !== a.id);
+          renderLines('charges');
+          refresh();
+        }
+      }, 'Annuler');
+      const ligneCell = h('td', {}, a.nom, a.ancienNom !== a.nom ? h('span', { class: 'sub' }, `Avant : ${a.ancienNom}`) : null);
+      body.append(h('tr', {},
+        ligneCell,
+        h('td', { class: `num delta delta--${eco > 0 ? 'good' : ''}` }, `+${eur2.format(eco)}`,
+          h('small', {}, `${eur2.format(annual(eco))} / an`)),
+        h('td', { class: 'num' }, eur2.format(a.ancienMensuel)),
+        h('td', { class: 'num' }, eur2.format(a.nouveau)),
+        h('td', { class: 'num' }, undo)
+      ));
+    }
+    updateScrollArrows($('#appTableWrap'), $('#appScrollLeft'), $('#appScrollRight'));
+  }
+
   function bindScenarios() {
     if (!$('#scForm')) return;
     bindScrollArrows($('#scTableWrap'), $('#scScrollLeft'), $('#scScrollRight'));
+    bindScrollArrows($('#appTableWrap'), $('#appScrollLeft'), $('#appScrollRight'));
     MOBILE_QUERY.addEventListener('change', renderScenarios);
     $('#scForm').addEventListener('submit', (e) => {
       e.preventDefault();

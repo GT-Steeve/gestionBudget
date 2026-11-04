@@ -99,6 +99,7 @@
         { id: uid(), chargeId: courses.id, option: 'Marque distributeur + drive', nouveau: 260 },
         { id: uid(), chargeId: abos.id, option: 'Offre duo partagée', nouveau: 18 }
       ],
+      appliquees: [],
       yield: { capital: 3000, versement: 150, annees: 15, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 5 },
       view: 'mois'
     };
@@ -112,17 +113,25 @@
   const records = (list) => (Array.isArray(list) ? list : [])
     .filter((x) => x !== null && typeof x === 'object' && !Array.isArray(x));
 
+  /** Comparaison (page Économie) nettoyée. */
+  const scenario = (x) => ({
+    id: String(x.id || uid()),
+    chargeId: String(x.chargeId),
+    option: String(x.option || '').slice(0, 60),
+    nouveau: num(x.nouveau)
+  });
+
   /** Budget vide (nouveau profil, première utilisation). */
   const emptyState = (now = new Date()) => ({
     revenus: [], charges: [], depenses: [], depensesHistorique: [], depensesMoisCourant: monthKey(now),
-    cashbackRate: 1, roundUpTo: 1, scenarios: [], view: 'mois',
+    cashbackRate: 1, roundUpTo: 1, scenarios: [], appliquees: [], view: 'mois',
     yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
   });
 
   /** État de l'application à partir des données enregistrées ou importées
       (saved), nettoyées champ par champ ; un budget vide si elles sont
       absentes ou illisibles. Les comparaisons dont la charge n'existe plus
-      sont retirées. */
+      sont retirées, comme les économies appliquées. */
   function load(saved, now = new Date()) {
     if (!saved || !Array.isArray(saved.charges) || !Array.isArray(saved.scenarios)
       || saved.yield === null || typeof saved.yield !== 'object') {
@@ -168,12 +177,18 @@
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(now),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,
-      scenarios: records(saved.scenarios).map((x) => ({
-        id: String(x.id || uid()),
-        chargeId: String(x.chargeId),
-        option: String(x.option || '').slice(0, 60),
-        nouveau: num(x.nouveau)
-      })),
+      scenarios: records(saved.scenarios).map(scenario),
+      // Économies appliquées (la plus récente en premier) : de quoi rendre à la
+      // charge son libellé et son montant, et remettre ses comparaisons.
+      appliquees: records(saved.appliquees).map((a) => ({
+        id: String(a.id || uid()),
+        chargeId: String(a.chargeId),
+        ancienNom: String(a.ancienNom || 'Sans nom').slice(0, 60),
+        ancienMensuel: num(a.ancienMensuel),
+        nom: String(a.nom || 'Sans nom').slice(0, 60),
+        nouveau: num(a.nouveau),
+        scenarios: records(a.scenarios).map(scenario)
+      })).slice(0, 100),
       view: saved.view === 'an' ? 'an' : 'mois',
       yield: (() => {
         const annees = clamp(Math.round(num(saved.yield.annees)) || 10, 1, 50);
@@ -187,7 +202,9 @@
         };
       })()
     };
-    state.scenarios = state.scenarios.filter((x) => state.charges.some((c) => c.id === x.chargeId));
+    const chargeExists = (x) => state.charges.some((c) => c.id === x.chargeId);
+    state.scenarios = state.scenarios.filter(chargeExists);
+    state.appliquees = state.appliquees.filter(chargeExists);
     return state;
   }
 

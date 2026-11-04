@@ -122,6 +122,7 @@
         saved.revenus = [];
         saved.charges = [];
         saved.scenarios = [];
+        saved.appliquees = [];
         saved.depenses = [];
         saved.depensesHistorique = [];
         store.set(STORAGE_KEY, saved);

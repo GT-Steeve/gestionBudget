@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.149">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.151">
 </head>
 <body data-app="true">
 
@@ -91,7 +91,7 @@
     </article>
     <article class="tile">
       <div class="tile__body">
-        <p class="tile__label">Économie par an (× 12)</p>
+        <p class="tile__label">Économie par an</p>
         <p class="tile__value tile__value--good" id="ecoAn">–</p>
       </div>
     </article>
@@ -134,7 +134,7 @@
               <th scope="col" class="num">Actuel / mois</th>
               <th scope="col" class="num">Nouveau / mois</th>
               <th scope="col" class="num">Écart / mois</th>
-              <th scope="col" class="num">Écart / an (× 12)</th>
+              <th scope="col" class="num">Écart / an</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
             <tr class="row-mobile">
@@ -143,7 +143,7 @@
               <th scope="col" class="num">Écart / mois</th>
               <th scope="col" class="num">Actuel / mois</th>
               <th scope="col" class="num">Nouveau / mois</th>
-              <th scope="col" class="num">Écart / an (× 12)</th>
+              <th scope="col" class="num">Écart / an</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
@@ -156,6 +156,35 @@
       <button type="button" class="scroll-arrow scroll-arrow--right" id="scScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+    </div>
+    <!-- Économies appliquées (bouton Appliquer ci-dessus) : Annuler rend à la
+         charge son libellé et son montant, et remet ses comparaisons au-dessus.
+         Masqué tant qu'aucune économie n'est appliquée (script.js). -->
+    <div id="appliqueesBlock" hidden>
+      <h3 class="h3 h3--gap">Économies appliquées</h3>
+      <div class="table-scroll-wrap">
+        <div class="table-wrap" id="appTableWrap">
+          <table class="table" id="appTable">
+            <caption class="sr-only">Économies appliquées à vos charges</caption>
+            <thead>
+              <tr>
+                <th scope="col">Ligne</th>
+                <th scope="col" class="num">Économie / mois</th>
+                <th scope="col" class="num">Avant</th>
+                <th scope="col" class="num">Après</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="appBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="scroll-arrow scroll-arrow--left" id="appScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="scroll-arrow scroll-arrow--right" id="appScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     </div>
     <div class="split">
       <p class="note">Si plusieurs options concernent la même ligne, seule la plus économique est comptée dans les totaux.</p>
@@ -236,12 +265,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.149"></script>
-<script src="../assets/js/ui.js?v=1.01.149"></script>
-<script src="../assets/js/nav.js?v=1.01.149"></script>
-<script src="../assets/js/calc.js?v=1.01.149"></script>
-<script src="../assets/js/state.js?v=1.01.149"></script>
-<script src="../assets/js/guide.js?v=1.01.149"></script>
-<script src="../assets/js/script.js?v=1.01.149"></script>
+<script src="../assets/js/profiles.js?v=1.01.151"></script>
+<script src="../assets/js/ui.js?v=1.01.151"></script>
+<script src="../assets/js/nav.js?v=1.01.151"></script>
+<script src="../assets/js/calc.js?v=1.01.151"></script>
+<script src="../assets/js/state.js?v=1.01.151"></script>
+<script src="../assets/js/guide.js?v=1.01.151"></script>
+<script src="../assets/js/script.js?v=1.01.151"></script>
 </body>
 </html>
