@@ -14,11 +14,4 @@
 
   bind('zoom', Prefs.zoom(), Prefs.setZoom);
   bind('theme', Prefs.theme(), Prefs.setTheme);
-
-  // Affiche les facteurs réellement définis dans le CSS (--zoom-small/normal/large).
-  const css = getComputedStyle(document.documentElement);
-  document.querySelectorAll('[data-zoom-factor]').forEach((el) => {
-    const factor = parseFloat(css.getPropertyValue(`--zoom-${el.dataset.zoomFactor}`));
-    if (factor) el.textContent = `${Math.round(factor * 100)} %`;
-  });
 })();
