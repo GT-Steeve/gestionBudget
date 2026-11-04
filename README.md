@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.17.1 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.17.3 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -91,6 +91,11 @@ placement, exemples de produits financiers et synthèse visuelle,
 - **Paramètres** — taille d'affichage petite (100 %), normale (115 %, par
   défaut) ou agrandie (130 %), comme le zoom du navigateur, et thème clair ou sombre (automatique selon le système
   tant qu'aucun choix n'est fait).
+- **Écran de chargement** — si une page met plus d'un quart de seconde à
+  s'afficher, des pièces tombent et s'empilent avec l'étape en cours
+  (revenus, charges, dépenses, économies, synthèse), puis le contenu arrive
+  bloc par bloc. Rien ne s'affiche sur un chargement rapide, et la pile reste
+  fixe si l'appareil demande des animations réduites.
 - **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
   qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
   onglets sous le titre, avec Profil et Paramètres en icônes.
@@ -131,6 +136,7 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`
+- `assets/js/loader.js` — écran de chargement « pile de pièces », inclus dans le `<head>` de chaque page
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
 - `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
