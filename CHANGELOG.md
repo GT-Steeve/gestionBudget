@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.38.0...v1.39.0) (2026-11-04)
+
+
+### Features
+
+* **chargement:** écran de chargement « pile de pièces » ([cfab2da](https://github.com/GT-Steeve/gestionBudget/commit/cfab2dae1c8a7c92391f5249a80f35eb9e6d5a2f))
+
 # [1.38.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.37.0...v1.38.0) (2026-11-04)
 
 
