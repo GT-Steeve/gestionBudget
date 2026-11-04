@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.151">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.155">
 </head>
 <body data-app="true">
 
@@ -140,6 +140,12 @@
         <span class="choice__label">Complet</span>
         <span class="choice__sub">Synthèse, revenus, dépenses, charges, historique des dépenses, économie, placement, cashback et RoundUp</span>
       </label>
+      <!-- Personnalisé : pop-up « Éléments à inclure » à chaque clic (report.js). -->
+      <label class="choice">
+        <input type="radio" name="modele" value="personnalise" id="modelePerso">
+        <span class="choice__label">Personnalisé</span>
+        <span class="choice__sub">Choisissez vous-même les éléments du rapport</span>
+      </label>
     </div>
     </div>
 
@@ -194,6 +200,19 @@
   </div>
 </div>
 
+<!-- Modèle Personnalisé : éléments du rapport à inclure ou non (report.js). -->
+<div id="persoOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="persoTitle">
+    <p id="persoTitle" class="modal__title modal__title--center">Éléments à inclure</p>
+    <div id="persoList" class="modal-list"></div>
+    <p id="persoError" class="note import-status is-error" role="alert"></p>
+    <div class="modal__actions modal__actions--center">
+      <button type="button" id="persoCancel" class="btn btn--ghost">Retour</button>
+      <button type="button" id="persoOk" class="btn">Valider</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
@@ -205,15 +224,15 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.151"></script>
-<script src="../assets/js/ui.js?v=1.01.151"></script>
-<script src="../assets/js/nav.js?v=1.01.151"></script>
-<script src="../assets/js/calc.js?v=1.01.151"></script>
-<script src="../assets/js/state.js?v=1.01.151"></script>
-<script src="../assets/js/guide.js?v=1.01.151"></script>
-<script src="../assets/js/docx.js?v=1.01.151"></script>
-<script src="../assets/js/pdflink.js?v=1.01.151"></script>
-<script src="../assets/js/report.js?v=1.01.151"></script>
-<script src="../assets/js/script.js?v=1.01.151"></script>
+<script src="../assets/js/profiles.js?v=1.01.155"></script>
+<script src="../assets/js/ui.js?v=1.01.155"></script>
+<script src="../assets/js/nav.js?v=1.01.155"></script>
+<script src="../assets/js/calc.js?v=1.01.155"></script>
+<script src="../assets/js/state.js?v=1.01.155"></script>
+<script src="../assets/js/guide.js?v=1.01.155"></script>
+<script src="../assets/js/docx.js?v=1.01.155"></script>
+<script src="../assets/js/pdflink.js?v=1.01.155"></script>
+<script src="../assets/js/report.js?v=1.01.155"></script>
+<script src="../assets/js/script.js?v=1.01.155"></script>
 </body>
 </html>

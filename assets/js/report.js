@@ -9,7 +9,7 @@
 
 (() => {
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, fmtRate, capitalize, monthLabel,
-    currentMonthWithPreposition, closeModal, bindAddWizard, niceScale, arcPath, ringPath } = UI;
+    currentMonthWithPreposition, openModal, closeModal, bindAddWizard, niceScale, arcPath, ringPath } = UI;
   const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES } = BudgetState;
   const annual = Calc.annual;
 
@@ -231,6 +231,46 @@
       roundup: 'Arrondi automatique mis de côté'
     };
 
+    /* ---------- Modèle Personnalisé ----------
+       Éléments choisis dans la pop-up « Éléments à inclure », dans l'ordre du
+       modèle Complet ; tous cochés au départ. */
+    const ALL_SECTIONS = EXPORT_MODELS.complet.sections;
+    const SECTION_NAMES = {
+      synthese: 'synthèse', revenus: 'revenus', depenses: 'dépenses', charges: 'charges',
+      historique: 'historique des dépenses', economie: 'économie', placement: 'placement',
+      cashback: 'cashback', roundup: 'RoundUp'
+    };
+    EXPORT_MODELS.personnalise = { label: 'Personnalisé', sections: [...ALL_SECTIONS] };
+    function bindPersoModel() {
+      const radio = $('#modelePerso');
+      const overlay = $('#persoOverlay');
+      if (!radio || !overlay) return;
+      const list = $('#persoList');
+      const error = $('#persoError');
+      const open = () => {
+        error.textContent = '';
+        list.replaceChildren(...ALL_SECTIONS.map((key) => {
+          const input = h('input', { type: 'checkbox', value: key, checked: EXPORT_MODELS.personnalise.sections.includes(key),
+            'aria-label': capitalize(SECTION_NAMES[key]), onchange: () => { error.textContent = ''; } });
+          return h('div', { class: 'cb-row' },
+            h('div', { class: 'cb-row__text' },
+              h('span', { class: 'cb-row__name' }, capitalize(SECTION_NAMES[key])),
+              h('span', { class: 'cb-row__amount' }, SECTION_SUMMARIES[key])),
+            h('label', { class: 'switch' }, input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' }))));
+        }));
+        openModal(overlay, { focus: '#persoOk' });
+      };
+      // Un clic sur la tuile (même déjà choisie) ouvre la pop-up, pour revoir le choix.
+      radio.addEventListener('click', open);
+      $('#persoCancel').addEventListener('click', () => closeModal(overlay));
+      $('#persoOk').addEventListener('click', () => {
+        const chosen = ALL_SECTIONS.filter((key) => $(`input[value="${key}"]`, list).checked);
+        if (!chosen.length) { error.textContent = 'Choisissez au moins un élément.'; return; }
+        EXPORT_MODELS.personnalise.sections = chosen;
+        closeModal(overlay);
+      });
+    }
+
     function buildReport(modelKey) {
       const model = EXPORT_MODELS[modelKey] || EXPORT_MODELS.simple;
       const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date());
@@ -442,6 +482,7 @@
     }
 
     bindExportForm();
+    bindPersoModel();
   }
 
   window.Report = { bindExport };
