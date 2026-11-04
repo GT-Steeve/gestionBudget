@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.40.1...v1.41.0) (2026-11-04)
+
+
+### Features
+
+* **suivi:** onglet Suivi avec calendrier du budget ([985eb2c](https://github.com/GT-Steeve/gestionBudget/commit/985eb2ce390d727069c0e50ff8dc1d41f92e882e))
+
 ## [1.40.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.40.0...v1.40.1) (2026-11-04)
 
 
