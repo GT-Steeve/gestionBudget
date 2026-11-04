@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.18.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.19.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -53,20 +53,20 @@ placement, exemples de produits financiers et synthèse visuelle,
   ETF, cashback, arrondi automatique).
 - **Synthèse graphique** — camembert de répartition des dépenses et graphique
   en barres, par mois ou par an.
-- **Exporter** — page dédiée : format **PDF** (fenêtre d'impression du
-  navigateur, « Enregistrer en PDF »), **Word** (fichier `.docx` généré dans
-  le navigateur, sans bibliothèque) ou **Google Docs** (le même `.docx`, à
-  importer dans Google Drive : aucune connexion n'est faite). Trois modèles :
-  **Simple** (synthèse + dépenses du mois), **Standard** (+ revenus, charges,
-  placement) et **Complet** (+ historique des dépenses, économie, cashback,
-  RoundUp). Option **Rapport + données** (désactivée par défaut, pour qu'un
-  rapport partagé n'emporte pas tout le budget) : le `.docx` et le PDF
-  embarquent alors toutes les données du profil, quel que soit le modèle, pour
-  pouvoir les réimporter : partie JSON dans le `.docx`, lien « Gestion
-  budget » de la page de garde dans le PDF (lu en clair ou dans un flux
-  d'objets compressé).
+- **Sauvegarder** — page dédiée, qui commence par un choix :
+  - **Dans un document** : un rapport à lire, imprimer ou partager, au format
+    **PDF** (fenêtre d'impression du navigateur, « Enregistrer en PDF »),
+    **Word** (fichier `.docx` généré dans le navigateur, sans bibliothèque)
+    ou **Google Docs** (le même `.docx`, à importer dans Google Drive : aucune
+    connexion n'est faite). Trois modèles : **Simple** (synthèse + dépenses du
+    mois), **Standard** (+ revenus, charges, placement) et **Complet**
+    (+ historique des dépenses, économie, cashback, RoundUp), ou
+    **Personnalisé**. Le document ne contient que le rapport.
+  - **Votre profil** : après confirmation, toutes les données du profil sont
+    enregistrées dans un fichier **`.gbudget`**, propre à l'application et
+    réservé au transfert vers un autre appareil (import depuis la page Profil).
 - **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
-  directement le rapport. Les boutons « Exporter » et « Imprimer » restent
+  directement le rapport. Les boutons « Exporter » (PDF) et « Imprimer » restent
   aussi disponibles sous la synthèse.
 - **Profils** — plusieurs budgets indépendants sur le même appareil (le vôtre,
   celui d'un proche…) : chacun garde ses propres revenus, charges, dépenses et
@@ -74,10 +74,11 @@ placement, exemples de produits financiers et synthèse visuelle,
   revenus, charges, dépenses du mois et son solde, avec un bouton œil pour
   masquer ses montants. Création d'un profil vide ou pré-rempli (point de
   départ choisi dans une pop-up), changement, renommage et suppression depuis
-  la page Profil. **Import** d'un profil à partir du `.docx` ou du PDF exporté
-  par l'application avec l'option « Rapport + données » (glisser-déposer sur bureau) ; tout autre fichier est
-  refusé (autre application, export modifié ou réenregistré), et un nom déjà
-  pris doit être changé. Après une création ou un import, l'application ouvre
+  la page Profil. **Import** d'un profil à partir du fichier `.gbudget` de la page
+  Sauvegarder (glisser-déposer sur bureau) ; les `.docx` / PDF « Rapport +
+  données » des versions précédentes restent acceptés. Tout autre fichier est
+  refusé (rapport sans données, autre application, sauvegarde modifiée), et un
+  nom déjà pris doit être changé. Après une création ou un import, l'application ouvre
   la page où continuer et y confirme l'action dans une pop-up.
 - **Guide** — au premier lancement, ou à l'ouverture d'un profil créé vide,
   l'application démarre vide et ouvre la page Guide : présentation des étapes
@@ -127,18 +128,18 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, Suivi, CashBack/RoundUp,
-  Économie, Placement, Produits financiers, Guide, Annexe, Exporter, Imprimer,
+  Économie, Placement, Produits financiers, Guide, Annexe, Sauvegarder (`exporter.html`), Imprimer,
   Profil, Paramètres, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
 - `assets/js/script.js` — logique des pages du tableau de bord (rendu, saisie, stockage local)
 - `assets/js/state.js` — état de l'application : catégories, profil d'exemple, lecture des données enregistrées ou importées et archivage mensuel, partagé avec les tests
 - `assets/js/ui.js` — outils d'interface partagés : formats, éléments DOM, pop-ups (pile, Échap, focus), choix en boutons, ajout guidé, tracés SVG
-- `assets/js/report.js` — rapport d'export et d'impression (pages Exporter et Imprimer)
+- `assets/js/report.js` — rapport d'export et d'impression, sauvegarde du profil (pages Sauvegarder et Imprimer)
 - `assets/js/guide.js` — guide de démarrage : page Guide, premier usage, étape en cours sur les pages
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
-- `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`
+- `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
 - `assets/js/loader.js` — écran de chargement « pile de pièces », inclus dans le `<head>` de chaque page
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
 - `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres

@@ -56,6 +56,7 @@ v1.17.3 = écran de chargement pile de pièces + arrivée du contenu en cascade
 v1.17.4 = l'user peut modifier les économie avant application
 v1.17.5 = correctif texte paramètre
 v1.18.0 = ajout onglet Suivi
+v1.19.0 = rework exporter par sauvegarder
 
 ** Next idea **
 exporter / imprimer l'historique des dépenses via un calendrier + liste
