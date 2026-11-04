@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.39.0...v1.40.0) (2026-11-04)
+
+
+### Features
+
+* **economie:** modifier une comparaison avant de l'appliquer ([bce5181](https://github.com/GT-Steeve/gestionBudget/commit/bce5181dcdcfd3056e06f0397f331405ad61ff4e))
+
 # [1.39.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.38.0...v1.39.0) (2026-11-04)
 
 
