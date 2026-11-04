@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.41.0...v1.42.0) (2026-11-04)
+
+
+### Features
+
+* **sauvegarder:** onglet Exporter renommé Sauvegarder, profil en .gbudget ([36463df](https://github.com/GT-Steeve/gestionBudget/commit/36463dfea76cb36389074f3bf859aef5266982b5))
+
 # [1.41.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.40.1...v1.41.0) (2026-11-04)
 
 
