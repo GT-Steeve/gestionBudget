@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.17.5 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.18.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -126,7 +126,7 @@ suffit). Un outillage Node existe en parallèle uniquement pour la qualité et
 les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 
 - `index.html` — tableau de bord (page d'accueil)
-- `pages/` — pages dédiées (Revenus, Dépenses, Charges, CashBack/RoundUp,
+- `pages/` — pages dédiées (Revenus, Dépenses, Charges, Suivi, CashBack/RoundUp,
   Économie, Placement, Produits financiers, Guide, Annexe, Exporter, Imprimer,
   Profil, Paramètres, À propos, Vos données)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression

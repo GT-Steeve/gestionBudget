@@ -55,11 +55,12 @@ v1.17.1 = ajout animation transition + impression modèle personalisé
 v1.17.3 = écran de chargement pile de pièces + arrivée du contenu en cascade
 v1.17.4 = l'user peut modifier les économie avant application
 v1.17.5 = correctif texte paramètre
+v1.18.0 = ajout onglet Suivi
 
 ** Next idea **
 exporter / imprimer l'historique des dépenses via un calendrier + liste
 exporter / imprimer le suivi des charges via un calendrier + liste
-ongler calendrier général pour suivre solde, revenu, dépense, charge
+revoir l'impression -> l'user doit indiquer la période et élements désiré
 réfléchir un don soutien où placement pub
 slogan : Tract tes finances / dépenses pour mieux gerer ton budget
 
