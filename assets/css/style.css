@@ -39,6 +39,13 @@
   --cat-pret: #5b6b7a;
   --cat-famille: #b0285f;
   --neutral-fill: #d6ccb6;
+  /* pièces de l'écran de chargement (loader.js) */
+  --coin-hi: #fbe8a6;
+  --coin: #e3b341;
+  --coin-deep: #c8941f;
+  --coin-rim: rgba(140, 95, 10, 0.35);
+  --coin-edge: #9c6f12;
+  --coin-floor: rgba(60, 45, 20, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -73,6 +80,12 @@
     --cat-pret: #93a3b3;
     --cat-famille: #e0608f;
     --neutral-fill: #2c4649;
+  --coin-hi: #ffe596;
+  --coin: #ebbd45;
+  --coin-deep: #b98a1c;
+  --coin-rim: rgba(110, 75, 5, 0.4);
+  --coin-edge: #8a6410;
+  --coin-floor: rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -107,6 +120,12 @@
   --cat-pret: #93a3b3;
   --cat-famille: #e0608f;
   --neutral-fill: #2c4649;
+  --coin-hi: #ffe596;
+  --coin: #ebbd45;
+  --coin-deep: #b98a1c;
+  --coin-rim: rgba(110, 75, 5, 0.4);
+  --coin-edge: #8a6410;
+  --coin-floor: rgba(0, 0, 0, 0.35);
 }
 
 /* ---------- Base ---------- */
@@ -1522,12 +1541,113 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
   .mini-kpis { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ---------- Écran de chargement (loader.js) ----------
+   html.is-pending : contenu masqué pendant le chargement ; html.is-loading :
+   pile de pièces affichée (seulement si le chargement dépasse 250 ms) ;
+   html.is-revealing : arrivée en cascade du contenu. Chaque pièce est un
+   disque vu de face qui tournoie en tombant (scaleY) puis se pose à plat
+   (scaleY 0.3) : son ombre portée devient la tranche. */
+html.is-pending main.wrap > *, html.is-pending .foot { opacity: 0; }
+html.is-revealing main.wrap > *, html.is-revealing .foot { animation: page-in 360ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards; }
+html.is-revealing main.wrap > :nth-child(2) { animation-delay: 50ms; }
+html.is-revealing main.wrap > :nth-child(3) { animation-delay: 100ms; }
+html.is-revealing main.wrap > :nth-child(n+4), html.is-revealing .foot { animation-delay: 150ms; }
+@keyframes page-in { from { opacity: 0; transform: translateY(12px); } }
+
+.page-loader {
+  position: fixed; inset: 56px 0 0; z-index: 5; pointer-events: none;
+  display: grid; place-content: center; justify-items: center; gap: 14px;
+  transition: opacity 220ms ease, transform 260ms ease;
+  --coin-face: inset 0 0 0 3px var(--coin-rim), 0 0 0 var(--coin-edge);
+  --coin-flat: inset 0 0 0 3px var(--coin-rim), 0 12px 0 var(--coin-edge);
+}
+html:not(.is-loading) .page-loader { opacity: 0; transform: translateY(-8px); }
+.page-loader__stack { position: relative; width: 56px; height: 92px; }
+.page-loader__stack::before {
+  content: ""; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 12px; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--coin-floor), transparent);
+}
+.page-loader .coin {
+  position: absolute; left: 4px; width: 48px; height: 48px; border-radius: 50%;
+  transform-origin: 50% 100%; opacity: 0;
+  background: radial-gradient(circle at 35% 30%, var(--coin-hi), var(--coin) 52%, var(--coin-deep));
+  box-shadow: var(--coin-face);
+  display: grid; place-items: center;
+  animation: 2.6s linear infinite;
+}
+.page-loader .coin::before { content: "€"; font: 800 24px/1 system-ui, sans-serif; color: var(--coin-edge); opacity: 0.75; text-shadow: 0 1px 0 var(--coin-hi); }
+.page-loader .coin:nth-child(1) { bottom: 4px; z-index: 1; animation-name: coin-drop-1; }
+.page-loader .coin:nth-child(2) { bottom: 10px; z-index: 2; animation-name: coin-drop-2; }
+.page-loader .coin:nth-child(3) { bottom: 16px; z-index: 3; animation-name: coin-drop-3; }
+.page-loader .coin:nth-child(4) { bottom: 22px; z-index: 4; animation-name: coin-drop-4; }
+.page-loader .coin:nth-child(5) { bottom: 28px; z-index: 5; animation-name: coin-drop-5; }
+.page-loader__label { font-size: 14px; color: var(--muted); min-width: 24ch; text-align: center; }
+.page-loader__label::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: loader-dots 1.2s steps(4, end) infinite; }
+@keyframes loader-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
+@keyframes coin-drop-1 {
+  0% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
+  1.92% { opacity: 1; }
+  5.65% { transform: translateY(-50px) scaleY(0.08); }
+  11.31% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
+  16.15% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
+  18.85% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
+  21.54%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
+  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+}
+@keyframes coin-drop-2 {
+  0%, 12.31% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
+  14.23% { opacity: 1; }
+  17.96% { transform: translateY(-50px) scaleY(0.08); }
+  23.62% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
+  28.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
+  31.15% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
+  33.85%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
+  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+}
+@keyframes coin-drop-3 {
+  0%, 24.62% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
+  26.54% { opacity: 1; }
+  30.27% { transform: translateY(-50px) scaleY(0.08); }
+  35.92% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
+  40.77% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
+  43.46% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
+  46.15%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
+  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+}
+@keyframes coin-drop-4 {
+  0%, 36.92% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
+  38.85% { opacity: 1; }
+  42.58% { transform: translateY(-50px) scaleY(0.08); }
+  48.23% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
+  53.08% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
+  55.77% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
+  58.46%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
+  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+}
+@keyframes coin-drop-5 {
+  0%, 49.23% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
+  51.15% { opacity: 1; }
+  54.88% { transform: translateY(-50px) scaleY(0.08); }
+  60.54% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
+  65.38% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
+  68.08% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
+  70.77%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
+  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .site-menu, .menu-icon { transition: none; }
+  /* Pile fixe, texte sans points animés, contenu en simple fondu. */
+  .page-loader .coin { animation: none; opacity: 1; transform: scaleY(0.3); box-shadow: var(--coin-flat); }
+  .page-loader__label::after { animation: none; content: "…"; }
+  html.is-revealing main.wrap > *, html.is-revealing .foot { animation-name: page-fade; }
 }
+@keyframes page-fade { from { opacity: 0; } }
 
 @media print {
+  .page-loader { display: none !important; }
+  html.is-pending main.wrap > *, html.is-pending .foot { opacity: 1 !important; }
   .topbar, .form-row, .add-trigger, .actions, .icon-btn, .syn-export, .foot, .example-close, .guide-step { display: none !important; }
   /* À l'export/impression, seule la Synthèse (camembert + bilan) est utile :
      les 6 tuiles résumé et le graphique en barres sont redondants sur papier. */
