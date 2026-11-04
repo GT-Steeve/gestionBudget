@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.37.0...v1.38.0) (2026-11-04)
+
+
+### Features
+
+* **export:** modèle Personnalisé dans Exporter et Imprimer ([c6051d3](https://github.com/GT-Steeve/gestionBudget/commit/c6051d30ebd1ddccbfc1dd03980de32369a221ce))
+
 # [1.37.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.36.0...v1.37.0) (2026-11-04)
 
 
