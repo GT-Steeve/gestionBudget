@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.36.0...v1.37.0) (2026-11-04)
+
+
+### Features
+
+* **economie:** tableau des économies appliquées avec Annuler ([a8a7ecd](https://github.com/GT-Steeve/gestionBudget/commit/a8a7ecd1000713c9d94991d3b6708813d84f659c))
+
 # [1.36.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.35.0...v1.36.0) (2026-10-30)
 
 
