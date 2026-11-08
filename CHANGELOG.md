@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.42.1...v1.43.0) (2026-11-08)
+
+
+### Features
+
+* **suivi:** détail du jour en pop-up avec effet de zoom depuis la case ([20d4364](https://github.com/GT-Steeve/gestionBudget/commit/20d4364e8f5d662061b57d9834741c9de6529ee9))
+
 ## [1.42.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.42.0...v1.42.1) (2026-11-08)
 
 
