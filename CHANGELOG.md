@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.43.0...v1.44.0) (2026-11-08)
+
+
+### Features
+
+* **categories:** ajout d'Épargne et Placement en dépenses, Placement en charges ([e69d676](https://github.com/GT-Steeve/gestionBudget/commit/e69d676a6fea77c7361bf29d52ccf37f344208d6))
+
 # [1.43.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.42.1...v1.43.0) (2026-11-08)
 
 
