@@ -38,7 +38,7 @@
     const REPORT_CAT_COLORS = {
       salaire: '#1baf7a', aide: '#008300', loyer: '#2a78d6', factures: '#eb6834', courses: '#eda100',
       transport: '#e87ba4', abonnements: '#4a3aa7', activite: '#9a6a3a', plaisir: '#7a9a0e', autre: '#e34948',
-      assurance: '#0f8b8d', epargne: '#b04fb5', pret: '#5b6b7a', famille: '#b0285f'
+      assurance: '#0f8b8d', epargne: '#b04fb5', placement: '#1f3f75', pret: '#5b6b7a', famille: '#b0285f'
     };
     const REPORT_PALETTE = ['#2a78d6', '#eb6834', '#eda100', '#1baf7a', '#e87ba4', '#4a3aa7', '#9a6a3a',
       '#7a9a0e', '#e34948', '#0f8b8d', '#b04fb5', '#5b6b7a', '#b0285f', '#00838f', '#8d6e63'];

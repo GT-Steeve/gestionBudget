@@ -36,6 +36,7 @@
   --cat-autre: #e34948;
   --cat-assurance: #0f8b8d;
   --cat-epargne: #b04fb5;
+  --cat-placement: #1f3f75;
   --cat-pret: #5b6b7a;
   --cat-famille: #b0285f;
   --neutral-fill: #d6ccb6;
@@ -77,6 +78,7 @@
     --cat-autre: #e66767;
     --cat-assurance: #2bb0b2;
     --cat-epargne: #c98ad0;
+    --cat-placement: #7d9be0;
     --cat-pret: #93a3b3;
     --cat-famille: #e0608f;
     --neutral-fill: #2c4649;
@@ -117,6 +119,7 @@
   --cat-autre: #e66767;
   --cat-assurance: #2bb0b2;
   --cat-epargne: #c98ad0;
+  --cat-placement: #7d9be0;
   --cat-pret: #93a3b3;
   --cat-famille: #e0608f;
   --neutral-fill: #2c4649;

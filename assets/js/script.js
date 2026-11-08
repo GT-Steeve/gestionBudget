@@ -32,6 +32,7 @@
       'Plaisir': 'Ex. Restaurant',
       'Assurance': 'Ex. Voiture, habitation',
       'Épargne': 'Ex. Économie, PEA',
+      'Placement': 'Ex. Versement programmé ETF, assurance vie',
       'Prêt': 'Ex. Crédit immobilier, prêt auto',
       'Famille / Proche': 'Ex. Aide aux parents, argent de poche',
       'Autre': 'Ex. Pension alimentaire (enfants)'
@@ -51,6 +52,8 @@
       'Amende': 'Ex. Stationnement, radar',
       'Imprévu': 'Ex. Panne voiture, garage',
       'Restaurant': 'Ex. Buffet, Uber, fast-food',
+      'Épargne': 'Ex. Versement sur livret A',
+      'Placement': 'Ex. Achat d\'actions, ETF, PEA',
       'Autre': 'Ex. Prêt, entretien voiture'
     }
   };
@@ -64,6 +67,7 @@
     Plaisir: 'Ex. Sortie moins chère, moins de restaurants, offre découverte',
     Assurance: 'Ex. Comparateur, changement de formule, regroupement de contrats',
     'Épargne': 'Ex. Virement automatique, livret, arrondi à l\'achat',
+    'Placement': 'Ex. Frais de courtage plus bas, ETF moins chargé',
     'Prêt': 'Ex. Renégociation du taux, rachat de crédit',
     'Famille / Proche': 'Ex. Budget fixe, montant revu ensemble',
     Autre: 'Ex. Option moins chère'
@@ -1835,7 +1839,7 @@
     Salaire: 'salaire', Aide: 'aide',
     Loyer: 'loyer', Factures: 'factures', Courses: 'courses',
     Transport: 'transport', Abonnements: 'abonnements', 'Activité': 'activite', Plaisir: 'plaisir', Autre: 'autre',
-    Assurance: 'assurance', 'Épargne': 'epargne', 'Prêt': 'pret', 'Famille / Proche': 'famille'
+    Assurance: 'assurance', 'Épargne': 'epargne', Placement: 'placement', 'Prêt': 'pret', 'Famille / Proche': 'famille'
   };
   const catColor = (key) => (key === 'reste' ? 'var(--neutral-fill)' : `var(--cat-${key})`);
   const factor = () => (state.view === 'an' ? MONTHS : 1);
