@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.19.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.19.1 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -28,6 +28,13 @@ placement, exemples de produits financiers et synthèse visuelle,
 - **Sélecteurs maison** — catégories, calendrier (avec choix de l'année) et
   heure à molettes chiffre par chiffre, en boutons plutôt que les listes et
   sélecteurs natifs du navigateur, plus lisibles sur mobile.
+- **Suivi** — calendrier du mois, une case par jour (toutes de même hauteur) :
+  le cumul du jour (revenus − charges − dépenses) sur la ligne du numéro, le
+  solde en fin de journée dessous, et une pastille par type présent (revenu,
+  charge, dépense), regroupée avec son total quand il y en a plusieurs. La
+  check-list (Revenus, Charges, Dépenses, Solde) filtre seulement l'affichage :
+  solde et cumul comptent toujours tous les évènements. Le détail du jour
+  s'affiche sous le calendrier.
 - **Répartition par catégorie** — vue synthétique des revenus et des charges
   avec barres de proportion.
 - **CashBack & RoundUp** — estimation du cashback reversé par la banque et de

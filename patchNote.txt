@@ -57,6 +57,7 @@ v1.17.4 = l'user peut modifier les économie avant application
 v1.17.5 = correctif texte paramètre
 v1.18.0 = ajout onglet Suivi
 v1.19.0 = rework exporter par sauvegarder
+v1.19.1 = polish case suivi
 
 ** Next idea **
 exporter / imprimer l'historique des dépenses via un calendrier + liste
