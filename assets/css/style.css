@@ -1256,7 +1256,9 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .cal__grid { list-style: none; margin: 0; padding: 0; }
 .cal__cell { min-width: 0; }
 .cal__day {
-  display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; min-height: 96px;
+  /* Hauteur fixée pour le contenu le plus haut (numéro du jour, cumul, solde et
+     une pastille par type) : toutes les cases sont identiques, vides ou non. */
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; min-height: 124px;
   padding: 6px; font: inherit; text-align: left; color: var(--ink);
   background: var(--wash); border: 1px solid transparent; border-radius: 10px; cursor: pointer;
 }
@@ -1267,6 +1269,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .cal__num { font-size: 13px; font-weight: 650; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .cal__solde { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .cal__solde-short { display: none; }
+/* Cumul du jour sur la ligne du numéro (même style que le solde) ; le solde passe dessous.
+   Les pastilles sont calées en bas de la case, à distance des montants. */
+.cal__below { align-self: flex-end; margin-top: -1px; }
+.cal__chips { margin-top: auto; }
 .cal-ev--solde { font-weight: 650; }
 .cal__day[aria-current="date"] .cal__num {
   display: inline-grid; place-items: center; align-self: flex-start; min-width: 22px; height: 22px; padding: 0 4px;
@@ -1638,11 +1644,16 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   .cal-chip--more { display: none; }
   /* Solde du jour : la case est trop étroite pour la ligne du numéro, il passe
      dessous, en montant compact (« −1,2k », sans €). */
-  .cal__day { aspect-ratio: auto; min-height: 52px; }
+  .cal__day { aspect-ratio: auto; min-height: 66px; }
   .cal__top { flex-direction: column; gap: 0; max-width: 100%; }
   .cal__solde { max-width: 100%; font-size: 9px; letter-spacing: -0.02em; }
   .cal__solde-full { display: none; }
   .cal__solde-short { display: inline; }
+  /* Cumul sous le solde : la case s'agrandit (jours avec activité) ; on serre
+     les lignes du solde et du cumul pour rester proche de la hauteur habituelle. */
+  .cal__day:has(.cal__below) .cal__solde { line-height: 1.1; }
+  .cal__below { align-self: center; margin-top: 1px; }
+  .cal__chips { padding-bottom: 2px; }
   .cal-nav { gap: 2px; }
 }
 
