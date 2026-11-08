@@ -1289,8 +1289,13 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .cal-chip__amount { flex: none; font-weight: 650; font-variant-numeric: tabular-nums; }
 .cal-chip--more { border-left-color: transparent; background: none; color: var(--muted); font-weight: 650; }
 
-.cal-day { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--grid); }
-.cal-day__list { list-style: none; margin: 10px 0 0; padding: 0; }
+/* Détail du jour : la case agrandie en pop-up (animation de zoom dans suivi.js). */
+.cal-zoom {
+  max-width: 440px; max-height: calc(100vh / var(--zoom) - 40px); display: flex; flex-direction: column;
+  background: var(--surface); border-color: var(--accent); transform-origin: top left; will-change: transform;
+}
+/* Marge à droite : la barre de défilement reste à l'écart des montants. */
+.cal-day__list { list-style: none; margin: 10px -12px 0 0; padding: 0 12px 0 0; overflow-y: auto; min-height: 0; }
 .cal-ev { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 14px; }
 .cal-ev:last-child { border-bottom: 0; }
 .cal-ev__name { min-width: 0; overflow-wrap: anywhere; }

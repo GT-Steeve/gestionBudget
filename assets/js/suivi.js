@@ -10,13 +10,16 @@
      n'en font qu'une, avec leur total) et, sur la ligne du numéro, le cumul
      du jour (revenus − charges − dépenses), masqué s'il est nul ; le solde
      passe alors sur la ligne en dessous.
+   Toucher un jour avec activité agrandit sa case en pop-up (effet de zoom
+   depuis la case) avec le détail : évènements, total (dès deux évènements)
+   et solde du jour.
    Un filtre (cases à cocher) choisit les évènements affichés ; il est
    mémorisé dans ce navigateur. Page en lecture seule : rien n'est enregistré.
    ========================================================================== */
 'use strict';
 
 (() => {
-  const { $, h, eur2, capitalize, MOBILE_QUERY } = UI;
+  const { $, h, eur2, capitalize, openModal } = UI;
   const STORAGE_KEY = Profiles.dataKey();
   // Types décochés (et non cochés) : un type ajouté plus tard au filtre s'affiche par défaut.
   const FILTER_KEY = 'gestion-budget-suivi-masques';
@@ -137,9 +140,19 @@
     $('#suiviSolde').textContent = fmtBalance(solde);
   }
 
-  function renderDay(byDay, balances, showSolde) {
+  function renderDay(byDay, allByDay, balances, showSolde) {
     const list = byDay[selected] || [];
     const total = balances[selected];
+    // Total du jour (revenus − charges − dépenses) : seulement à partir de deux évènements.
+    const dayEvents = allByDay[selected] || [];
+    const cum = daySum(dayEvents);
+    const sign = cum > 0.004 ? '+' : cum < -0.004 ? '−' : '';
+    const cumulRow = dayEvents.length > 1
+      ? [h('li', { class: 'cal-ev cal-ev--solde' },
+        h('span', { class: 'sw', 'aria-hidden': 'true' }),
+        h('span', { class: 'cal-ev__name' }, 'Total'),
+        h('span', { class: `cal-ev__amount ${cum > 0.004 ? 'good' : ''}` }, `${sign}${eur2.format(Math.abs(cum))}`))]
+      : [];
     const trend = upClass(total, balances[selected - 1]);
     const soldeRow = showSolde
       ? [h('li', { class: 'cal-ev cal-ev--solde' },
@@ -152,8 +165,8 @@
       ? list.map((ev) => h('li', { class: `cal-ev cal-ev--${ev.type}` },
         h('span', { class: 'sw', 'aria-hidden': 'true' }),
         h('span', { class: 'cal-ev__name' }, ev.nom, h('span', { class: 'cal-ev__cat' }, `${TYPES[ev.type].label} · ${ev.categorie}`)),
-        h('span', { class: 'cal-ev__amount' }, signed(ev)))).concat(soldeRow)
-      : [h('li', { class: 'cal-day__empty' }, 'Aucun évènement ce jour-là.'), ...soldeRow]));
+        h('span', { class: 'cal-ev__amount' }, signed(ev)))).concat(cumulRow, soldeRow)
+      : [h('li', { class: 'cal-day__empty' }, 'Aucun évènement affiché ce jour-là.'), ...cumulRow, ...soldeRow]));
   }
 
   /** Solde en fin de journée dans la case : complet en bureau, court sur mobile.
@@ -211,7 +224,7 @@
         type: 'button', class: 'cal__day', 'data-day': d, 'aria-label': label,
         'aria-pressed': String(d === selected), tabindex: d === selected ? '0' : '-1',
         'aria-current': isThisMonth && d === today.getDate() ? 'date' : null,
-        onclick: () => select(d, false), onkeydown: onKey
+        onclick: () => { select(d, false); if (hasActivity(d)) openZoom(d); }, onkeydown: onKey
       }, h('span', { class: 'cal__top' },
         h('span', { class: 'cal__num' }, String(d)),
         cumul || (soldeShown ? daySolde(balances[d], balances[d - 1]) : null)),
@@ -221,16 +234,90 @@
     }
     $('#calGrid').replaceChildren(...cells);
     renderTotals();
-    renderDay(byDay, balances, showSolde);
+    renderDay(byDay, allByDay, balances, showSolde);
+    hasActivity = (d) => !!(allByDay[d] || []).length;
     if (focus) $(`#calGrid [data-day="${selected}"]`)?.focus();
   }
 
   function select(day, focus) {
     selected = day;
     render({ focus });
-    // Sur mobile, le détail du jour est sous le calendrier : on l'amène à l'écran.
-    if (!focus && MOBILE_QUERY.matches) $('#calDay').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
+
+  /* ---------- Zoom : détail du jour en pop-up ---------- */
+
+  let hasActivity = () => false;
+  const zoomOverlay = $('#calZoomOverlay');
+  const zoomBox = $('.cal-zoom', zoomOverlay);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const ZOOM_MS = 260;
+  let closeZoomNow = null;
+  let zoomAnim = null;
+
+  /** Transformation qui ramène la pop-up (à sa place finale) sur la case du jour. */
+  function fromCell(day) {
+    const cell = $(`#calGrid [data-day="${day}"]`)?.getBoundingClientRect();
+    const box = zoomBox.getBoundingClientRect();
+    if (!cell || !box.width) return null;
+    return `translate(${cell.left - box.left}px, ${cell.top - box.top}px) scale(${cell.width / box.width}, ${cell.height / box.height})`;
+  }
+
+  /** Anime la pop-up et le fond, de la case vers le centre (ou l'inverse). */
+  function animateZoom(day, reverse) {
+    const from = reduceMotion.matches ? null : fromCell(day);
+    if (!from || !zoomBox.animate) return Promise.resolve();
+    zoomAnim?.cancel();
+    const opts = { duration: ZOOM_MS, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)', direction: reverse ? 'reverse' : 'normal', fill: 'both' };
+    const backdrop = zoomOverlay.animate([{ backgroundColor: 'rgba(0, 0, 0, 0)' }, { backgroundColor: 'rgba(0, 0, 0, 0.45)' }], opts);
+    const anim = zoomAnim = zoomBox.animate([
+      { transform: from, opacity: 0.4, borderRadius: '10px' },
+      { transform: 'none', opacity: 1, borderRadius: '14px' }
+    ], opts);
+    // Sécurité : si l'animation ne progresse pas (onglet en arrière-plan…), on n'attend pas plus que sa durée.
+    const timeout = new Promise((resolve) => { setTimeout(resolve, ZOOM_MS + 60); });
+    return Promise.race([anim.finished.catch(() => {}), timeout]).then(() => {
+      // Animation bloquée : on saute à son état final (jamais de pop-up figée en miniature).
+      [anim, backdrop].forEach((a) => { if (a.playState === 'running') a.finish(); });
+    });
+  }
+
+  function openZoom(day) {
+    if (closeZoomNow) return;
+    closeZoomNow = openModal(zoomOverlay, {
+      focus: '#calZoomClose',
+      onClose: () => {
+        closeZoomNow = null;
+        zoomOverlay.getAnimations().forEach((a) => a.cancel());
+        zoomAnim?.cancel();
+        $(`#calGrid [data-day="${selected}"]`)?.focus();
+      }
+    });
+    animateZoom(day, false);
+  }
+
+  /** Fermeture animée : la pop-up se rétracte dans sa case, puis disparaît. */
+  let closing = false;
+  async function closeZoom() {
+    if (!closeZoomNow || closing) return;
+    closing = true;
+    await animateZoom(selected, true);
+    closing = false;
+    closeZoomNow?.();
+  }
+
+  $('#calZoomClose').addEventListener('click', closeZoom);
+  // Fond et Échap : on passe avant la gestion commune des pop-ups (ui.js) pour animer la fermeture.
+  zoomOverlay.addEventListener('click', (e) => {
+    if (e.target !== zoomOverlay) return;
+    e.stopImmediatePropagation();
+    closeZoom();
+  }, true);
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !closeZoomNow) return;
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    closeZoom();
+  }, true);
 
   function shiftMonth(delta, day = 1) {
     const d = new Date(year, month + delta, 1);

@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.177">
-  <script src="../assets/js/loader.js?v=1.01.177"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.181">
+  <script src="../assets/js/loader.js?v=1.01.181"></script>
 </head>
 <body>
 
@@ -88,7 +88,7 @@
     <div class="card__head">
       <h2 id="h-suivi">Suivi de votre budget</h2>
     </div>
-    <p class="lead lead--full">Cochez les éléments à afficher sur le calendrier : revenus, charges, dépenses et solde du jour.</p>
+    <p class="lead lead--full">Cochez les éléments à afficher sur le calendrier : revenus, charges, dépenses et solde du jour. Touchez un jour pour en voir le détail.</p>
 
     <div class="cal-tools">
       <div class="cal-nav">
@@ -122,11 +122,6 @@
       </div>
       <ol class="cal__grid" id="calGrid" aria-labelledby="calTitle"></ol>
     </div>
-
-    <div class="cal-day" id="calDay" aria-live="polite">
-      <h3 class="h3" id="calDayTitle"></h3>
-      <ul class="cal-day__list" id="calDayList"></ul>
-    </div>
   </section>
 
   <p class="back-link"><a href="../index.html">← Retour au tableau de bord</a></p>
@@ -137,10 +132,23 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
 
-<script src="../assets/js/profiles.js?v=1.01.177"></script>
-<script src="../assets/js/ui.js?v=1.01.177"></script>
-<script src="../assets/js/nav.js?v=1.01.177"></script>
-<script src="../assets/js/state.js?v=1.01.177"></script>
-<script src="../assets/js/suivi.js?v=1.01.177"></script>
+<!-- Détail d'un jour : la case s'agrandit en pop-up (suivi.js) -->
+<div id="calZoomOverlay" class="modal-overlay cal-zoom-overlay" hidden>
+  <div class="modal cal-zoom" role="dialog" aria-modal="true" aria-labelledby="calDayTitle">
+    <div class="wizard__head">
+      <p class="modal__title" id="calDayTitle"></p>
+      <button type="button" id="calZoomClose" class="icon-btn wizard__close" aria-label="Fermer le détail du jour">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <ul class="cal-day__list" id="calDayList"></ul>
+  </div>
+</div>
+
+<script src="../assets/js/profiles.js?v=1.01.181"></script>
+<script src="../assets/js/ui.js?v=1.01.181"></script>
+<script src="../assets/js/nav.js?v=1.01.181"></script>
+<script src="../assets/js/state.js?v=1.01.181"></script>
+<script src="../assets/js/suivi.js?v=1.01.181"></script>
 </body>
 </html>
