@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.42.0...v1.42.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **suivi:** cases du calendrier avec cumul du jour et pastilles par type ([27093cf](https://github.com/GT-Steeve/gestionBudget/commit/27093cf8156bc3a7e406002f3b0180a7a4407e08))
+
 # [1.42.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.41.0...v1.42.0) (2026-11-04)
 
 
