@@ -1031,6 +1031,35 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .wizard__step--center .input-with-btn { width: calc(9ch + 118px); }
 .wizard__step--center .wizard__extra { width: auto; }
 
+/* Wizard Dépense : question posée par des cartes à choisir (besoin général
+   ou précis, produit acheté seul ou avec d'autres), liste des produits déjà
+   suivis à sélectionner, et champs empilés sur l'étape Prix. */
+.wizard__question { font-size: 13px; color: var(--ink-2); margin: 0; }
+.choices--stack { grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
+.choices--duo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.choice--compact { padding: 10px 12px; align-items: center; text-align: center; }
+.wizard__field { margin-top: 14px; }
+.wizard__field[hidden], .produit-picks[hidden], #depProduitSection[hidden] { display: none; }
+.produit-picks { margin-top: 16px; }
+.produit-picks__title { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+/* Produits connus : même grille de boutons que « Choisir la catégorie »,
+   en plus court (la pop-up garde le champ et les boutons visibles). */
+.produit-picks__list.cat-picker { margin-top: 0; max-height: 196px; padding: 1px; }
+.produit-picks__list .cat-picker__opt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#depProduitBreakdown .bd__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Répartition par produit : nom cliquable pour renommer le produit. */
+#depProduitBreakdown { grid-template-columns: minmax(110px, 42%) 1fr auto auto; }
+.bd__name--edit {
+  display: flex; align-items: center; gap: 6px; padding: 0; font: inherit; font-size: 14px; text-align: left;
+  background: none; border: 0; cursor: pointer; color: var(--ink-2);
+}
+.bd__name--edit:hover { color: var(--ink); }
+.bd__name--edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.bd__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd__pen { flex: none; color: var(--muted); }
+.bd__name--edit:hover .bd__pen { color: var(--accent); }
+.bd__input { min-width: 0; width: 100%; height: 30px; padding: 0 8px; font-size: 14px; }
+
 /* Liste scrollable générique pour le contenu d'une modale qui grandit avec les
    données (Historique des dépenses, paramétrage CashBack…). */
 /* padding-right : laisse la place à la barre de défilement native du
@@ -1547,8 +1576,22 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   /* Mobile : Épargne sur toute la ligne, bouton économies dessous. */
   #yieldForm .yield-line > label, #yieldForm .yield-line > .btn-with-info { flex: 1 1 100%; }
   #yieldForm .yield-line .input-with-btn { flex: 1 1 auto; width: auto; }
+  /* Mobile : le pourcentage s'affiche au centre de la barre (épaissie pour
+     le contenir) au lieu d'une ligne à part. Chaque ligne devient une
+     sous-grille pour superposer les deux dans la même cellule, tout en
+     gardant les colonnes alignées d'une ligne à l'autre. */
   .breakdown { grid-template-columns: 90px 1fr auto; }
-  .bd__pct { grid-column: 1 / -1; font-size: 12px; margin-top: -6px; }
+  #depProduitBreakdown { grid-template-columns: minmax(90px, 42%) 1fr auto; }
+  .bd { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; }
+  .bd__track { grid-column: 2; grid-row: 1; height: 18px; border-radius: 9px; }
+  .bd__bar { border-radius: 0 9px 9px 0; }
+  .bd__pct {
+    grid-column: 2; grid-row: 1; justify-self: center; min-width: 0;
+    font-size: 11px; font-weight: 650; line-height: 16px; color: var(--ink);
+    /* Léger halo (pas de cadre) : lisible sur la partie colorée comme sur le fond. */
+    text-shadow: 0 0 3px var(--surface), 0 0 2px var(--surface);
+  }
+  .bd__amt { grid-column: 3; grid-row: 1; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
   .tile { padding: 12px 14px; }
   .back-link { text-align: center; }

@@ -290,6 +290,7 @@
         list.replaceChildren(...[
           ['Libellé', item.nom],
           ['Catégorie', item.categorie],
+          ...(item.produit ? [['Produit suivi', `${item.produit} · ${eur2.format(item.produitPrix || 0)}`]] : []),
           [monthly ? 'Mensuel' : 'Montant', `${eur2.format(item[key])}${suffix}`],
           ...computed(item[key])
         ].flatMap(row));
@@ -481,26 +482,67 @@
 
   /** Répartition par catégorie (barres proportionnelles + montant + part du total). */
   function renderBreakdown(box, cats, items, amountOf, total, emptyMsg) {
-    box.replaceChildren();
-    const byCat = cats
-      .map((cat) => ({ cat, total: items.filter((x) => x.categorie === cat).reduce((a, x) => a + amountOf(x), 0) }))
-      .filter((x) => x.total > 0)
-      .sort((a, b) => b.total - a.total);
+    renderShareBars(box, cats.map((cat) => ({
+      label: cat, total: items.filter((x) => x.categorie === cat).reduce((a, x) => a + amountOf(x), 0)
+    })), total, emptyMsg);
+  }
 
-    if (!byCat.length) {
+  /** Barres de répartition (libellé, barre, montant, part du total), de la
+      plus grosse à la plus petite ; les lignes à 0 sont ignorées. Une ligne
+      avec rename (nom actuel + callback) affiche un libellé cliquable qui se
+      change en champ pour la renommer (Entrée ou clic ailleurs : valider,
+      Échap : annuler). */
+  function renderShareBars(box, rows, total, emptyMsg) {
+    box.replaceChildren();
+    const sorted = rows.filter((x) => x.total > 0).sort((a, b) => b.total - a.total);
+
+    if (!sorted.length) {
       box.append(h('p', { class: 'note' }, emptyMsg));
       return;
     }
-    const max = byCat[0].total;
-    for (const { cat, total: catTotal } of byCat) {
+    const max = sorted[0].total;
+    for (const { label, title, total: rowTotal, rename } of sorted) {
       box.append(h('div', { class: 'bd' },
-        h('span', { class: 'bd__name' }, cat),
+        rename ? renameLabel(label, rename) : h('span', { class: 'bd__name', title: title || label }, label),
         h('div', { class: 'bd__track', role: 'presentation' },
-          h('div', { class: 'bd__bar', style: `width:${(catTotal / max) * 100}%` })),
-        h('span', { class: 'bd__amt' }, eur2.format(catTotal)),
-        h('span', { class: 'bd__pct' }, pct1.format(catTotal / total))
+          h('div', { class: 'bd__bar', style: `width:${(rowTotal / max) * 100}%` })),
+        h('span', { class: 'bd__amt' }, eur2.format(rowTotal)),
+        h('span', { class: 'bd__pct' }, total > 0 ? pct1.format(rowTotal / total) : '')
       ));
     }
+  }
+
+  /** Libellé de barre renommable : bouton (avec un crayon) qui laisse place à
+      un champ texte prérempli. */
+  function renameLabel(label, { value, onRename }) {
+    const btn = h('button', {
+      type: 'button', class: 'bd__name bd__name--edit', title: `Renommer « ${value} »`,
+      'aria-label': `Renommer ${value}`
+    }, h('span', { class: 'bd__label' }, label));
+    btn.insertAdjacentHTML('beforeend', '<svg class="bd__pen" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5L11 2.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>');
+    btn.addEventListener('click', () => {
+      const input = h('input', {
+        type: 'text', class: 'cell bd__input', maxlength: 60, 'aria-label': `Nouveau nom de ${value}`
+      });
+      input.value = value;
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        const next = input.value.trim();
+        if (ok && next && next !== value) onRename(next);
+        else input.replaceWith(btn);
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+        if (e.key === 'Escape') { e.preventDefault(); finish(false); btn.focus(); }
+      });
+      input.addEventListener('blur', () => finish(true));
+      btn.replaceWith(input);
+      input.focus();
+      input.select();
+    });
+    return btn;
   }
 
   function renderRevenusTotals() {
@@ -609,6 +651,7 @@
         state.appliquees = [];
         state.depenses = [];
         state.depensesHistorique = [];
+        state.produits = [];
         renderLines('revenus');
         renderLines('charges');
         renderDepenses();
@@ -725,34 +768,168 @@
 
     renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
       'Ajoutez des dépenses pour voir leur répartition.');
+
+    // Besoins précis du mois : prix seul de chaque produit suivi (cumulé s'il
+    // a été racheté), en part des dépenses du mois.
+    const section = $('#depProduitSection');
+    if (section) {
+      const byProduit = new Map();
+      for (const d of state.depenses) {
+        if (!d.produit) continue;
+        const key = produitKey(d.produit);
+        const row = byProduit.get(key) || { nom: d.produit, total: 0, fois: 0 };
+        row.total += d.produitPrix || 0;
+        row.fois += 1;
+        byProduit.set(key, row);
+      }
+      section.hidden = !byProduit.size;
+      renderShareBars($('#depProduitBreakdown'), [...byProduit.values()].map((r) => ({
+        label: r.fois > 1 ? `${r.nom} (×${r.fois})` : r.nom,
+        total: r.total,
+        rename: { value: r.nom, onRename: (nom) => { renameProduit(r.nom, nom); renderDepenses(); refresh(); } }
+      })), total, '');
+    }
   }
 
+  /* ---------- Produits suivis (besoins précis et répétés) ---------- */
+
+  const produitKey = (nom) => nom.trim().toLocaleLowerCase('fr');
+  /** Produit du catalogue portant ce nom (casse ignorée), sinon undefined. */
+  const findProduit = (nom) => state.produits.find((p) => produitKey(p.nom) === produitKey(nom));
+
+  /** Renomme un produit suivi partout : catalogue, achats du mois et de
+      l'historique, et leur libellé s'il reprenait le nom du produit. Si le
+      nouveau nom est déjà celui d'un autre produit, les deux sont fusionnés. */
+  function renameProduit(ancien, nouveau) {
+    const nom = nouveau.trim().slice(0, 60);
+    const oldKey = produitKey(ancien);
+    if (!nom) return;
+    const existing = findProduit(nom);
+    if (existing && produitKey(existing.nom) !== oldKey) {
+      state.produits = state.produits.filter((p) => produitKey(p.nom) !== oldKey);
+    } else {
+      const p = findProduit(ancien);
+      if (p) p.nom = nom;
+    }
+    const finalNom = (existing && produitKey(existing.nom) !== oldKey) ? existing.nom : nom;
+    const relabel = (d) => {
+      if (!d.produit || produitKey(d.produit) !== oldKey) return;
+      const ancienNom = d.produit;
+      d.produit = finalNom;
+      if (d.nom === ancienNom) d.nom = finalNom;
+      else if (d.nom === `${ancienNom} + autres articles`) d.nom = `${finalNom} + autres articles`.slice(0, 60);
+    };
+    state.depenses.forEach(relabel);
+    state.depensesHistorique.forEach((m) => m.items.forEach(relabel));
+  }
   function bindDepenses() {
     bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
-    bindAddWizard({
+    const form = $('#depenseForm');
+    // Étapes de la pop-up (même ordre que cfg.steps ci-dessous).
+    const STEP = { type: 0, cat: 1, montant: 2, nom: 3, produit: 4, prix: 5, avantages: 6 };
+    const isPrecis = () => $('input[name="dType"]:checked')?.value === 'precis';
+    const avecAutres = () => $('input[name="dAvec"]:checked')?.value === 'avec';
+    const produitNom = () => ($('#dProduit')?.value || '').trim();
+    let wizard = null;
+
+    /** Liste des produits déjà suivis, filtrée par la saisie : un clic remplit
+        le champ et passe à l'étape suivante. */
+    const renderProduitPicks = () => {
+      const box = $('#dProduitsBox');
+      const list = $('#dProduitsList');
+      if (!box || !list) return;
+      const query = produitKey(produitNom());
+      const matches = sortAlpha(state.produits.map((p) => p.nom))
+        .filter((nom) => !query || produitKey(nom).includes(query));
+      box.hidden = !matches.length;
+      // Mêmes boutons que « Choisir la catégorie » (le produit saisi, s'il est
+      // connu, mis en avant).
+      const current = findProduit(produitNom());
+      list.replaceChildren(...matches.map((nom) => pickerOpt(nom, current?.nom === nom, () => {
+        $('#dProduit').value = nom;
+        wizard?.next();
+      }, { title: nom })));
+    };
+
+    /** Étape Prix : le champ « total de l'achat » n'apparaît que si le produit
+        a été acheté avec d'autres articles ; ce total couvre au moins son prix. */
+    const syncPrix = () => {
+      const avec = avecAutres();
+      const nom = produitNom();
+      $('#dTotalField').hidden = !avec;
+      $('#dPrixLabel').textContent = avec ? `Prix de « ${nom} » seul (€)` : `Combien avez-vous payé « ${nom} » ? (€)`;
+      const total = $('#dTotal');
+      total.setCustomValidity(avec && num(total.value) < num($('#dPrix').value)
+        ? 'Le total de l’achat doit être au moins égal au prix du produit.' : '');
+    };
+
+    wizard = bindAddWizard({
       openBtn: '#btnOpenDepenseWizard', overlay: '#depenseWizardOverlay', form: '#depenseForm',
       closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
       nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
-      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
-      fields: ['#dCatBtn', '#dMontant', '#dNom', null]
+      steps: ['[data-step="type"]', '[data-step="cat"]', '[data-step="montant"]', '[data-step="nom"]',
+        '[data-step="produit"]', '[data-step="prix"]', '[data-step="avantages"]'],
+      fields: ['input[name="dType"]:checked', '#dCatBtn', '#dMontant', '#dNom',
+        '#dProduit', ['#dPrix', '#dTotal'], null],
+      // Besoin général : catégorie, montant, libellé. Besoin précis : produit,
+      // sa catégorie seulement s'il est nouveau, puis son prix.
+      flow: () => (isPrecis()
+        ? [STEP.type, STEP.produit, ...(findProduit(produitNom()) ? [] : [STEP.cat]), STEP.prix, STEP.avantages]
+        : [STEP.type, STEP.cat, STEP.montant, STEP.nom, STEP.avantages]),
+      onOpen: () => {
+        $('input[name="dType"][value="general"]').checked = true;
+        $('input[name="dAvec"][value="seul"]').checked = true;
+        for (const sel of ['#dProduit', '#dPrix', '#dTotal']) $(sel).value = '';
+      },
+      onStep: (i) => {
+        if (i === STEP.cat) {
+          $('#dCatQuestion').textContent = isPrecis()
+            ? `Dans quelle catégorie ranger « ${produitNom()} » ?` : 'Dans quelle catégorie ?';
+        }
+        if (i === STEP.produit) renderProduitPicks();
+        if (i === STEP.prix) syncPrix();
+      }
     });
     bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
-    const form = $('#depenseForm');
     if (form) {
+      $('#dProduit').addEventListener('input', renderProduitPicks);
+      for (const radio of form.querySelectorAll('input[name="dAvec"]')) radio.addEventListener('change', syncPrix);
+      $('#dPrix').addEventListener('input', syncPrix);
+      $('#dTotal').addEventListener('input', syncPrix);
+
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const nom = $('#dNom').value.trim();
-        if (!nom) return;
-        state.depenses.push({
-          id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value),
+        const avantages = {
           cashbackOn: $('#dCashbackOn').checked, roundUpOn: $('#dRoundUpOn').checked,
           ajout: new Date().toISOString()
-        });
-        $('#dNom').value = '';
-        $('#dMontant').value = '';
+        };
+        if (isPrecis()) {
+          const nom = produitNom().slice(0, 60);
+          if (!nom) return;
+          // Nouveau produit : ajouté au catalogue avec la catégorie choisie,
+          // pour le resélectionner la prochaine fois sans le retaper.
+          let produit = findProduit(nom);
+          if (!produit) {
+            produit = { nom, categorie: $('#dCat').value };
+            state.produits.push(produit);
+          }
+          const prix = num($('#dPrix').value);
+          const avec = avecAutres();
+          state.depenses.push({
+            id: uid(), categorie: produit.categorie,
+            nom: (avec ? `${produit.nom} + autres articles` : produit.nom).slice(0, 60),
+            montant: avec ? Math.max(num($('#dTotal').value), prix) : prix,
+            ...avantages, produit: produit.nom, produitPrix: prix
+          });
+        } else {
+          const nom = $('#dNom').value.trim();
+          if (!nom) return;
+          state.depenses.push({ id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value), ...avantages });
+          $('#dNom').value = '';
+          $('#dMontant').value = '';
+        }
         $('#dCashbackOn').checked = true;
         $('#dRoundUpOn').checked = true;
-        $('#dNom').focus();
         renderDepenses();
         refresh();
       });

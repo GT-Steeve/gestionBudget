@@ -340,7 +340,10 @@
 
   /** Pop-up d'ajout guidé, un champ à la fois (Retour/Suivant), plus
       pratique qu'une ligne de formulaire à plusieurs champs côte à côte au
-      clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape. */
+      clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape (un
+      sélecteur, une liste de sélecteurs ou null). Options : cfg.flow()
+      renvoie les indices des étapes à parcourir selon les choix déjà faits,
+      cfg.onOpen() remet la pop-up à zéro, cfg.onStep(i) prépare l'étape i. */
   function bindAddWizard(cfg) {
     const overlay = $(cfg.overlay);
     const openBtn = $(cfg.openBtn);
@@ -355,45 +358,58 @@
     // Étapes cherchées dans la pop-up, ou dans cfg.stepsRoot si elles n'y sont
     // pas toujours (formulaire Sauvegarder, déplacé selon la largeur d'écran).
     const steps = cfg.steps.map((sel) => $(sel, cfg.stepsRoot || overlay));
-    const total = steps.length;
-    let current = 0;
+    // Parcours : toutes les étapes dans l'ordre, ou celles que renvoie
+    // cfg.flow() (indices dans cfg.steps), relu à chaque étape pour suivre
+    // les choix déjà faits (embranchements).
+    const order = () => (cfg.flow ? cfg.flow() : steps.map((_, i) => i));
+    // Champ(s) à valider avant de passer l'étape i (sélecteur ou liste), le
+    // premier recevant le focus ; un champ masqué dans l'étape est ignoré.
+    const visible = (el) => { const hid = el.closest('[hidden]'); return !hid || hid === overlay; };
+    const fieldsOf = (i) => [].concat(cfg.fields[i] || []).map((sel) => $(sel)).filter((el) => el && visible(el));
+    let pos = 0;
 
-    const showStep = (i) => {
-      current = i;
+    const showStep = (p) => {
+      const seq = order();
+      pos = Math.max(0, Math.min(p, seq.length - 1));
+      const i = seq[pos];
+      const last = pos === seq.length - 1;
       steps.forEach((el, idx) => { el.hidden = idx !== i; });
-      backBtn.hidden = i === 0;
-      nextBtn.hidden = i === total - 1;
-      finishBtn.hidden = i !== total - 1;
-      if (stepLabel) stepLabel.textContent = `Étape ${i + 1} / ${total}`;
-      $(cfg.fields[i])?.focus();
+      backBtn.hidden = pos === 0;
+      nextBtn.hidden = last;
+      finishBtn.hidden = !last;
+      if (stepLabel) stepLabel.textContent = `Étape ${pos + 1} / ${seq.length}`;
+      cfg.onStep?.(i);
+      fieldsOf(i)[0]?.focus();
     };
 
     const close = () => closeModal(overlay);
     const open = () => {
+      cfg.onOpen?.();
       showStep(0);
       openModal(overlay);
     };
+    const current = () => order()[pos];
     const goNext = () => {
-      const field = $(cfg.fields[current]);
-      if (field && !field.reportValidity()) return;
-      showStep(Math.min(current + 1, total - 1));
+      if (!fieldsOf(current()).every((el) => el.reportValidity())) return;
+      showStep(pos + 1);
     };
 
     openBtn.addEventListener('click', open);
     closeBtn.addEventListener('click', close);
     nextBtn.addEventListener('click', goNext);
-    backBtn.addEventListener('click', () => showStep(Math.max(current - 1, 0)));
+    backBtn.addEventListener('click', () => showStep(pos - 1));
     // Entrée dans un champ texte/nombre = Suivant (ou Terminer sur la
     // dernière étape), comme la touche "suivant" d'un clavier mobile.
     form.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
       e.preventDefault();
-      (current === total - 1 ? finishBtn : nextBtn).click();
+      (pos === order().length - 1 ? finishBtn : nextBtn).click();
     });
     // La validation du formulaire (bindForm) gère déjà preventDefault + ajout
     // + reset ; ce listener, ajouté après, ferme juste la pop-up une fois
     // l'ajout effectué.
     form.addEventListener('submit', close);
+    return { next: goNext, show: showStep };
   }
 
   /** Déplace un bouton d'ajout entre deux emplacements selon la largeur

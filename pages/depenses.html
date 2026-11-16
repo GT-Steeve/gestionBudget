@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.183">
-  <script src="../assets/js/loader.js?v=1.01.183"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.190">
+  <script src="../assets/js/loader.js?v=1.01.190"></script>
 </head>
 <body data-app="true">
 
@@ -166,6 +166,12 @@
       <div>
         <h3 class="h3">Répartition par catégorie</h3>
         <div id="depBreakdown" class="breakdown"></div>
+        <!-- Affiché dès qu'un achat de « besoin précis » a été noté ce mois :
+             ce que chaque produit suivi a coûté (son prix seul). -->
+        <div id="depProduitSection" hidden>
+          <h3 class="h3 h3--gap">Répartition par produit</h3>
+          <div id="depProduitBreakdown" class="breakdown"></div>
+        </div>
       </div>
       <div class="actions">
         <button id="btnClearDepenses" class="btn btn--ghost" type="button">Tout effacer</button>
@@ -237,7 +243,11 @@
 
 <!-- Ajout d'une dépense, guidé étape par étape (un champ à la fois) : plus
      pratique à remplir au clavier mobile qu'une ligne avec plusieurs champs
-     côte à côte. -->
+     côte à côte. Deux parcours selon la première réponse :
+     - besoin général : catégorie, montant, libellé ;
+     - besoin précis et répété : produit (à choisir parmi ceux déjà suivis ou
+       à nommer), sa catégorie s'il est nouveau, puis son prix, avec le total
+       de l'achat s'il a été acheté avec d'autres articles. -->
 <div id="depenseWizardOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="depenseWizardTitle">
     <div class="wizard__head">
@@ -246,25 +256,70 @@
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
     </div>
-    <form id="depenseForm" autocomplete="off">
-      <div class="wizard__step" data-step="1">
-        <label for="dCatBtn">Désignez la catégorie
+    <!-- novalidate : chaque étape est vérifiée en passant à la suivante ;
+         les champs de l'autre parcours, vides, ne bloquent pas l'ajout. -->
+    <form id="depenseForm" autocomplete="off" novalidate>
+      <div class="wizard__step" data-step="type">
+        <p id="dTypeQuestion" class="wizard__question">De quoi s'agit-il ?</p>
+        <div class="choices choices--stack" role="radiogroup" aria-labelledby="dTypeQuestion">
+          <label class="choice">
+            <input type="radio" name="dType" value="general" checked>
+            <span class="choice__label">Un besoin général</span>
+            <span class="choice__sub">Courses, sortie, plein d'essence… rangé dans une catégorie.</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="dType" value="precis">
+            <span class="choice__label">Un besoin précis et répété</span>
+            <span class="choice__sub">Un produit que vous rachetez souvent, pour suivre ce qu'il vous coûte.</span>
+          </label>
+        </div>
+      </div>
+      <div class="wizard__step" data-step="cat" hidden>
+        <label for="dCatBtn"><span id="dCatQuestion">Dans quelle catégorie ?</span>
           <button type="button" id="dCatBtn" class="select-btn"></button>
         </label>
         <input type="hidden" id="dCat">
       </div>
-      <div class="wizard__step" data-step="2" hidden>
-        <label for="dMontant">Montant (€)
+      <div class="wizard__step" data-step="montant" hidden>
+        <label for="dMontant">Combien avez-vous dépensé ? (€)
           <input id="dMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
         </label>
       </div>
-      <div class="wizard__step" data-step="3" hidden>
-        <label for="dNom">Quelle dépense ?
+      <div class="wizard__step" data-step="nom" hidden>
+        <label for="dNom">Pour quoi ?
           <input id="dNom" type="text" maxlength="60" placeholder="Ex. Restaurant japonais" required>
         </label>
       </div>
-      <div class="wizard__step" data-step="4" hidden>
-        <p class="h3">Inclure les avantages</p>
+      <div class="wizard__step" data-step="produit" hidden>
+        <label for="dProduit">Quel produit ?
+          <input id="dProduit" type="text" maxlength="60" placeholder="Ex. Lait demi-écrémé, croquettes" required>
+        </label>
+        <div id="dProduitsBox" class="produit-picks" hidden>
+          <p class="produit-picks__title">Produit connu</p>
+          <div id="dProduitsList" class="cat-picker produit-picks__list"></div>
+        </div>
+      </div>
+      <div class="wizard__step" data-step="prix" hidden>
+        <p id="dAvecQuestion" class="wizard__question">Acheté seul ou avec d'autres articles ?</p>
+        <div class="choices choices--duo" role="radiogroup" aria-labelledby="dAvecQuestion">
+          <label class="choice choice--compact">
+            <input type="radio" name="dAvec" value="seul" checked>
+            <span class="choice__label">Seul</span>
+          </label>
+          <label class="choice choice--compact">
+            <input type="radio" name="dAvec" value="avec">
+            <span class="choice__label">Avec d'autres</span>
+          </label>
+        </div>
+        <label for="dPrix" class="wizard__field"><span id="dPrixLabel">Combien l'avez-vous payé ? (€)</span>
+          <input id="dPrix" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+        </label>
+        <label for="dTotal" id="dTotalField" class="wizard__field" hidden>Montant total de l'achat (€)
+          <input id="dTotal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
+        </label>
+      </div>
+      <div class="wizard__step" data-step="avantages" hidden>
+        <p class="wizard__question">Compter cet achat dans vos avantages ?</p>
         <div class="cb-row">
           <span class="cb-row__name">CashBack</span>
           <label class="switch">
@@ -280,7 +335,7 @@
           </label>
         </div>
       </div>
-      <p id="depenseWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 4</p>
+      <p id="depenseWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 5</p>
       <div class="modal__actions">
         <button type="button" id="depenseWizardBack" class="btn btn--ghost" hidden>Retour</button>
         <button type="button" id="depenseWizardNext" class="btn">Suivant</button>
@@ -290,12 +345,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.183"></script>
-<script src="../assets/js/ui.js?v=1.01.183"></script>
-<script src="../assets/js/nav.js?v=1.01.183"></script>
-<script src="../assets/js/calc.js?v=1.01.183"></script>
-<script src="../assets/js/state.js?v=1.01.183"></script>
-<script src="../assets/js/guide.js?v=1.01.183"></script>
-<script src="../assets/js/script.js?v=1.01.183"></script>
+<script src="../assets/js/profiles.js?v=1.01.190"></script>
+<script src="../assets/js/ui.js?v=1.01.190"></script>
+<script src="../assets/js/nav.js?v=1.01.190"></script>
+<script src="../assets/js/calc.js?v=1.01.190"></script>
+<script src="../assets/js/state.js?v=1.01.190"></script>
+<script src="../assets/js/guide.js?v=1.01.190"></script>
+<script src="../assets/js/script.js?v=1.01.190"></script>
 </body>
 </html>

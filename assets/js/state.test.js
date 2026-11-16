@@ -131,3 +131,27 @@ describe('BudgetState.exampleState', () => {
     for (const sc of state.scenarios) expect(state.charges.some((c) => c.id === sc.chargeId)).toBe(true);
   });
 });
+
+describe('BudgetState.load — produits suivis', () => {
+  it('keeps the tracked product of an expense, capped at its amount', () => {
+    const state = BudgetState.load(saved({
+      depenses: [
+        { nom: 'Lait + autres articles', montant: 30, produit: ' Lait ', produitPrix: 1.2 },
+        { nom: 'Café', montant: 2, produit: 'Café', produitPrix: 5 },
+        { nom: 'Pain', montant: 1, produit: 42 }
+      ],
+      depensesHistorique: [{ mois: '2026-09', items: [{ nom: 'Lait', montant: 1.1, produit: 'Lait', produitPrix: 1.1 }] }]
+    }), NOW);
+    expect(state.depenses[0]).toMatchObject({ produit: 'Lait', produitPrix: 1.2, montant: 30 });
+    expect(state.depenses[1].produitPrix).toBe(2);
+    expect(state.depenses[2]).not.toHaveProperty('produit');
+    expect(state.depensesHistorique[0].items[0]).toMatchObject({ produit: 'Lait', produitPrix: 1.1 });
+  });
+
+  it('cleans the product catalogue and drops duplicates', () => {
+    const state = BudgetState.load(saved({
+      produits: [{ nom: 'Lait', categorie: 'Course' }, { nom: 'lait', categorie: 'Santé' }, { nom: '' }, null, { nom: 'Croquettes', categorie: 'Inconnue' }]
+    }), NOW);
+    expect(state.produits).toEqual([{ nom: 'Lait', categorie: 'Course' }, { nom: 'Croquettes', categorie: 'Autre' }]);
+  });
+});

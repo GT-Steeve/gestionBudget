@@ -91,6 +91,7 @@
           depense(2, 25, 'Cadeau', 'Fleurs', 25)
         ])
       ],
+      produits: [],
       depensesMoisCourant: monthKey(now),
       cashbackRate: 1,
       roundUpTo: 1,
@@ -121,9 +122,46 @@
     nouveau: num(x.nouveau)
   });
 
+  /** Dépense nettoyée (mois en cours ou historique). Un achat de « besoin
+      précis » garde le produit suivi et son prix seul (produitPrix), qui peut
+      être inférieur au montant si l'achat comprenait d'autres articles. */
+  const depense = (d, withAdvantages) => {
+    const out = {
+      id: String(d.id || uid()),
+      categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
+      nom: String(d.nom || 'Sans nom').slice(0, 60),
+      montant: num(d.montant)
+    };
+    if (withAdvantages) {
+      out.cashbackOn = d.cashbackOn !== false;
+      out.roundUpOn = d.roundUpOn !== false;
+    }
+    out.ajout = validDate(d.ajout);
+    const produit = typeof d.produit === 'string' ? d.produit.trim().slice(0, 60) : '';
+    if (produit) {
+      out.produit = produit;
+      out.produitPrix = Math.min(num(d.produitPrix), out.montant);
+    }
+    return out;
+  };
+
+  /** Catalogue des produits suivis (besoins précis), sans doublon de nom. */
+  const produits = (list) => {
+    const seen = new Set();
+    return records(list).map((p) => ({
+      nom: String(p.nom || '').trim().slice(0, 60),
+      categorie: DEP_CATEGORIES.includes(p.categorie) ? p.categorie : 'Autre'
+    })).filter((p) => {
+      const key = p.nom.toLocaleLowerCase('fr');
+      if (!p.nom || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 200);
+  };
+
   /** Budget vide (nouveau profil, première utilisation). */
   const emptyState = (now = new Date()) => ({
-    revenus: [], charges: [], depenses: [], depensesHistorique: [], depensesMoisCourant: monthKey(now),
+    revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], depensesMoisCourant: monthKey(now),
     cashbackRate: 1, roundUpTo: 1, scenarios: [], appliquees: [], view: 'mois',
     yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
   });
@@ -154,26 +192,13 @@
         mensuel: num(r.mensuel),
         ajout: validDate(r.ajout)
       })),
-      depenses: records(saved.depenses).map((d) => ({
-        id: String(d.id || uid()),
-        categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
-        nom: String(d.nom || 'Sans nom').slice(0, 60),
-        montant: num(d.montant),
-        cashbackOn: d.cashbackOn !== false,
-        roundUpOn: d.roundUpOn !== false,
-        ajout: validDate(d.ajout)
-      })),
+      depenses: records(saved.depenses).map((d) => depense(d, true)),
       depensesHistorique: records(saved.depensesHistorique).map((m) => ({
         mois: /^\d{4}-\d{2}$/.test(m.mois) ? m.mois : monthKey(now),
         total: num(m.total),
-        items: records(m.items).map((d) => ({
-          id: String(d.id || uid()),
-          categorie: DEP_CATEGORIES.includes(d.categorie) ? d.categorie : 'Autre',
-          nom: String(d.nom || 'Sans nom').slice(0, 60),
-          montant: num(d.montant),
-          ajout: validDate(d.ajout)
-        }))
+        items: records(m.items).map((d) => depense(d, false))
       })).slice(0, 12),
+      produits: produits(saved.produits),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(now),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,

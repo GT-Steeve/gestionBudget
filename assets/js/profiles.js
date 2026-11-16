@@ -30,7 +30,7 @@
   // Type JSON plutôt qu'un type inventé : mieux pris en charge au téléchargement
   // et dans les sélecteurs de fichiers mobiles (l'extension .gbudget reste).
   const PROFILE_MIME = 'application/json';
-  const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'depensesMoisCourant',
+  const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'produits', 'depensesMoisCourant',
     'scenarios', 'appliquees', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
   const MAX_ITEMS = 5000;
   // Avancement du guide (page Guide) : étape en cours, ou « fini » une fois le
@@ -98,7 +98,7 @@
     const data = payload.data;
     // Mêmes conditions que script.js (loadState) pour ne pas retomber sur l'exemple.
     if (!isObject(data) || !Array.isArray(data.charges) || !Array.isArray(data.scenarios) || !isObject(data.yield)) return null;
-    const lists = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'scenarios', 'appliquees'];
+    const lists = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'produits', 'scenarios', 'appliquees'];
     if (lists.some((k) => data[k] !== undefined && (!Array.isArray(data[k]) || data[k].length > MAX_ITEMS))) return null;
     return Object.fromEntries(STATE_KEYS.filter((k) => data[k] !== undefined).map((k) => [k, data[k]]));
   }
