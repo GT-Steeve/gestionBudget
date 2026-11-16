@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.44.0...v1.45.0) (2026-11-16)
+
+
+### Features
+
+* **depenses:** besoin précis et répété avec suivi de produit ([68d38bf](https://github.com/GT-Steeve/gestionBudget/commit/68d38bfc6ed2f5d39f698c89c6a6123affd02fd9))
+
 # [1.44.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.43.0...v1.44.0) (2026-11-08)
 
 
