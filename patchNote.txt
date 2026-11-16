@@ -60,6 +60,7 @@ v1.19.0 = rework exporter par sauvegarder
 v1.19.1 = polish case suivi
 v1.19.2 = ajout zoom case suivi
 v1.19.3 = nouvelle catégorie dépense + charge
+v1.20.0 = Track un produit précis dans nouvelle dépense
 
 ** Next idea **
 exporter / imprimer l'historique des dépenses via un calendrier + liste
