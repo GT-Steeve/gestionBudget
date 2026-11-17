@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.45.0...v1.46.0) (2026-11-17)
+
+
+### Features
+
+* **depenses:** bouton « Tracker un produit » séparé de « Nouvelle dépense » ([a73b995](https://github.com/GT-Steeve/gestionBudget/commit/a73b995bb15da91a87690cff2c81af00da09bff0))
+
 # [1.45.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.44.0...v1.45.0) (2026-11-16)
 
 
