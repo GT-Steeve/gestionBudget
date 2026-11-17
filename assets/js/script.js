@@ -826,10 +826,12 @@
     bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
     const form = $('#depenseForm');
     // Étapes de la pop-up (même ordre que cfg.steps ci-dessous).
-    const STEP = { type: 0, cat: 1, montant: 2, nom: 3, produit: 4, prix: 5, avantages: 6 };
-    const isPrecis = () => $('input[name="dType"]:checked')?.value === 'precis';
+    const STEP = { produit: 0, cat: 1, montant: 2, nom: 3, prix: 4, avantages: 5 };
     const avecAutres = () => $('input[name="dAvec"]:checked')?.value === 'avec';
     const produitNom = () => ($('#dProduit')?.value || '').trim();
+    // Besoin précis et répété : pop-up ouverte par « Tracker un produit ».
+    let precis = false;
+    const isPrecis = () => precis;
     let wizard = null;
 
     /** Liste des produits déjà suivis, filtrée par la saisie : un clic remplit
@@ -864,20 +866,20 @@
     };
 
     wizard = bindAddWizard({
-      openBtn: '#btnOpenDepenseWizard', overlay: '#depenseWizardOverlay', form: '#depenseForm',
+      openBtn: ['#btnOpenDepenseWizard', '#btnOpenProduitWizard'], overlay: '#depenseWizardOverlay', form: '#depenseForm',
       closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
       nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
-      steps: ['[data-step="type"]', '[data-step="cat"]', '[data-step="montant"]', '[data-step="nom"]',
-        '[data-step="produit"]', '[data-step="prix"]', '[data-step="avantages"]'],
-      fields: ['input[name="dType"]:checked', '#dCatBtn', '#dMontant', '#dNom',
-        '#dProduit', ['#dPrix', '#dTotal'], null],
-      // Besoin général : catégorie, montant, libellé. Besoin précis : produit,
-      // sa catégorie seulement s'il est nouveau, puis son prix.
+      steps: ['[data-step="produit"]', '[data-step="cat"]', '[data-step="montant"]', '[data-step="nom"]',
+        '[data-step="prix"]', '[data-step="avantages"]'],
+      fields: ['#dProduit', '#dCatBtn', '#dMontant', '#dNom', ['#dPrix', '#dTotal'], null],
+      // Tracker un produit : produit, sa catégorie seulement s'il est nouveau,
+      // puis son prix. Nouvelle dépense : catégorie, montant, libellé.
       flow: () => (isPrecis()
-        ? [STEP.type, STEP.produit, ...(findProduit(produitNom()) ? [] : [STEP.cat]), STEP.prix, STEP.avantages]
-        : [STEP.type, STEP.cat, STEP.montant, STEP.nom, STEP.avantages]),
-      onOpen: () => {
-        $('input[name="dType"][value="general"]').checked = true;
+        ? [STEP.produit, ...(findProduit(produitNom()) ? [] : [STEP.cat]), STEP.prix, STEP.avantages]
+        : [STEP.cat, STEP.montant, STEP.nom, STEP.avantages]),
+      onOpen: (btn) => {
+        precis = btn?.id === 'btnOpenProduitWizard';
+        $('#depenseWizardTitle').textContent = precis ? 'Tracker un produit' : 'Nouvelle dépense';
         $('input[name="dAvec"][value="seul"]').checked = true;
         for (const sel of ['#dProduit', '#dPrix', '#dTotal']) $(sel).value = '';
       },
@@ -890,7 +892,7 @@
         if (i === STEP.prix) syncPrix();
       }
     });
-    bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
+    bindResponsiveTrigger('#depenseAddBtns', '#addDepenseMobileSlot', '#depenses .card__head');
     if (form) {
       $('#dProduit').addEventListener('input', renderProduitPicks);
       for (const radio of form.querySelectorAll('input[name="dAvec"]')) radio.addEventListener('change', syncPrix);

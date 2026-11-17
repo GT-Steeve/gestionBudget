@@ -343,12 +343,13 @@
       clavier mobile. cfg.steps/cfg.fields : même ordre, un par étape (un
       sélecteur, une liste de sélecteurs ou null). Options : cfg.flow()
       renvoie les indices des étapes à parcourir selon les choix déjà faits,
-      cfg.onOpen() remet la pop-up à zéro, cfg.onStep(i) prépare l'étape i. */
+      cfg.onOpen(btn) remet la pop-up à zéro (btn : bouton qui l'a ouverte,
+      cfg.openBtn pouvant en lister plusieurs), cfg.onStep(i) prépare l'étape i. */
   function bindAddWizard(cfg) {
     const overlay = $(cfg.overlay);
-    const openBtn = $(cfg.openBtn);
+    const openBtns = [].concat(cfg.openBtn).map((sel) => $(sel)).filter(Boolean);
     const form = $(cfg.form);
-    if (!overlay || !openBtn || !form) return;
+    if (!overlay || !openBtns.length || !form) return;
 
     const closeBtn = $(cfg.closeBtn);
     const backBtn = $(cfg.backBtn);
@@ -383,8 +384,8 @@
     };
 
     const close = () => closeModal(overlay);
-    const open = () => {
-      cfg.onOpen?.();
+    const open = (e) => {
+      cfg.onOpen?.(e.currentTarget);
       showStep(0);
       openModal(overlay);
     };
@@ -394,7 +395,7 @@
       showStep(pos + 1);
     };
 
-    openBtn.addEventListener('click', open);
+    for (const btn of openBtns) btn.addEventListener('click', open);
     closeBtn.addEventListener('click', close);
     nextBtn.addEventListener('click', goNext);
     backBtn.addEventListener('click', () => showStep(pos - 1));

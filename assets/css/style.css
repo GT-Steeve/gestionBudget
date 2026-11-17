@@ -1031,11 +1031,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .wizard__step--center .input-with-btn { width: calc(9ch + 118px); }
 .wizard__step--center .wizard__extra { width: auto; }
 
-/* Wizard Dépense : question posée par des cartes à choisir (besoin général
-   ou précis, produit acheté seul ou avec d'autres), liste des produits déjà
-   suivis à sélectionner, et champs empilés sur l'étape Prix. */
+/* Wizard Dépense : produit à suivre (avec la liste des produits déjà suivis
+   à sélectionner), question posée par des cartes à choisir (produit acheté
+   seul ou avec d'autres) et champs empilés sur l'étape Prix. */
 .wizard__question { font-size: 13px; color: var(--ink-2); margin: 0; }
-.choices--stack { grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
 .choices--duo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
 .choice--compact { padding: 10px 12px; align-items: center; text-align: center; }
 .wizard__field { margin-top: 14px; }
@@ -1378,8 +1377,9 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   .nav-scroll-wrap { flex: 1 1 auto; min-height: 0; display: flex; overflow-y: auto; }
   .nav { flex: 1 0 auto; flex-direction: column; gap: 2px; }
   .nav a { padding: 8px 12px; }
-  /* Profil, puis Paramètres, Guide et À propos (qui le suivent dans le HTML), sont
-     poussés en bas du menu. En mobile, seul À propos reste en onglet. */
+  /* Profil, puis Paramètres et À propos (qui le suivent dans le HTML), sont
+     poussés en bas du menu. Guide est placé juste sous Imprimer dans le HTML.
+     En mobile, seul À propos reste en onglet. */
   .nav a[href$="profil.html"] { margin-top: auto; }
   .nav a[aria-current="page"] { background: var(--wash); color: var(--accent); font-weight: 650; }
   .nav-icon { display: inline-flex; }
