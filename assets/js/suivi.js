@@ -13,8 +13,10 @@
    Toucher un jour avec activité agrandit sa case en pop-up (effet de zoom
    depuis la case) avec le détail : évènements, total (dès deux évènements)
    et solde du jour.
-   Un filtre (cases à cocher) choisit les évènements affichés ; il est
-   mémorisé dans ce navigateur. Page en lecture seule : rien n'est enregistré.
+   Un filtre (cases à cocher) choisit les évènements pris en compte : un type
+   décoché disparaît des cases et du détail, et n'entre plus dans le cumul,
+   le total ni le solde du jour (les totaux du mois, en haut, restent
+   complets). Il est mémorisé dans ce navigateur. Page en lecture seule : rien n'est enregistré.
    ========================================================================== */
 'use strict';
 
@@ -120,7 +122,7 @@
   /** Solde : « 180,00 € », « −8,40 € » (court : « −1,2k »). */
   const fmtBalance = (v, nf = eur2) => `${v < -0.004 ? '−' : ''}${nf.format(Math.abs(v))}`;
   /** Solde à la fin de chaque jour du mois : celui de la veille plus les
-      évènements du jour, cochés ou non (le mois part de 0 €). balances[d], d de 1 à last. */
+      évènements cochés du jour (le mois part de 0 €). balances[d], d de 1 à last. */
   function balancesOf(byDay, last) {
     const balances = [0];
     for (let d = 1; d <= last; d++) balances[d] = balances[d - 1] + daySum(byDay[d] || []);
@@ -140,14 +142,13 @@
     $('#suiviSolde').textContent = fmtBalance(solde);
   }
 
-  function renderDay(byDay, allByDay, balances, showSolde) {
+  function renderDay(byDay, balances, showSolde) {
     const list = byDay[selected] || [];
     const total = balances[selected];
     // Total du jour (revenus − charges − dépenses) : seulement à partir de deux évènements.
-    const dayEvents = allByDay[selected] || [];
-    const cum = daySum(dayEvents);
+    const cum = daySum(list);
     const sign = cum > 0.004 ? '+' : cum < -0.004 ? '−' : '';
-    const cumulRow = dayEvents.length > 1
+    const cumulRow = list.length > 1
       ? [h('li', { class: 'cal-ev cal-ev--solde' },
         h('span', { class: 'sw', 'aria-hidden': 'true' }),
         h('span', { class: 'cal-ev__name' }, 'Total'),
@@ -198,12 +199,11 @@
   function render({ focus = false } = {}) {
     const filter = currentFilter();
     const showSolde = filter.has('solde');
-    // Le filtre ne choisit que les évènements affichés ; solde et cumul comptent tout.
+    // Seuls les types cochés comptent : évènements affichés, cumul, solde et détail.
     const byDay = eventsOf(year, month, filter);
-    const allByDay = eventsOf(year, month, new Set(Object.keys(TYPES)));
     const last = daysIn(year, month);
     selected = Math.min(selected, last);
-    const balances = balancesOf(allByDay, last);
+    const balances = balancesOf(byDay, last);
     $('#calTitle').textContent = capitalize(fmtTitle.format(new Date(year, month, 1)));
 
     const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi en premier
@@ -213,7 +213,7 @@
     for (let d = 1; d <= last; d++) {
       const list = byDay[d] || [];
       // Solde affiché seulement quand il change par rapport à la veille (le 1er : par rapport à 0 €).
-      const cum = daySum(allByDay[d] || []);
+      const cum = daySum(list);
       const soldeShown = showSolde && Math.abs(balances[d] - balances[d - 1]) > 0.004;
       const label = `${fmtDay.format(new Date(year, month, d))}${list.length ? `, ${list.length} évènement${list.length > 1 ? 's' : ''}` : ''}`
         + (soldeShown ? `, solde ${fmtBalance(balances[d])}` : '')
@@ -234,8 +234,8 @@
     }
     $('#calGrid').replaceChildren(...cells);
     renderTotals();
-    renderDay(byDay, allByDay, balances, showSolde);
-    hasActivity = (d) => !!(allByDay[d] || []).length;
+    renderDay(byDay, balances, showSolde);
+    hasActivity = (d) => !!(byDay[d] || []).length;
     if (focus) $(`#calGrid [data-day="${selected}"]`)?.focus();
   }
 
