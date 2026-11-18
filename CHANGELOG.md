@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.47.0...v1.48.0) (2026-11-18)
+
+
+### Features
+
+* **suivi:** filtre appliqué aux calculs, Solde décoché par défaut ([f4f3172](https://github.com/GT-Steeve/gestionBudget/commit/f4f317282b7d889b17eea192db13015ddd9f4a45))
+
 # [1.47.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.46.0...v1.47.0) (2026-11-18)
 
 
