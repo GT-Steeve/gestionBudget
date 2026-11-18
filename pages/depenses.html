@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.191">
-  <script src="../assets/js/loader.js?v=1.01.191"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.192">
+  <script src="../assets/js/loader.js?v=1.01.192"></script>
 </head>
 <body data-app="true">
 
@@ -112,16 +112,12 @@
     </div>
     <p class="lead lead--full">Suivez vos dépenses du quotidien. La liste est réinitialisée à la fin de chaque mois, sauvegardée dans l'historique.</p>
 
-    <!-- Sur mobile, les boutons restent ici, sous le texte ci-dessus. À partir
-         de la tablette, le JS les déplace dans .card__head (à droite du titre,
-         à la place de l'ancien bouton Historique) ; ce conteneur se masque
-         alors tout seul (:empty) via le CSS. Les deux ouvrent la même pop-up :
-         besoin général (Nouvelle dépense) ou précis et répété (Tracker un produit). -->
+    <!-- Sur mobile, le bouton reste ici, sous le texte ci-dessus. À partir de
+         la tablette, le JS le déplace dans .card__head (à droite du titre, à
+         la place de l'ancien bouton Historique) ; ce conteneur se masque
+         alors tout seul (:empty) via le CSS. -->
     <div id="addDepenseMobileSlot" class="add-trigger">
-      <div id="depenseAddBtns" class="btn-group">
-        <button type="button" id="btnOpenDepenseWizard" class="btn">Nouvelle dépense</button>
-        <button type="button" id="btnOpenProduitWizard" class="btn btn--ghost">Tracker un produit</button>
-      </div>
+      <button type="button" id="btnOpenDepenseWizard" class="btn">Nouvelle dépense</button>
     </div>
 
     <div class="table-scroll-wrap">
@@ -175,6 +171,19 @@
         <div id="depProduitSection" hidden>
           <h3 class="h3 h3--gap">Répartition par produit</h3>
           <div id="depProduitBreakdown" class="breakdown"></div>
+        </div>
+        <!-- Affiché dès qu'une habitude a été notée ce mois : son coût du mois,
+             et ce qu'elle coûterait sur un an si chaque mois ressemblait à celui-ci.
+             Le bouton + ouvre la synthèse des habitudes (produits, motifs, pistes). -->
+        <div id="depHabitudeSection" hidden>
+          <div class="h3-row h3--gap">
+            <h3 class="h3">Répartition par habitude</h3>
+            <button type="button" id="btnHabitudeSynth" class="info-btn info-btn--sm" aria-label="Voir la synthèse des habitudes" title="Synthèse des habitudes">
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5v7M1.5 5h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div id="depHabitudeBreakdown" class="breakdown"></div>
+          <p id="depHabitudeAn" class="note"></p>
         </div>
       </div>
       <div class="actions">
@@ -245,13 +254,30 @@
   </div>
 </div>
 
+<!-- Synthèse des habitudes (bouton + de « Répartition par habitude ») : pour
+     chacune, son coût, les produits qui justifient l'achat, les motifs donnés
+     et des pistes pour la réduire. Rempli par script.js (renderHabitudeSynth). -->
+<div id="habitudeSynthOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="habitudeSynthTitle">
+    <p id="habitudeSynthTitle" class="modal__title modal__title--center">Synthèse des habitudes</p>
+    <div id="habitudeSynthList" class="modal-list"></div>
+    <div class="modal__actions">
+      <button type="button" id="habitudeSynthClose" class="btn btn--ghost">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Ajout d'une dépense, guidé étape par étape (un champ à la fois) : plus
      pratique à remplir au clavier mobile qu'une ligne avec plusieurs champs
-     côte à côte. Deux parcours selon le bouton qui l'ouvre :
-     - Nouvelle dépense (besoin général) : catégorie, montant, libellé ;
-     - Tracker un produit (besoin précis et répété) : produit (à choisir parmi
-       ceux déjà suivis ou à nommer), sa catégorie s'il est nouveau, puis son
-       prix, avec le total de l'achat s'il a été acheté avec d'autres articles. -->
+     côte à côte. Première étape « Que suivre ? », puis selon la réponse :
+     - Achat (besoin général) : catégorie, montant, lieu ;
+     - Produit (besoin précis et répété) : produit (à choisir parmi ceux déjà
+       suivis ou à nommer), sa catégorie s'il est nouveau, puis son prix, avec
+       le total de l'achat s'il a été acheté avec d'autres articles ;
+     - Habitude (café, tabac…) : habitude (déjà suivie ou à nommer), le
+       produit consommé (compté dans la répartition par produit), sa
+       catégorie s'il est nouveau, son prix, puis le motif (facultatif).
+     Habitudes, produits et motifs déjà saisis sont proposés en cartes. -->
 <div id="depenseWizardOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="depenseWizardTitle">
     <div class="wizard__head">
@@ -263,13 +289,39 @@
     <!-- novalidate : chaque étape est vérifiée en passant à la suivante ;
          les champs de l'autre parcours, vides, ne bloquent pas l'ajout. -->
     <form id="depenseForm" autocomplete="off" novalidate>
+      <div class="wizard__step" data-step="suivi">
+        <p id="dSuiviQuestion" class="wizard__question">Que suivre ?</p>
+        <div class="choices choices--trio" role="radiogroup" aria-labelledby="dSuiviQuestion">
+          <label class="choice choice--compact">
+            <input type="radio" name="dSuivi" value="general" checked>
+            <span class="choice__label">Achat</span>
+          </label>
+          <label class="choice choice--compact">
+            <input type="radio" name="dSuivi" value="produit">
+            <span class="choice__label">Produit</span>
+          </label>
+          <label class="choice choice--compact">
+            <input type="radio" name="dSuivi" value="habitude">
+            <span class="choice__label">Habitude</span>
+          </label>
+        </div>
+      </div>
       <div class="wizard__step" data-step="produit" hidden>
-        <label for="dProduit">Quel produit souhaitez-vous suivre ?
+        <label for="dProduit"><span id="dProduitLabel">Quel produit souhaitez-vous suivre ?</span>
           <input id="dProduit" type="text" maxlength="60" placeholder="Ex. Lait demi-écrémé, croquettes" required>
         </label>
         <div id="dProduitsBox" class="produit-picks" hidden>
           <p class="produit-picks__title">Produit connu</p>
           <div id="dProduitsList" class="cat-picker produit-picks__list"></div>
+        </div>
+      </div>
+      <div class="wizard__step" data-step="habitude" hidden>
+        <label for="dHabitude">Quelle habitude souhaitez-vous suivre ?
+          <input id="dHabitude" type="text" maxlength="60" placeholder="Ex. Café du matin, cigarettes" required>
+        </label>
+        <div id="dHabitudesBox" class="produit-picks" hidden>
+          <p class="produit-picks__title">Habitude connue</p>
+          <div id="dHabitudesList" class="cat-picker produit-picks__list"></div>
         </div>
       </div>
       <div class="wizard__step" data-step="cat" hidden>
@@ -279,14 +331,23 @@
         <input type="hidden" id="dCat">
       </div>
       <div class="wizard__step" data-step="montant" hidden>
-        <label for="dMontant">Combien avez-vous dépensé ? (€)
+        <label for="dMontant"><span id="dMontantLabel">Combien avez-vous dépensé ? (€)</span>
           <input id="dMontant" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required>
         </label>
       </div>
       <div class="wizard__step" data-step="nom" hidden>
-        <label for="dNom">Pour quoi ?
-          <input id="dNom" type="text" maxlength="60" placeholder="Ex. Restaurant japonais" required>
+        <label for="dNom">Où avez-vous fait cette dépense ?
+          <input id="dNom" type="text" maxlength="60" placeholder="Ex. Carrefour, pharmacie, en ligne" required>
         </label>
+      </div>
+      <div class="wizard__step" data-step="motif" hidden>
+        <label for="dMotif">Motif (facultatif)
+          <input id="dMotif" type="text" maxlength="80" placeholder="Ex. Fatigue, stress, pause entre collègues">
+        </label>
+        <div id="dMotifsBox" class="produit-picks" hidden>
+          <p class="produit-picks__title">Motif déjà utilisé</p>
+          <div id="dMotifsList" class="cat-picker produit-picks__list"></div>
+        </div>
       </div>
       <div class="wizard__step" data-step="prix" hidden>
         <p id="dAvecQuestion" class="wizard__question">Acheté seul ou avec d'autres articles ?</p>
@@ -324,7 +385,7 @@
           </label>
         </div>
       </div>
-      <p id="depenseWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 4</p>
+      <p id="depenseWizardStepLabel" class="wizard__progress" aria-live="polite">Étape 1 / 5</p>
       <div class="modal__actions">
         <button type="button" id="depenseWizardBack" class="btn btn--ghost" hidden>Retour</button>
         <button type="button" id="depenseWizardNext" class="btn">Suivant</button>
@@ -334,12 +395,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.191"></script>
-<script src="../assets/js/ui.js?v=1.01.191"></script>
-<script src="../assets/js/nav.js?v=1.01.191"></script>
-<script src="../assets/js/calc.js?v=1.01.191"></script>
-<script src="../assets/js/state.js?v=1.01.191"></script>
-<script src="../assets/js/guide.js?v=1.01.191"></script>
-<script src="../assets/js/script.js?v=1.01.191"></script>
+<script src="../assets/js/profiles.js?v=1.01.192"></script>
+<script src="../assets/js/ui.js?v=1.01.192"></script>
+<script src="../assets/js/nav.js?v=1.01.192"></script>
+<script src="../assets/js/calc.js?v=1.01.192"></script>
+<script src="../assets/js/state.js?v=1.01.192"></script>
+<script src="../assets/js/guide.js?v=1.01.192"></script>
+<script src="../assets/js/script.js?v=1.01.192"></script>
 </body>
 </html>

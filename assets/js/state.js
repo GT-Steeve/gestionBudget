@@ -13,7 +13,7 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Placement', 'Prêt', 'Famille / Proche', 'Autre'];
   const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
-  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Équipement', 'Entretien ménager', 'Cadeau', 'Famille / Proche', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Épargne', 'Placement', 'Autre'];
+  const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Détente', 'Équipement', 'Entretien ménager', 'Cadeau', 'Famille / Proche', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Épargne', 'Placement', 'Autre'];
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
   const MAX_RATE = 100;          // plafond des rendements saisis, en %
   const ROUND_UP_OPTIONS = [1, 2, 3, 5, 10]; // multiples disponibles pour le RoundUp, en €
@@ -92,6 +92,7 @@
         ])
       ],
       produits: [],
+      habitudes: [],
       depensesMoisCourant: monthKey(now),
       cashbackRate: 1,
       roundUpTo: 1,
@@ -124,7 +125,9 @@
 
   /** Dépense nettoyée (mois en cours ou historique). Un achat de « besoin
       précis » garde le produit suivi et son prix seul (produitPrix), qui peut
-      être inférieur au montant si l'achat comprenait d'autres articles. */
+      être inférieur au montant si l'achat comprenait d'autres articles. Une
+      dépense d'habitude (café, tabac…) garde le nom de l'habitude suivie et
+      son motif (pourquoi cette dépense). */
   const depense = (d, withAdvantages) => {
     const out = {
       id: String(d.id || uid()),
@@ -142,11 +145,18 @@
       out.produit = produit;
       out.produitPrix = Math.min(num(d.produitPrix), out.montant);
     }
+    const habitude = typeof d.habitude === 'string' ? d.habitude.trim().slice(0, 60) : '';
+    if (habitude) {
+      out.habitude = habitude;
+      const motif = typeof d.motif === 'string' ? d.motif.trim().slice(0, 80) : '';
+      if (motif) out.motif = motif;
+    }
     return out;
   };
 
-  /** Catalogue des produits suivis (besoins précis), sans doublon de nom. */
-  const produits = (list) => {
+  /** Catalogue des produits (besoins précis) ou des habitudes suivis, sans
+      doublon de nom. */
+  const suivis = (list) => {
     const seen = new Set();
     return records(list).map((p) => ({
       nom: String(p.nom || '').trim().slice(0, 60),
@@ -161,7 +171,8 @@
 
   /** Budget vide (nouveau profil, première utilisation). */
   const emptyState = (now = new Date()) => ({
-    revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], depensesMoisCourant: monthKey(now),
+    revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], habitudes: [],
+    depensesMoisCourant: monthKey(now),
     cashbackRate: 1, roundUpTo: 1, scenarios: [], appliquees: [], view: 'mois',
     yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
   });
@@ -198,7 +209,8 @@
         total: num(m.total),
         items: records(m.items).map((d) => depense(d, false))
       })).slice(0, 12),
-      produits: produits(saved.produits),
+      produits: suivis(saved.produits),
+      habitudes: suivis(saved.habitudes),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(now),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,

@@ -155,3 +155,25 @@ describe('BudgetState.load — produits suivis', () => {
     expect(state.produits).toEqual([{ nom: 'Lait', categorie: 'Course' }, { nom: 'Croquettes', categorie: 'Autre' }]);
   });
 });
+
+describe('BudgetState.load — habitudes suivies', () => {
+  it('keeps the tracked habit of an expense and ignores invalid values', () => {
+    const state = BudgetState.load(saved({
+      depenses: [
+        { nom: 'Café', montant: 2.5, habitude: ' Café du matin ', motif: ' Fatigue ' },
+        { nom: 'Tabac', montant: 12, habitude: 7 }
+      ]
+    }), NOW);
+    expect(state.depenses[0]).toMatchObject({ habitude: 'Café du matin', montant: 2.5, motif: 'Fatigue' });
+    expect(state.depenses[1]).not.toHaveProperty('habitude');
+    expect(state.depenses[1]).not.toHaveProperty('motif');
+  });
+
+  it('cleans the habit catalogue, defaults to empty', () => {
+    expect(BudgetState.load(saved({}), NOW).habitudes).toEqual([]);
+    const state = BudgetState.load(saved({
+      habitudes: [{ nom: 'Café', categorie: 'Alimentaire' }, { nom: 'CAFÉ' }, { nom: 'Tabac', categorie: 'Inconnue' }]
+    }), NOW);
+    expect(state.habitudes).toEqual([{ nom: 'Café', categorie: 'Alimentaire' }, { nom: 'Tabac', categorie: 'Autre' }]);
+  });
+});

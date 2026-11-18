@@ -143,7 +143,9 @@
 
   /** Pop-up de confirmation (#confirmOverlay) : détails [libellé, valeur] puis
       Annuler / Confirmer. opts.center : pop-up étroite, titre, détails et
-      boutons centrés. Sans pop-up dans la page, l'action est faite directement. */
+      boutons centrés ; opts.okLabel / opts.cancelLabel : textes des boutons ;
+      opts.danger (vrai par défaut) : bouton rouge, pour une suppression.
+      Sans pop-up dans la page, l'action est faite directement. */
   function confirmDialog(title, details, onConfirm, opts = {}) {
     const overlay = $('#confirmOverlay');
     if (!overlay) { onConfirm(); return; }
@@ -156,8 +158,14 @@
     detailsEl.replaceChildren(...details.flatMap(([label, value]) => [h('dt', {}, label), h('dd', {}, value)]));
     $('#confirmOverlay .modal__actions').classList.toggle('modal__actions--center', center);
     $('#confirmOverlay .modal').classList.toggle('modal--narrow', center);
+    // Ouverte aussi depuis une autre pop-up (wizard d'ajout) : déplacée en fin
+    // de <body> pour s'afficher au-dessus.
+    document.body.append(overlay);
 
     const okBtn = $('#confirmOk');
+    okBtn.textContent = opts.okLabel || 'Confirmer';
+    okBtn.classList.toggle('btn--danger', opts.danger !== false);
+    $('#confirmCancel').textContent = opts.cancelLabel || 'Annuler';
     const cancelBtn = $('#confirmCancel');
     const onOk = () => { close(); onConfirm(); };
     const onCancel = () => close();

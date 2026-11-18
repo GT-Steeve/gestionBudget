@@ -959,11 +959,11 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 }
 .modal__details:empty { display: none; }
 .modal__details dt { color: var(--ink-2); }
-.modal__details dd { text-align: right; font-weight: 600; }
+.modal__details dd { margin: 0; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
 /* Variante centrée (ex. suppression d'un profil) : une seule colonne, texte au centre. */
 .modal__details--center { grid-template-columns: 1fr; text-align: center; }
 .modal__details--center dd { text-align: center; }
-.modal__details--center dd:empty { display: none; }
+.modal__details--center dd:empty, .modal__details--center dt:empty { display: none; }
 /* Pop-up Détail : date (à gauche) et heure (à droite) d'ajout, sous le titre. */
 .modal__stamp {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1036,18 +1036,21 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
    seul ou avec d'autres) et champs empilés sur l'étape Prix. */
 .wizard__question { font-size: 13px; color: var(--ink-2); margin: 0; }
 .choices--duo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+/* « Que suivre ? » : Achat, Produit, Habitude empilés. Double classe pour
+   l'emporter sur la grille en colonnes de .choices en mobile. */
+.choices.choices--trio { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; }
 .choice--compact { padding: 10px 12px; align-items: center; text-align: center; }
 .wizard__field { margin-top: 14px; }
-.wizard__field[hidden], .produit-picks[hidden], #depProduitSection[hidden] { display: none; }
+.wizard__field[hidden], .produit-picks[hidden], #depProduitSection[hidden], #depHabitudeSection[hidden] { display: none; }
 .produit-picks { margin-top: 16px; }
 .produit-picks__title { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
 /* Produits connus : même grille de boutons que « Choisir la catégorie »,
    en plus court (la pop-up garde le champ et les boutons visibles). */
 .produit-picks__list.cat-picker { margin-top: 0; max-height: 196px; padding: 1px; }
 .produit-picks__list .cat-picker__opt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#depProduitBreakdown .bd__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Répartition par produit : nom cliquable pour renommer le produit. */
-#depProduitBreakdown { grid-template-columns: minmax(110px, 42%) 1fr auto auto; }
+#depProduitBreakdown .bd__name, #depHabitudeBreakdown .bd__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Répartition par produit / habitude : nom cliquable pour la renommer. */
+#depProduitBreakdown, #depHabitudeBreakdown { grid-template-columns: minmax(110px, 42%) 1fr auto auto; }
 .bd__name--edit {
   display: flex; align-items: center; gap: 6px; padding: 0; font: inherit; font-size: 14px; text-align: left;
   background: none; border: 0; cursor: pointer; color: var(--ink-2);
@@ -1171,6 +1174,20 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 }
 .info-btn:hover { background: var(--wash); color: var(--ink); }
 .info-btn--sm { width: 18px; height: 18px; }
+/* Titre de section suivi d'un petit bouton (ex. + de Répartition par habitude). */
+.h3-row { display: flex; align-items: center; gap: 8px; }
+
+/* Synthèse des habitudes (Dépenses) : une fiche par habitude. */
+.habit-card { padding: 14px 0; border-top: 1px solid var(--border); }
+.habit-card:first-child { padding-top: 0; border-top: 0; }
+.habit-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.habit-card__name { font-size: 15px; font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.habit-card__cost { flex: none; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.habit-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0 0; font-size: 13px; }
+.habit-card dt { color: var(--muted); }
+.habit-card dd { margin: 0; color: var(--ink-2); }
+.habit-card__tips { margin: 10px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.habit-card__tips li + li { margin-top: 4px; }
 
 .tile__label--with-info { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -1581,7 +1598,7 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
      sous-grille pour superposer les deux dans la même cellule, tout en
      gardant les colonnes alignées d'une ligne à l'autre. */
   .breakdown { grid-template-columns: 90px 1fr auto; }
-  #depProduitBreakdown { grid-template-columns: minmax(90px, 42%) 1fr auto; }
+  #depProduitBreakdown, #depHabitudeBreakdown { grid-template-columns: minmax(90px, 42%) 1fr auto; }
   .bd { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; }
   .bd__track { grid-column: 2; grid-row: 1; height: 18px; border-radius: 9px; }
   .bd__bar { border-radius: 0 9px 9px 0; }

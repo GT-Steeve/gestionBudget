@@ -37,24 +37,26 @@
       'Famille / Proche': 'Ex. Aide aux parents, argent de poche',
       'Autre': 'Ex. Pension alimentaire (enfants)'
     },
+    // Dépenses : le champ demande où la dépense a été faite (magasin, lieu, site).
     depenses: {
       'Course': 'Ex. Carrefour, Monoprix, Lidl',
-      'Alimentaire': 'Ex. Carrefour, Monoprix',
-      'Transport': 'Ex. Essence',
-      'Shopping': 'Ex. Amazon, Zara',
-      'Divertissement': 'Ex. Jeu Steam, PlayStation, film',
-      'Sortie': 'Ex. Cinéma',
-      'Équipement': 'Ex. Lave-linge, télé',
-      'Entretien ménager': 'Ex. Liquide vaisselle, Javel',
-      'Cadeau': 'Ex. Anniversaire, fleur',
-      'Famille / Proche': 'Ex. Aide ponctuelle, sortie en famille',
-      'Santé': 'Ex. Médecin, lunettes',
-      'Amende': 'Ex. Stationnement, radar',
-      'Imprévu': 'Ex. Panne voiture, garage',
-      'Restaurant': 'Ex. Buffet, Uber, fast-food',
-      'Épargne': 'Ex. Versement sur livret A',
-      'Placement': 'Ex. Achat d\'actions, ETF, PEA',
-      'Autre': 'Ex. Prêt, entretien voiture'
+      'Alimentaire': 'Ex. Boulangerie, marché, Picard',
+      'Transport': 'Ex. Station Total, SNCF, parking',
+      'Shopping': 'Ex. Amazon, Zara, Decathlon',
+      'Divertissement': 'Ex. Steam, PlayStation Store, Fnac',
+      'Sortie': 'Ex. Cinéma Pathé, bowling, bar',
+      'Détente': 'Ex. Spa, massage, hammam',
+      'Équipement': 'Ex. Darty, Boulanger, Ikea',
+      'Entretien ménager': 'Ex. Action, supermarché',
+      'Cadeau': 'Ex. Fleuriste, Fnac, en ligne',
+      'Famille / Proche': 'Ex. Chez mes parents, parc d\'attractions',
+      'Santé': 'Ex. Pharmacie, médecin, opticien',
+      'Amende': 'Ex. Amende en ligne (ANTAI), mairie',
+      'Imprévu': 'Ex. Garage, plombier',
+      'Restaurant': 'Ex. Pizzeria, Uber Eats, fast-food',
+      'Épargne': 'Ex. Livret A à ma banque',
+      'Placement': 'Ex. PEA, courtier en ligne',
+      'Autre': 'Ex. En ligne, mairie, chez un particulier'
     }
   };
   const HINTS = {
@@ -291,6 +293,8 @@
           ['Libellé', item.nom],
           ['Catégorie', item.categorie],
           ...(item.produit ? [['Produit suivi', `${item.produit} · ${eur2.format(item.produitPrix || 0)}`]] : []),
+          ...(item.habitude ? [['Habitude suivie', item.habitude]] : []),
+          ...(item.motif ? [['Motif', item.motif]] : []),
           [monthly ? 'Mensuel' : 'Montant', `${eur2.format(item[key])}${suffix}`],
           ...computed(item[key])
         ].flatMap(row));
@@ -652,6 +656,7 @@
         state.depenses = [];
         state.depensesHistorique = [];
         state.produits = [];
+        state.habitudes = [];
         renderLines('revenus');
         renderLines('charges');
         renderDepenses();
@@ -769,53 +774,80 @@
     renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
       'Ajoutez des dépenses pour voir leur répartition.');
 
-    // Besoins précis du mois : prix seul de chaque produit suivi (cumulé s'il
-    // a été racheté), en part des dépenses du mois.
-    const section = $('#depProduitSection');
-    if (section) {
-      const byProduit = new Map();
-      for (const d of state.depenses) {
-        if (!d.produit) continue;
-        const key = produitKey(d.produit);
-        const row = byProduit.get(key) || { nom: d.produit, total: 0, fois: 0 };
-        row.total += d.produitPrix || 0;
-        row.fois += 1;
-        byProduit.set(key, row);
-      }
-      section.hidden = !byProduit.size;
-      renderShareBars($('#depProduitBreakdown'), [...byProduit.values()].map((r) => ({
-        label: r.fois > 1 ? `${r.nom} (×${r.fois})` : r.nom,
-        total: r.total,
-        rename: { value: r.nom, onRename: (nom) => { renameProduit(r.nom, nom); renderDepenses(); refresh(); } }
-      })), total, '');
+    // Produits suivis du mois (seuls ou consommés par une habitude) : prix
+    // seul de chacun (cumulé s'il a été racheté), en part des dépenses du mois.
+    renderSuiviSection(SUIVI.produit, total, (d) => d.produit, (d) => d.produitPrix || 0);
+    // Habitudes du mois : montant cumulé de chacune, et son coût sur un an si
+    // chaque mois ressemblait à celui-ci.
+    const habitudes = renderSuiviSection(SUIVI.habitude, total, (d) => d.habitude, (d) => d.montant);
+    const an = $('#depHabitudeAn');
+    if (an && habitudes.length) {
+      // « Sur un an à ce rythme : » puis une habitude par ligne, la plus chère d'abord.
+      an.replaceChildren('Sur un an à ce rythme :', ...habitudes
+        .sort((x, y) => y.total - x.total)
+        .flatMap((r) => [h('br'), `${r.nom} ≈ ${eur0.format(r.total * 12)}`]));
     }
   }
 
-  /* ---------- Produits suivis (besoins précis et répétés) ---------- */
+  /** Répartition du mois pour un type de suivi (produit ou habitude) : une
+      barre par nom suivi (nameOf(d), vide si la dépense n'est pas suivie),
+      renommable ; section masquée s'il n'y en a pas. Renvoie les lignes
+      ({ nom, total, fois }). */
+  function renderSuiviSection(kind, total, nameOf, amountOf) {
+    const section = $(kind.section);
+    if (!section) return [];
+    const byNom = new Map();
+    for (const d of state.depenses) {
+      const nom = nameOf(d);
+      if (!nom) continue;
+      const key = suiviKey(nom);
+      const row = byNom.get(key) || { nom, total: 0, fois: 0 };
+      row.total += amountOf(d);
+      row.fois += 1;
+      byNom.set(key, row);
+    }
+    const rows = [...byNom.values()];
+    section.hidden = !rows.length;
+    renderShareBars($(kind.breakdown), rows.map((r) => ({
+      label: r.fois > 1 ? `${r.nom} (×${r.fois})` : r.nom,
+      total: r.total,
+      rename: { value: r.nom, onRename: (nom) => { renameSuivi(kind, r.nom, nom); renderDepenses(); refresh(); } }
+    })), total, '');
+    return rows;
+  }
 
-  const produitKey = (nom) => nom.trim().toLocaleLowerCase('fr');
-  /** Produit du catalogue portant ce nom (casse ignorée), sinon undefined. */
-  const findProduit = (nom) => state.produits.find((p) => produitKey(p.nom) === produitKey(nom));
+  /* ---------- Produits et habitudes suivis ---------- */
 
-  /** Renomme un produit suivi partout : catalogue, achats du mois et de
-      l'historique, et leur libellé s'il reprenait le nom du produit. Si le
-      nouveau nom est déjà celui d'un autre produit, les deux sont fusionnés. */
-  function renameProduit(ancien, nouveau) {
+  // Deux types de suivi : produit (besoin précis et répété) et habitude de
+  // dépense (café, tabac…). list : catalogue dans state ; field : champ de la
+  // dépense qui porte le nom suivi ; section/breakdown : répartition du mois.
+  const SUIVI = {
+    produit: { list: 'produits', field: 'produit', section: '#depProduitSection', breakdown: '#depProduitBreakdown' },
+    habitude: { list: 'habitudes', field: 'habitude', section: '#depHabitudeSection', breakdown: '#depHabitudeBreakdown' }
+  };
+  const suiviKey = (nom) => nom.trim().toLocaleLowerCase('fr');
+  /** Élément du catalogue (produit ou habitude) portant ce nom (casse ignorée), sinon undefined. */
+  const findSuivi = (kind, nom) => state[kind.list].find((p) => suiviKey(p.nom) === suiviKey(nom));
+
+  /** Renomme un produit ou une habitude partout : catalogue, dépenses du mois
+      et de l'historique, et leur libellé s'il reprenait l'ancien nom. Si le
+      nouveau nom est déjà pris dans le catalogue, les deux sont fusionnés. */
+  function renameSuivi(kind, ancien, nouveau) {
     const nom = nouveau.trim().slice(0, 60);
-    const oldKey = produitKey(ancien);
+    const oldKey = suiviKey(ancien);
     if (!nom) return;
-    const existing = findProduit(nom);
-    if (existing && produitKey(existing.nom) !== oldKey) {
-      state.produits = state.produits.filter((p) => produitKey(p.nom) !== oldKey);
+    const existing = findSuivi(kind, nom);
+    if (existing && suiviKey(existing.nom) !== oldKey) {
+      state[kind.list] = state[kind.list].filter((p) => suiviKey(p.nom) !== oldKey);
     } else {
-      const p = findProduit(ancien);
+      const p = findSuivi(kind, ancien);
       if (p) p.nom = nom;
     }
-    const finalNom = (existing && produitKey(existing.nom) !== oldKey) ? existing.nom : nom;
+    const finalNom = (existing && suiviKey(existing.nom) !== oldKey) ? existing.nom : nom;
     const relabel = (d) => {
-      if (!d.produit || produitKey(d.produit) !== oldKey) return;
-      const ancienNom = d.produit;
-      d.produit = finalNom;
+      if (!d[kind.field] || suiviKey(d[kind.field]) !== oldKey) return;
+      const ancienNom = d[kind.field];
+      d[kind.field] = finalNom;
       if (d.nom === ancienNom) d.nom = finalNom;
       else if (d.nom === `${ancienNom} + autres articles`) d.nom = `${finalNom} + autres articles`.slice(0, 60);
     };
@@ -826,31 +858,70 @@
     bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
     const form = $('#depenseForm');
     // Étapes de la pop-up (même ordre que cfg.steps ci-dessous).
-    const STEP = { produit: 0, cat: 1, montant: 2, nom: 3, prix: 4, avantages: 5 };
+    const STEP = { suivi: 0, produit: 1, habitude: 2, cat: 3, montant: 4, nom: 5, motif: 6, prix: 7, avantages: 8 };
     const avecAutres = () => $('input[name="dAvec"]:checked')?.value === 'avec';
     const produitNom = () => ($('#dProduit')?.value || '').trim();
-    // Besoin précis et répété : pop-up ouverte par « Tracker un produit ».
-    let precis = false;
-    const isPrecis = () => precis;
+    const habitudeNom = () => ($('#dHabitude')?.value || '').trim();
+    // Parcours choisi à la 1re étape « Que suivre ? » : 'general' (Achat),
+    // 'produit' ou 'habitude'.
+    const mode = () => $('input[name="dSuivi"]:checked')?.value || 'general';
+    const isPrecis = () => mode() === 'produit';
+
+    /** Dernier prix payé pour ce produit (achat le plus récent du mois, sinon
+        de l'historique, du plus récent au plus ancien), ou 0 s'il est inconnu. */
+    const dernierPrix = (nom) => {
+      const key = suiviKey(nom);
+      const match = (d) => d.produit && suiviKey(d.produit) === key && d.produitPrix > 0;
+      const d = [...state.depenses].reverse().find(match)
+        || state.depensesHistorique.flatMap((m) => m.items).find(match);
+      return d ? d.produitPrix : 0;
+    };
+    /** Préremplit le prix d'un produit déjà connu : l'utilisateur garde la
+        valeur (Suivant) ou la modifie. Rien n'est écrasé tant que le produit
+        n'a pas changé (retour en arrière après une correction). */
+    const prefillPrix = (field) => {
+      const key = suiviKey(produitNom());
+      if (field.dataset.prefillFor === key) return;
+      field.dataset.prefillFor = key;
+      const prix = dernierPrix(produitNom());
+      field.value = prix ? String(prix) : '';
+      // Valeur sélectionnée : une frappe la remplace directement.
+      if (prix) requestAnimationFrame(() => { try { field.select(); } catch { /* type non sélectionnable */ } });
+    };
     let wizard = null;
 
-    /** Liste des produits déjà suivis, filtrée par la saisie : un clic remplit
-        le champ et passe à l'étape suivante. */
-    const renderProduitPicks = () => {
-      const box = $('#dProduitsBox');
-      const list = $('#dProduitsList');
-      if (!box || !list) return;
-      const query = produitKey(produitNom());
-      const matches = sortAlpha(state.produits.map((p) => p.nom))
-        .filter((nom) => !query || produitKey(nom).includes(query));
-      box.hidden = !matches.length;
-      // Mêmes boutons que « Choisir la catégorie » (le produit saisi, s'il est
-      // connu, mis en avant).
-      const current = findProduit(produitNom());
-      list.replaceChildren(...matches.map((nom) => pickerOpt(nom, current?.nom === nom, () => {
-        $('#dProduit').value = nom;
+    /** Cartes des noms déjà saisis (produits, habitudes ou motifs), filtrées
+        par la saisie : un clic remplit le champ et passe à l'étape suivante.
+        Mêmes boutons que « Choisir la catégorie » (le nom saisi, s'il est
+        connu, mis en avant). */
+    const renderPicks = (names, input, box, list, confirmPick) => {
+      const boxEl = $(box);
+      const listEl = $(list);
+      if (!boxEl || !listEl) return;
+      const query = suiviKey($(input).value);
+      const matches = sortAlpha(names).filter((nom) => !query || suiviKey(nom).includes(query));
+      boxEl.hidden = !matches.length;
+      const pick = (nom) => {
+        $(input).value = nom;
         wizard?.next();
-      }, { title: nom })));
+      };
+      listEl.replaceChildren(...matches.map((nom) => pickerOpt(nom, suiviKey(nom) === query,
+        () => (confirmPick ? confirmPick(nom, () => pick(nom)) : pick(nom)), { title: nom })));
+    };
+    const renderProduitPicks = () => renderPicks(state.produits.map((p) => p.nom),
+      '#dProduit', '#dProduitsBox', '#dProduitsList');
+    const renderHabitudePicks = () => renderPicks(state.habitudes.map((p) => p.nom),
+      '#dHabitude', '#dHabitudesBox', '#dHabitudesList');
+    // Motifs : ceux des dépenses du mois et de l'historique, sans doublon.
+    const renderMotifPicks = () => {
+      const motifs = new Map();
+      for (const d of [...state.depenses, ...state.depensesHistorique.flatMap((m) => m.items)]) {
+        if (d.motif && !motifs.has(suiviKey(d.motif))) motifs.set(suiviKey(d.motif), d.motif);
+      }
+      // Carte coupée si le motif est long : il est confirmé en entier avant d'être repris.
+      renderPicks([...motifs.values()], '#dMotif', '#dMotifsBox', '#dMotifsList', (nom, ok) =>
+        confirmDelete('Est-ce bien le motif ?', [['', nom]], ok,
+          { center: true, okLabel: 'Oui', cancelLabel: 'Non', danger: false }));
     };
 
     /** Étape Prix : le champ « total de l'achat » n'apparaît que si le produit
@@ -866,35 +937,104 @@
     };
 
     wizard = bindAddWizard({
-      openBtn: ['#btnOpenDepenseWizard', '#btnOpenProduitWizard'], overlay: '#depenseWizardOverlay', form: '#depenseForm',
+      openBtn: '#btnOpenDepenseWizard', overlay: '#depenseWizardOverlay', form: '#depenseForm',
       closeBtn: '#depenseWizardClose', backBtn: '#depenseWizardBack',
       nextBtn: '#depenseWizardNext', finishBtn: '#depenseWizardFinish', stepLabel: '#depenseWizardStepLabel',
-      steps: ['[data-step="produit"]', '[data-step="cat"]', '[data-step="montant"]', '[data-step="nom"]',
-        '[data-step="prix"]', '[data-step="avantages"]'],
-      fields: ['#dProduit', '#dCatBtn', '#dMontant', '#dNom', ['#dPrix', '#dTotal'], null],
-      // Tracker un produit : produit, sa catégorie seulement s'il est nouveau,
-      // puis son prix. Nouvelle dépense : catégorie, montant, libellé.
-      flow: () => (isPrecis()
-        ? [STEP.produit, ...(findProduit(produitNom()) ? [] : [STEP.cat]), STEP.prix, STEP.avantages]
-        : [STEP.cat, STEP.montant, STEP.nom, STEP.avantages]),
-      onOpen: (btn) => {
-        precis = btn?.id === 'btnOpenProduitWizard';
-        $('#depenseWizardTitle').textContent = precis ? 'Tracker un produit' : 'Nouvelle dépense';
+      steps: ['[data-step="suivi"]', '[data-step="produit"]', '[data-step="habitude"]', '[data-step="cat"]',
+        '[data-step="montant"]', '[data-step="nom"]', '[data-step="motif"]', '[data-step="prix"]',
+        '[data-step="avantages"]'],
+      fields: ['input[name="dSuivi"]:checked', '#dProduit', '#dHabitude', '#dCatBtn', '#dMontant', '#dNom', '#dMotif',
+        ['#dPrix', '#dTotal'], null],
+      // Produit : produit, sa catégorie seulement s'il est nouveau, puis son
+      // prix. Habitude : habitude, produit consommé (sa catégorie s'il est
+      // nouveau), son prix puis le motif. Achat : catégorie, montant, lieu.
+      flow: () => {
+        const m = mode();
+        if (m === 'produit') {
+          return [STEP.suivi, STEP.produit, ...(findSuivi(SUIVI.produit, produitNom()) ? [] : [STEP.cat]), STEP.prix,
+            STEP.avantages];
+        }
+        if (m === 'habitude') {
+          return [STEP.suivi, STEP.habitude, STEP.produit, ...(findSuivi(SUIVI.produit, produitNom()) ? [] : [STEP.cat]),
+            STEP.montant, STEP.motif, STEP.avantages];
+        }
+        return [STEP.suivi, STEP.cat, STEP.montant, STEP.nom, STEP.avantages];
+      },
+      onOpen: () => {
+        $('input[name="dSuivi"][value="general"]').checked = true;
         $('input[name="dAvec"][value="seul"]').checked = true;
-        for (const sel of ['#dProduit', '#dPrix', '#dTotal']) $(sel).value = '';
+        for (const sel of ['#dProduit', '#dHabitude', '#dMotif', '#dPrix', '#dTotal', '#dMontant']) {
+          $(sel).value = '';
+          delete $(sel).dataset.prefillFor;
+        }
       },
       onStep: (i) => {
+        const m = mode();
+        // « Que suivre ? » : un clic sur Achat, Produit ou Habitude passe
+        // directement à l'étape 2, sans bouton Suivant.
+        // (bindAddWizard a déjà masqué Suivant sur la dernière étape.)
+        if (i === STEP.suivi) $('#depenseWizardNext').hidden = true;
         if (i === STEP.cat) {
-          $('#dCatQuestion').textContent = isPrecis()
-            ? `Dans quelle catégorie ranger « ${produitNom()} » ?` : 'Dans quelle catégorie ?';
+          const nom = m === 'general' ? '' : produitNom();
+          $('#dCatQuestion').textContent = nom ? `Dans quelle catégorie ranger « ${nom} » ?` : 'Dans quelle catégorie ?';
         }
-        if (i === STEP.produit) renderProduitPicks();
-        if (i === STEP.prix) syncPrix();
+        if (i === STEP.montant) {
+          $('#dMontantLabel').textContent = m === 'habitude'
+            ? `Combien vous a coûté « ${produitNom()} » ? (€)` : 'Combien avez-vous dépensé ? (€)';
+        }
+        if (i === STEP.produit) {
+          $('#dProduitLabel').textContent = m === 'habitude'
+            ? `Quel produit pour « ${habitudeNom()} » ?` : 'Quel produit souhaitez-vous suivre ?';
+          renderProduitPicks();
+        }
+        if (i === STEP.motif) renderMotifPicks();
+        if (i === STEP.habitude) renderHabitudePicks();
+        if (i === STEP.prix) {
+          prefillPrix($('#dPrix'));
+          syncPrix();
+        }
+        if (i === STEP.montant) {
+          const montant = $('#dMontant');
+          if (m === 'habitude') prefillPrix(montant);
+          else if (montant.dataset.prefillFor !== undefined) {
+            // Retour à « Achat » après une habitude : pas de prix d'un produit.
+            montant.value = '';
+            delete montant.dataset.prefillFor;
+          }
+        }
       }
     });
-    bindResponsiveTrigger('#depenseAddBtns', '#addDepenseMobileSlot', '#depenses .card__head');
+    bindResponsiveTrigger('#btnOpenDepenseWizard', '#addDepenseMobileSlot', '#depenses .card__head');
     if (form) {
       $('#dProduit').addEventListener('input', renderProduitPicks);
+      $('#dHabitude').addEventListener('input', renderHabitudePicks);
+      // Retour vers une étape à cartes (habitude, produit, motif) : champ vidé
+      // pour choisir de nouveau, toutes les cartes de nouveau visibles. Ce
+      // listener passe après celui de bindAddWizard (étape déjà affichée).
+      const PICK_STEPS = {
+        habitude: ['#dHabitude', renderHabitudePicks],
+        produit: ['#dProduit', renderProduitPicks],
+        motif: ['#dMotif', renderMotifPicks]
+      };
+      $('#depenseWizardBack').addEventListener('click', () => {
+        const step = form.querySelector('.wizard__step:not([hidden])')?.dataset.step;
+        const [sel, render] = PICK_STEPS[step] || [];
+        if (!sel) return;
+        $(sel).value = '';
+        render();
+      });
+      // Clic sur une carte de « Que suivre ? » : la coche et passe à l'étape 2.
+      // Seul le clic sur la carte compte (pas le clic relayé au bouton radio,
+      // ni les flèches du clavier, qui changent juste le choix ; Entrée valide).
+      for (const card of form.querySelectorAll('[data-step="suivi"] .choice')) {
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName === 'INPUT') return;
+          e.preventDefault();
+          card.querySelector('input').checked = true;
+          wizard?.next();
+        });
+      }
+      $('#dMotif').addEventListener('input', renderMotifPicks);
       for (const radio of form.querySelectorAll('input[name="dAvec"]')) radio.addEventListener('change', syncPrix);
       $('#dPrix').addEventListener('input', syncPrix);
       $('#dTotal').addEventListener('input', syncPrix);
@@ -905,16 +1045,21 @@
           cashbackOn: $('#dCashbackOn').checked, roundUpOn: $('#dRoundUpOn').checked,
           ajout: new Date().toISOString()
         };
-        if (isPrecis()) {
+        // Nouveau produit : ajouté au catalogue avec la catégorie choisie, pour
+        // le resélectionner la prochaine fois sans le retaper.
+        const produitSuivi = () => {
           const nom = produitNom().slice(0, 60);
-          if (!nom) return;
-          // Nouveau produit : ajouté au catalogue avec la catégorie choisie,
-          // pour le resélectionner la prochaine fois sans le retaper.
-          let produit = findProduit(nom);
+          if (!nom) return null;
+          let produit = findSuivi(SUIVI.produit, nom);
           if (!produit) {
             produit = { nom, categorie: $('#dCat').value };
             state.produits.push(produit);
           }
+          return produit;
+        };
+        if (isPrecis()) {
+          const produit = produitSuivi();
+          if (!produit) return;
           const prix = num($('#dPrix').value);
           const avec = avecAutres();
           state.depenses.push({
@@ -923,6 +1068,25 @@
             montant: avec ? Math.max(num($('#dTotal').value), prix) : prix,
             ...avantages, produit: produit.nom, produitPrix: prix
           });
+        } else if (mode() === 'habitude') {
+          const nom = habitudeNom().slice(0, 60);
+          const produit = produitSuivi();
+          if (!nom || !produit) return;
+          // Nouvelle habitude : ajoutée au catalogue (carte à la prochaine
+          // saisie), rangée dans la catégorie de son premier produit. Le
+          // produit consommé compte dans la répartition par produit.
+          let habitude = findSuivi(SUIVI.habitude, nom);
+          if (!habitude) {
+            habitude = { nom, categorie: produit.categorie };
+            state.habitudes.push(habitude);
+          }
+          const prix = num($('#dMontant').value);
+          const motif = $('#dMotif').value.trim().slice(0, 80);
+          state.depenses.push({
+            id: uid(), categorie: produit.categorie, nom: produit.nom, montant: prix, ...avantages,
+            produit: produit.nom, produitPrix: prix, habitude: habitude.nom, ...(motif ? { motif } : {})
+          });
+          $('#dMontant').value = '';
         } else {
           const nom = $('#dNom').value.trim();
           if (!nom) return;
@@ -983,6 +1147,83 @@
       }
       box.append(section);
     }
+  }
+
+  /* ---------- Synthèse des habitudes ---------- */
+
+  // Pistes selon le motif donné (mots-clés, accents et majuscules ignorés).
+  const HABIT_TIPS = [
+    [/fatigu|sommeil|crev|epuis|reveil/, 'Fatigue : misez d\'abord sur le sommeil, un verre d\'eau ou quelques minutes de marche avant de racheter.'],
+    [/stress|anxi|nerv|angoiss|pression|tension/, 'Stress : remplacez l\'achat par une courte pause sans dépense (respiration, marche, musique), souvent aussi efficace.'],
+    [/ennui|ennuy|rien a faire|occup/, 'Ennui : prévoyez une activité gratuite pour ce moment-là (appel à un proche, lecture, sortie).'],
+    [/faim|creux|fringale|grignot/, 'Faim : emportez un en-cas préparé à la maison, bien moins cher.'],
+    [/collegu|ami|pote|social|soiree|pause|potes|famille/, 'Moment partagé : proposez une alternative (thermos maison, pause sans achat) ou fixez un nombre de fois par semaine.'],
+    [/envie|plaisir|recompens|craqu|gourman|kiff/, 'Envie / récompense : gardez-la comme plaisir prévu, avec un nombre de fois fixé à l\'avance.'],
+    [/reflexe|automatique|routine|machinal|trajet/, 'Réflexe : changez le trajet ou le moment qui déclenche l\'achat, et notez-le à chaque fois avant d\'acheter.']
+  ];
+  const sansAccent = (txt) => txt.toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  /** Éléments les plus fréquents d'une liste de noms : « Expresso ×8, Café ×3 ». */
+  const topCounts = (names, max = 4) => {
+    const counts = new Map();
+    for (const nom of names) {
+      const key = suiviKey(nom);
+      const c = counts.get(key) || { nom, n: 0 };
+      c.n += 1;
+      counts.set(key, c);
+    }
+    return [...counts.values()].sort((a, b) => b.n - a.n || a.nom.localeCompare(b.nom, 'fr')).slice(0, max);
+  };
+  const fmtCounts = (list) => list.map((c) => (c.n > 1 ? `${c.nom} ×${c.n}` : c.nom)).join(', ');
+
+  /** Contenu du pop-up Synthèse des habitudes : une fiche par habitude
+      (dépenses du mois et de l'historique), la plus coûteuse ce mois en premier. */
+  function renderHabitudeSynth() {
+    const box = $('#habitudeSynthList');
+    if (!box) return;
+    const all = [...state.depenses.map((d) => ({ ...d, courant: true })),
+      ...state.depensesHistorique.flatMap((m) => m.items)].filter((d) => d.habitude);
+    const byHabit = new Map();
+    for (const d of all) {
+      const key = suiviKey(d.habitude);
+      const g = byHabit.get(key) || { nom: d.habitude, items: [], mois: 0, fois: 0 };
+      g.items.push(d);
+      if (d.courant) { g.mois += d.montant; g.fois += 1; }
+      byHabit.set(key, g);
+    }
+    if (!byHabit.size) {
+      box.replaceChildren(h('p', { class: 'note' }, 'Aucune habitude suivie pour le moment.'));
+      return;
+    }
+    const cards = [...byHabit.values()].sort((a, b) => b.mois - a.mois).map((g) => {
+      const produits = topCounts(g.items.map((d) => d.produit).filter(Boolean));
+      const motifs = topCounts(g.items.map((d) => d.motif).filter(Boolean));
+      const motifsTxt = sansAccent(`${g.items.map((d) => d.motif || '').join(' ')}`);
+      const tips = HABIT_TIPS.filter(([re]) => re.test(motifsTxt)).map(([, tip]) => tip);
+      if (/tabac|cigaret|clope|vape|puff/.test(sansAccent(g.nom))) {
+        tips.push('Tabac : Tabac Info Service (39 89, appel gratuit) propose un accompagnement personnalisé pour réduire ou arrêter.');
+      }
+      if (!motifs.length) tips.push('Notez un motif à chaque achat : c\'est ce qui permet de repérer ce qui déclenche l\'habitude.');
+      if (tips.length < 2) tips.push('Fixez un plafond mensuel pour cette habitude et comparez chaque mois ici.');
+      if (g.mois > 0) tips.push(`En la réduisant de moitié, vous économiseriez environ ${eur0.format(g.mois * 6)} par an.`);
+      return h('article', { class: 'habit-card' },
+        h('div', { class: 'habit-card__head' },
+          h('p', { class: 'habit-card__name' }, g.nom),
+          h('span', { class: 'habit-card__cost' },
+            g.fois ? `${eur2.format(g.mois)} ce mois (${g.fois} fois)` : 'Pas ce mois-ci')),
+        h('dl', {},
+          h('dt', {}, 'Produits'), h('dd', {}, produits.length ? fmtCounts(produits) : '—'),
+          h('dt', {}, 'Motifs'), h('dd', {}, motifs.length ? fmtCounts(motifs) : 'Aucun motif noté')),
+        h('ul', { class: 'habit-card__tips' }, ...tips.map((t) => h('li', {}, t))));
+    });
+    box.replaceChildren(...cards);
+  }
+
+  function bindHabitudeSynth() {
+    const btn = $('#btnHabitudeSynth');
+    if (!btn) return;
+    bindInfoModal('#btnHabitudeSynth', '#habitudeSynthOverlay', '#habitudeSynthClose');
+    btn.addEventListener('click', renderHabitudeSynth);
   }
 
   function bindHistorique() {
@@ -2430,6 +2671,7 @@
     bindLines();
     bindDepenses();
     bindHistorique();
+    bindHabitudeSynth();
     bindCashback();
     bindRoundUp();
     bindScenarios();
