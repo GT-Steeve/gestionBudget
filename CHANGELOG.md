@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.46.0...v1.47.0) (2026-11-18)
+
+
+### Features
+
+* **depenses:** « Que suivre ? » Achat, Produit ou Habitude dans Nouvelle dépense ([3e7930c](https://github.com/GT-Steeve/gestionBudget/commit/3e7930ce514d66d16155a534fd88bd2b4bc92a82))
+
 # [1.46.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.45.0...v1.46.0) (2026-11-17)
 
 
