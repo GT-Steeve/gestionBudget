@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.194">
-  <script src="../assets/js/loader.js?v=1.01.194"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.195">
+  <script src="../assets/js/loader.js?v=1.01.195"></script>
 </head>
 <body data-app="true">
 
@@ -83,36 +83,101 @@
 
 <main class="wrap">
 
-  <!-- CashBack / RoundUp : deux tuiles côte à côte (50 % chacune), même en mobile -->
-  <section class="kpis" aria-label="CashBack et RoundUp" aria-live="polite">
-    <article class="tile tile--summary">
-      <div class="tile__body">
-        <h2>CashBack (<span id="cashbackPageRate">1 %</span>)</h2>
-        <div class="tile-stat">
-          <span class="tile-stat__label">Charges</span>
-          <span class="tile-stat__value" id="kpiCashbackChargesSub">–</span>
-        </div>
-        <div class="tile-stat">
-          <span class="tile-stat__label" id="cashbackAchatsMoisSub">Dépenses de ce mois</span>
-          <span class="tile-stat__value" id="kpiCashbackDepenses">–</span>
-        </div>
-        <a href="cashback.html" class="btn btn--ghost btn--sm">Voir plus d'infos</a>
+  <!-- CashBack / Round Up : un onglet chacun ; l'onglet choisi affiche son
+       résumé puis, dessous, le calendrier de ses gains jour par jour (script.js). -->
+  <!-- Effet dossier : les onglets sont posés au-dessus de la carte, dont le
+       bord haut s'arrête au pied des onglets (l'onglet ouvert passe devant). -->
+  <div class="tabs avantages__tabs" role="tablist" aria-label="Avantage affiché">
+      <button type="button" class="tab" role="tab" id="tab-cashback" data-avantage="cashback" aria-controls="panel-cashback" aria-selected="true">CashBack (<span id="cashbackPageRate">1 %</span>)</button>
+      <button type="button" class="tab" role="tab" id="tab-roundup" data-avantage="roundup" aria-controls="panel-roundup" aria-selected="false" tabindex="-1">Round Up (<span id="roundUpPageValue">x1</span>)</button>
+  </div>
+  <section class="card avantages" aria-label="CashBack et Round Up">
+
+    <div id="panel-cashback" class="avantages__panel" role="tabpanel" aria-labelledby="tab-cashback" aria-live="polite">
+      <!-- Configuration du taux / multiple et des lignes concernées (pop-up en bas de page). -->
+      <div class="avantages__tools">
+        <button id="btnCashbackSettings" class="btn btn--ghost btn--sm btn--icon-text" type="button"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Configurer</button>
       </div>
-    </article>
-    <article class="tile tile--summary">
-      <div class="tile__body">
-        <h2>Round Up (<span id="roundUpPageValue">x1</span>)</h2>
-        <div class="tile-stat">
-          <span class="tile-stat__label">Charges</span>
-          <span class="tile-stat__value" id="kpiRoundUpChargesSub">–</span>
-        </div>
-        <div class="tile-stat">
-          <span class="tile-stat__label" id="roundUpAchatsMoisSub">Dépenses de ce mois</span>
-          <span class="tile-stat__value" id="kpiRoundUpDepenses">–</span>
-        </div>
-        <a href="roundUp.html" class="btn btn--ghost btn--sm">Voir plus d'infos</a>
+      <!-- Résumé du mois en tableau (comme les autres pages), en haut de l'onglet. -->
+      <div class="table-wrap">
+        <table class="table avantages__table">
+          <caption class="sr-only">CashBack du mois</caption>
+          <tbody>
+            <tr>
+              <th scope="row">En charges <span class="cell-sub" id="kpiCashbackChargesSub"></span></th>
+              <td class="num" id="kpiCashbackCharges">–</td>
+            </tr>
+            <tr>
+              <th scope="row">En dépenses <span class="cell-sub" id="cashbackAchatsMoisSub"></span></th>
+              <td class="num" id="kpiCashbackDepenses">–</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">CashBack du mois</th>
+              <td class="num good" id="kpiCashbackMois">–</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-    </article>
+    </div>
+    <div id="panel-roundup" class="avantages__panel" role="tabpanel" aria-labelledby="tab-roundup" aria-live="polite" hidden>
+      <!-- Configuration du taux / multiple et des lignes concernées (pop-up en bas de page). -->
+      <div class="avantages__tools">
+        <button id="btnRoundUpSettings" class="btn btn--ghost btn--sm btn--icon-text" type="button"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Configurer</button>
+      </div>
+      <!-- Résumé du mois en tableau (comme les autres pages), en haut de l'onglet. -->
+      <div class="table-wrap">
+        <table class="table avantages__table">
+          <caption class="sr-only">Round Up du mois</caption>
+          <tbody>
+            <tr>
+              <th scope="row">En charges <span class="cell-sub" id="kpiRoundUpChargesSub"></span></th>
+              <td class="num" id="kpiRoundUpCharges">–</td>
+            </tr>
+            <tr>
+              <th scope="row">En dépenses <span class="cell-sub" id="roundUpAchatsMoisSub"></span></th>
+              <td class="num" id="kpiRoundUpDepenses">–</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Round Up du mois</th>
+              <td class="num good" id="kpiRoundUpMois">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Calendrier des gains de l'onglet choisi : dans chaque case, le gain du
+         jour (charges et dépenses qui en bénéficient) ; un clic sur un jour
+         avec des gains ouvre son détail en pop-up. Comme la page Suivi. -->
+    <div class="cal-tools">
+      <div class="cal-nav">
+        <button type="button" id="avCalPrev" class="icon-btn icon-btn--view" aria-label="Mois précédent">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p id="avCalTitle" class="cal-title" aria-live="polite"></p>
+        <button type="button" id="avCalNext" class="icon-btn icon-btn--view" aria-label="Mois suivant">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="cal">
+      <div class="cal__head" aria-hidden="true">
+        <span>Lun</span>
+        <span>Mar</span>
+        <span>Mer</span>
+        <span>Jeu</span>
+        <span>Ven</span>
+        <span>Sam</span>
+        <span>Dim</span>
+      </div>
+      <ol class="cal__grid" id="avCalGrid" aria-labelledby="avCalTitle"></ol>
+    </div>
+    <!-- Lien vers la page détaillée de l'onglet choisi (texte et adresse mis à jour par script.js). -->
+    <a href="cashback.html" id="avMoreLink" class="btn btn--ghost btn--sm avantages__more">Format liste</a>
   </section>
 
   <p class="back-link"><a href="../index.html">← Retour au tableau de bord</a></p>
@@ -122,6 +187,75 @@
 <footer class="wrap foot">
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
+
+<!-- Détail d'un jour du calendrier des gains (comme la page Suivi) : les
+     charges et dépenses du jour et leur CashBack / Round Up (script.js). -->
+<div id="avZoomOverlay" class="modal-overlay cal-zoom-overlay" hidden>
+  <div class="modal cal-zoom" role="dialog" aria-modal="true" aria-labelledby="avDayTitle">
+    <div class="wizard__head">
+      <p class="modal__title" id="avDayTitle"></p>
+      <button type="button" id="avZoomClose" class="icon-btn wizard__close" aria-label="Fermer le détail du jour">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <ul class="cal-day__list" id="avDayList"></ul>
+  </div>
+</div>
+
+<!-- Réglage du CashBack : taux, puis interrupteur ligne par ligne (script.js). -->
+<div id="cashbackSettingsOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wide av-settings" role="dialog" aria-modal="true" aria-labelledby="cashbackSettingsTitle">
+    <div class="wizard__head">
+      <p id="cashbackSettingsTitle" class="modal__title">CashBack</p>
+      <button type="button" class="icon-btn wizard__close" data-close-for="cashbackSettingsClose" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <!-- Réglage et lignes défilent ensemble (rien de fixe dans la pop-up). -->
+    <div class="modal-list av-settings__body">
+      <div class="av-settings__rate">
+        <label for="cashbackRateInput" class="av-settings__label">Taux</label>
+        <div class="av-settings__input">
+          <input id="cashbackRateInput" type="number" min="0" max="100" step="0.1" inputmode="decimal">
+          <span aria-hidden="true">%</span>
+        </div>
+      </div>
+      <div id="cashbackSettingsList" class="av-settings__list"></div>
+    </div>
+    <div class="modal__actions modal__actions--center">
+      <button type="button" id="cashbackSettingsClose" class="btn">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<!-- Réglage du Round Up : multiple d'arrondi, puis interrupteur ligne par ligne (script.js). -->
+<div id="roundUpSettingsOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wide av-settings" role="dialog" aria-modal="true" aria-labelledby="roundUpSettingsTitle">
+    <div class="wizard__head">
+      <p id="roundUpSettingsTitle" class="modal__title">Round Up</p>
+      <button type="button" class="icon-btn wizard__close" data-close-for="roundUpSettingsClose" aria-label="Fermer">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <!-- Réglage et lignes défilent ensemble (rien de fixe dans la pop-up). -->
+    <div class="modal-list av-settings__body">
+      <div class="av-settings__rate av-settings__rate--stack">
+        <span id="roundUpToLabel" class="av-settings__label">Arrondir au multiple de</span>
+        <div class="av-seg" role="radiogroup" aria-labelledby="roundUpToLabel">
+          <label class="av-seg__opt"><input type="radio" name="roundUpTo" value="1"><span>x1</span></label>
+          <label class="av-seg__opt"><input type="radio" name="roundUpTo" value="2"><span>x2</span></label>
+          <label class="av-seg__opt"><input type="radio" name="roundUpTo" value="3"><span>x3</span></label>
+          <label class="av-seg__opt"><input type="radio" name="roundUpTo" value="5"><span>x5</span></label>
+          <label class="av-seg__opt"><input type="radio" name="roundUpTo" value="10"><span>x10</span></label>
+        </div>
+      </div>
+      <div id="roundUpSettingsList" class="av-settings__list"></div>
+    </div>
+    <div class="modal__actions modal__actions--center">
+      <button type="button" id="roundUpSettingsClose" class="btn">Terminé</button>
+    </div>
+  </div>
+</div>
 
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -134,12 +268,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.194"></script>
-<script src="../assets/js/ui.js?v=1.01.194"></script>
-<script src="../assets/js/nav.js?v=1.01.194"></script>
-<script src="../assets/js/calc.js?v=1.01.194"></script>
-<script src="../assets/js/state.js?v=1.01.194"></script>
-<script src="../assets/js/guide.js?v=1.01.194"></script>
-<script src="../assets/js/script.js?v=1.01.194"></script>
+<script src="../assets/js/profiles.js?v=1.01.195"></script>
+<script src="../assets/js/ui.js?v=1.01.195"></script>
+<script src="../assets/js/nav.js?v=1.01.195"></script>
+<script src="../assets/js/calc.js?v=1.01.195"></script>
+<script src="../assets/js/state.js?v=1.01.195"></script>
+<script src="../assets/js/guide.js?v=1.01.195"></script>
+<script src="../assets/js/script.js?v=1.01.195"></script>
 </body>
 </html>

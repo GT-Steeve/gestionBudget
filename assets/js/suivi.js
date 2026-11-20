@@ -354,12 +354,6 @@
 
   $('#calPrev').addEventListener('click', () => { shiftMonth(-1); render(); });
   $('#calNext').addEventListener('click', () => { shiftMonth(1); render(); });
-  $('#calToday').addEventListener('click', () => {
-    year = today.getFullYear();
-    month = today.getMonth();
-    selected = today.getDate();
-    render();
-  });
   checks.forEach((c) => c.addEventListener('change', () => {
     store.set(FILTER_KEY, checks.filter((x) => !x.checked).map((x) => x.value));
     render();

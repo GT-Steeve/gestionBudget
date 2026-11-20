@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.194">
-  <script src="../assets/js/loader.js?v=1.01.194"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.195">
+  <script src="../assets/js/loader.js?v=1.01.195"></script>
 </head>
 <body data-app="true">
 
@@ -83,31 +83,13 @@
 
 <main class="wrap">
 
-  <!-- Résumé -->
-  <section class="kpis" aria-label="Résumé" aria-live="polite">
-    <article class="tile">
-      <div class="tile__body">
-        <p class="tile__label">Sur les charges</p>
-        <p class="tile__value" id="kpiRoundUpCharges">–</p>
-        <p class="tile__sub" id="kpiRoundUpChargesSub">–</p>
-      </div>
-    </article>
-    <article class="tile">
-      <div class="tile__body">
-        <p class="tile__label">Sur les dépenses</p>
-        <p class="tile__value" id="kpiRoundUpDepenses">–</p>
-        <p class="tile__sub" id="roundUpAchatsMoisSub">Dépenses de ce mois</p>
-      </div>
-    </article>
-  </section>
-
   <!-- RoundUp -->
   <section id="roundup" class="card" aria-labelledby="h-roundup">
     <div class="card__head">
-      <h2 id="h-roundup">RoundUp (<span id="roundUpPageValue">x1</span>)</h2>
-      <button id="btnRoundUpSettings" class="btn btn--ghost btn--sm" type="button">Paramétrer</button>
+      <h2 id="h-roundup">RoundUp</h2>
+      <!-- Retour au calendrier de la page CashBack, onglet Round Up, au mois consulté. -->
+      <a href="backOrRound.html#roundup" class="btn btn--ghost btn--sm btn--icon-text"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Calendrier</a>
     </div>
-    <p class="lead">Chaque charge ou dépense est arrondie au multiple supérieur choisi ; la différence est mise de côté, comme sur Trade Republic.</p>
 
     <h3 class="h3 h3--gap">Charges</h3>
     <div class="table-scroll-wrap">
@@ -115,18 +97,20 @@
         <table class="table" id="roundUpChargesTable">
           <caption class="sr-only">RoundUp sur les charges</caption>
           <thead>
-            <tr class="row-desktop">
+            <tr>
               <th scope="col">Libellé</th>
-              <th scope="col" class="num">Mensuel (€)</th>
-              <th scope="col" class="num">RoundUp (€)</th>
-            </tr>
-            <tr class="row-mobile">
-              <th scope="col">Libellé</th>
-              <th scope="col" class="num">RoundUp (€)</th>
-              <th scope="col" class="num">Mensuel (€)</th>
+              <th scope="col" class="num">Coût</th>
+              <th scope="col" class="num">RoundUp</th>
             </tr>
           </thead>
           <tbody id="roundUpChargesBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td class="num" data-total="montant">–</td>
+              <td class="num" data-total="gain">–</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <button type="button" class="scroll-arrow scroll-arrow--left" id="roundUpChargesScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
@@ -143,18 +127,20 @@
         <table class="table" id="roundUpDepensesTable">
           <caption class="sr-only">RoundUp sur les dépenses</caption>
           <thead>
-            <tr class="row-desktop">
+            <tr>
               <th scope="col">Libellé</th>
-              <th scope="col" class="num">Montant (€)</th>
-              <th scope="col" class="num">RoundUp (€)</th>
-            </tr>
-            <tr class="row-mobile">
-              <th scope="col">Libellé</th>
-              <th scope="col" class="num">RoundUp (€)</th>
-              <th scope="col" class="num">Montant (€)</th>
+              <th scope="col" class="num">Montant</th>
+              <th scope="col" class="num">RoundUp</th>
             </tr>
           </thead>
           <tbody id="roundUpDepensesBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td class="num" data-total="montant">–</td>
+              <td class="num" data-total="gain">–</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <button type="button" class="scroll-arrow scroll-arrow--left" id="roundUpDepensesScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
@@ -185,32 +171,12 @@
   </div>
 </div>
 
-<div id="roundUpSettingsOverlay" class="modal-overlay" hidden>
-  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="roundUpSettingsTitle">
-    <p id="roundUpSettingsTitle" class="modal__title modal__title--center">Paramétrer le RoundUp (<span id="roundUpSettingsValue">x1</span>)</p>
-    <p class="note">Activez le round up pour les charges et dépenses concernées, désactivez-le pour les autres.</p>
-    <label class="cb-rate-field">Arrondir au multiple de
-      <select id="roundUpSelect">
-        <option value="1">x1</option>
-        <option value="2">x2</option>
-        <option value="3">x3</option>
-        <option value="5">x5</option>
-        <option value="10">x10</option>
-      </select>
-    </label>
-    <div id="roundUpSettingsList" class="modal-list"></div>
-    <div class="modal__actions modal__actions--center">
-      <button type="button" id="roundUpSettingsClose" class="btn btn--ghost">Terminé</button>
-    </div>
-  </div>
-</div>
-
-<script src="../assets/js/profiles.js?v=1.01.194"></script>
-<script src="../assets/js/ui.js?v=1.01.194"></script>
-<script src="../assets/js/nav.js?v=1.01.194"></script>
-<script src="../assets/js/calc.js?v=1.01.194"></script>
-<script src="../assets/js/state.js?v=1.01.194"></script>
-<script src="../assets/js/guide.js?v=1.01.194"></script>
-<script src="../assets/js/script.js?v=1.01.194"></script>
+<script src="../assets/js/profiles.js?v=1.01.195"></script>
+<script src="../assets/js/ui.js?v=1.01.195"></script>
+<script src="../assets/js/nav.js?v=1.01.195"></script>
+<script src="../assets/js/calc.js?v=1.01.195"></script>
+<script src="../assets/js/state.js?v=1.01.195"></script>
+<script src="../assets/js/guide.js?v=1.01.195"></script>
+<script src="../assets/js/script.js?v=1.01.195"></script>
 </body>
 </html>

@@ -534,21 +534,93 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .cb-row__text { display: flex; flex-direction: column; min-width: 0; }
 .cb-row__name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cb-row__amount { font-size: 12px; color: var(--muted); }
-#cashbackSettingsTitle { margin-bottom: 4px; }
-#cashbackSettingsOverlay .note, #roundUpSettingsOverlay .note { text-align: justify; margin-top: 0; }
-.cb-rate-field { max-width: 140px; margin: 12px auto 16px; text-align: center; }
+/* Pop-ups « Configurer » (CashBack / Round Up, page backOrRound.html) :
+   réglage principal dans un encadré, puis lignes groupées avec compteur. */
+/* Le pop-up tient toujours entier dans l'écran (coins arrondis visibles,
+   marge autour) : il ne dépasse pas 640px ni la hauteur de la fenêtre moins
+   une marge ; seul son contenu (réglage + lignes) défile. */
+.av-settings {
+  display: flex; flex-direction: column;
+  max-height: min(640px, calc(100vh / var(--zoom) - 80px));
+}
+.av-settings__body { flex: 1 1 auto; min-height: 0; max-height: none; }
+.av-settings__rate {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px 16px;
+  margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--wash);
+}
+.av-settings__rate--stack { flex-direction: column; align-items: stretch; }
+.av-settings__label { display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 650; color: var(--ink); }
+.av-settings__input { display: flex; align-items: center; gap: 6px; flex: none; font-weight: 650; }
+.av-settings__input input { width: 84px; text-align: right; }
+.av-settings__list { margin-top: 4px; }
+.av-settings__group { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.av-settings__group:first-child { margin-top: 8px; }
+.av-settings__count { margin-left: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+/* Multiple du Round Up : boutons segmentés x1 … x10. */
+.av-seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.av-seg__opt { position: relative; }
+.av-seg__opt input { position: absolute; opacity: 0; pointer-events: none; }
+.av-seg__opt span {
+  display: flex; align-items: center; justify-content: center; height: 36px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+  font-size: 14px; font-weight: 650; color: var(--ink-2); cursor: pointer;
+}
+.av-seg__opt span:hover { color: var(--ink); border-color: var(--axis); }
+.av-seg__opt input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.av-seg__opt input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* backOrRound.html : tuile enrichie (titre + 2 stats + bouton) au lieu du
-   simple label/valeur/sous-texte habituel — toujours 2 tuiles à 50 % côte à
-   côte (voir .kpis), y compris en mobile. */
-.tile--summary { flex-direction: column; align-items: stretch; }
-.tile--summary .tile__body { width: 100%; }
-.tile--summary h2 { margin: 0 0 14px; font-size: 18px; font-weight: 700; text-align: center; }
-.tile-stat { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 8px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 14px; }
-.tile-stat:last-of-type { border-bottom: 0; }
-.tile-stat__label { color: var(--ink-2); }
-.tile-stat__value { font-weight: 650; font-variant-numeric: tabular-nums; }
-.tile--summary .btn { display: block; text-align: center; margin-top: 14px; }
+/* backOrRound.html : onglets CashBack / Round Up ; l'onglet choisi affiche sa
+   tuile de résumé (2 stats + bouton), puis le calendrier de ses gains. */
+/* Onglets « classeur » : intercalaires arrondis en haut, posés sur le bord
+   haut de la carte (le dossier, juste en dessous) ; l'onglet ouvert prend la
+   couleur de la carte et passe devant ce bord (il fait corps avec son
+   contenu), les autres restent en retrait. */
+/* Les onglets occupent toute la largeur : le bord gauche du premier et le bord
+   droit du dernier prolongent ceux de la carte, dont les coins du haut sont
+   donc droits. */
+.avantages__tabs {
+  justify-content: stretch; align-items: flex-end; gap: 2px;
+  margin: 20px 0 0; padding: 0; border-bottom: 0;
+}
+.avantages__tabs .tab { flex: 1 1 0; }
+.avantages__tabs + .card { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
+.avantages__tabs .tab {
+  position: relative; margin-bottom: -1px; padding: 8px 18px;
+  background: var(--wash); color: var(--ink-2);
+  border: 1px solid var(--border); border-bottom-color: var(--border);
+  border-radius: 0;
+}
+.avantages__tabs .tab:hover { color: var(--ink); background: color-mix(in srgb, var(--wash) 60%, var(--surface)); }
+.avantages__tabs .tab[aria-selected="true"] {
+  z-index: 1; padding: 11px 22px 10px;
+  background: var(--surface); color: var(--ink); font-weight: 700;
+  border-bottom-color: var(--surface);
+}
+.avantages__tabs .tab:focus-visible { outline-offset: -3px; border-radius: 0; }
+/* Résumé de l'onglet : les deux tuiles de la page détaillée (charges,
+   dépenses) côte à côte, puis le lien vers cette page. */
+/* Résumé du mois en tableau, sans largeur minimale (2 colonnes seulement). */
+.avantages__table { min-width: 0; }
+.avantages__table tbody th { font-weight: 600; }
+/* Sans traits ni survol : un simple résumé, pas une liste de lignes. */
+.avantages__table tbody tr { border-bottom: 0; }
+.avantages__table tbody tr:hover { background: none; }
+.avantages__table tfoot th, .avantages__table tfoot td { border-top: 0; }
+.cell-sub { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+.avantages__more { display: table; margin: 16px auto 0; }
+/* Bouton Configurer : en haut à gauche de l'onglet, sous les onglets. */
+.avantages__tools { display: flex; justify-content: flex-start; margin-bottom: 8px; }
+.btn--icon-text { display: inline-flex; align-items: center; gap: 6px; }
+/* cashback.html / roundUp.html : bouton Calendrier aligné sur le titre, à droite. */
+#cashback .card__head, #roundup .card__head { align-items: center; }
+/* Cases sans gain du calendrier des gains : rien à ouvrir au clic. */
+.cal__day--static, .cal__day--static:hover { cursor: default; border-color: transparent; }
+/* Cases moins hautes que celles du Suivi : au plus le gain du jour et deux
+   pastilles (charges, dépenses), soit 12px de marges + 22px de numéro + 4px
+   + 2 × 19px de pastilles + 3px d'écart. */
+#avCalGrid .cal__day { min-height: 84px; }
+/* Sélection du mois (‹ Novembre 2026 ›) centrée au-dessus du calendrier. */
+.avantages .cal-nav { justify-content: center; }
 
 /* ---------- Breakdown ---------- */
 
@@ -1708,7 +1780,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 /* Suivi sur mobile : cases carrées, une pastille de couleur par évènement
    (le détail s'affiche sous le calendrier au toucher d'un jour). */
 @media (max-width: 640px) {
-  .cal-nav { justify-content: center; }
+  .cal-nav { justify-content: center; flex-wrap: wrap; }
+  /* Onglets classeur : moins d'espace intérieur pour tenir sur la largeur. */
+  .avantages__tabs { margin-top: 12px; gap: 2px; }
+  .avantages__tabs .tab, .avantages__tabs .tab[aria-selected="true"] { padding-left: 8px; padding-right: 8px; }
   .cal-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cal-check { column-gap: 8px; padding: 6px 12px; }
   .cal-check__value { font-size: 14px; }
@@ -1725,7 +1800,14 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
      dessous, en montant compact (« −1,2k », sans €). */
   .cal__day { aspect-ratio: auto; min-height: 66px; }
   .cal__top { flex-direction: column; gap: 0; max-width: 100%; }
+  /* Tableaux CashBack / RoundUp (3 colonnes) : tiennent dans la largeur de
+     l'écran, sans défilement horizontal ; le libellé passe à la ligne. */
+  #cashback .table, #roundup .table { min-width: 0; font-size: 14px; }
+  #cashback .table th, #cashback .table td, #roundup .table th, #roundup .table td { padding: 8px 6px; }
+  #cashback .table tbody td:first-child, #roundup .table tbody td:first-child { overflow-wrap: anywhere; }
+  #cashback .table thead th, #roundup .table thead th { white-space: normal; letter-spacing: 0; }
   .cal__solde { max-width: 100%; font-size: 9px; letter-spacing: -0.02em; }
+  #avCalGrid .cal__day { min-height: 56px; }
   .cal__solde-full { display: none; }
   .cal__solde-short { display: inline; }
   /* Cumul sous le solde : la case s'agrandit (jours avec activité) ; on serre

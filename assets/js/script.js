@@ -78,7 +78,7 @@
   const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, MAX_RATE, ROUND_UP_OPTIONS,
     uid, num, clamp, readRate } = BudgetState;
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
-    currentMonthName, currentMonthWithPreposition, openModal, confirmDialog: confirmDelete, bindInfoModal,
+    currentMonthName, openModal, confirmDialog: confirmDelete, bindInfoModal,
     openPicker, pickerOpt, pickCategory, pickDate, pickTime, bindAddWizard, bindResponsiveTrigger,
     niceScale, arcPath, ringPath } = UI;
 
@@ -1331,10 +1331,11 @@
      ========================================================================== */
 
   function renderCashback() {
-    /** N'affiche que les lignes soumises au cashback (voir Paramétrer) : une
+    /** N'affiche que les lignes soumises au cashback (voir Configurer) : une
         ligne désactivée n'a rien à montrer dans ce tableau. */
     const buildRows = (body, items, amountKey, wrap, leftBtn, rightBtn) => {
       const visible = items.filter((item) => item.cashbackOn !== false);
+      setTableTotals(body, visible, amountKey, (montant) => montant * cashbackFraction());
       body.replaceChildren();
       if (!visible.length) {
         body.append(h('tr', {}, h('td', { colspan: 3, class: 'empty' }, 'Aucune ligne soumise au cashback pour le moment.')));
@@ -1347,9 +1348,8 @@
         const nameCell = h('td', {}, item.nom);
         const montantCell = h('td', { class: 'num' }, eur2.format(montant));
         const cashbackCell = h('td', { class: 'num' }, eur2.format(cashback));
-        body.append(MOBILE_QUERY.matches
-          ? h('tr', {}, nameCell, cashbackCell, montantCell)
-          : h('tr', {}, nameCell, montantCell, cashbackCell));
+        // Même ordre en mobile et en bureau : libellé, coût / montant, cashback.
+        body.append(h('tr', {}, nameCell, montantCell, cashbackCell));
       }
       updateScrollArrows(wrap, leftBtn, rightBtn);
     };
@@ -1364,79 +1364,89 @@
       buildRows($('#cashbackDepensesBody'), state.depenses, 'montant',
         $('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
     }
+    // Taux / multiple affichés (titres, réglage) : à jour sur toutes les pages.
+    syncCashbackRateUI();
+    // Tuiles de résumé : seulement dans l'onglet de backOrRound.html.
     if (!$('#kpiCashbackChargesSub')) return;
 
     const chargesCashback = state.charges.reduce((sum, c) => sum + (c.cashbackOn !== false ? c.mensuel * cashbackFraction() : 0), 0);
     const depensesCashback = state.depenses.reduce((sum, d) => sum + (d.cashbackOn !== false ? d.montant * cashbackFraction() : 0), 0);
-    // #kpiCashbackCharges (montant mensuel brut) n'existe que sur cashback.html ;
-    // backOrRound.html n'affiche que le total annuel (#kpiCashbackChargesSub).
     if ($('#kpiCashbackCharges')) $('#kpiCashbackCharges').textContent = eur2.format(chargesCashback);
     $('#kpiCashbackChargesSub').textContent = `${eur2.format(annual(chargesCashback))} par an`;
     $('#kpiCashbackDepenses').textContent = eur2.format(depensesCashback);
-    if ($('#cashbackAchatsMoisSub')) $('#cashbackAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
-    syncCashbackRateUI();
+    if ($('#cashbackAchatsMoisSub')) $('#cashbackAchatsMoisSub').textContent = `en ${currentMonthName()}`;
+    // Ligne « CashBack du mois » du tableau : charges + dépenses du mois.
+    if ($('#kpiCashbackMois')) $('#kpiCashbackMois').textContent = `+${eur2.format(chargesCashback + depensesCashback)}`;
   }
 
   /** Synchronise l'affichage du taux (titre de page, titre du pop-up, champ)
       sur state.cashbackRate. */
   function syncCashbackRateUI() {
     if ($('#cashbackPageRate')) $('#cashbackPageRate').textContent = fmtRate(state.cashbackRate);
-    if ($('#cashbackSettingsRate')) $('#cashbackSettingsRate').textContent = fmtRate(state.cashbackRate);
     const input = $('#cashbackRateInput');
     if (input) input.value = rateNf.format(state.cashbackRate);
   }
 
-  /** Liste du pop-up de paramétrage : une section Charges puis Dépenses, chaque
-      ligne avec son interrupteur pour inclure ou non le cashback. */
-  function renderCashbackSettings() {
-    const box = $('#cashbackSettingsList');
-    if (!box) return;
-    syncCashbackRateUI();
+  /** Liste des lignes du pop-up « Configurer » (CashBack ou Round Up) :
+      deux groupes (Charges, Dépenses) avec le nombre de lignes actives, puis
+      chaque ligne (son nom) et son interrupteur. flag : 'cashbackOn' ou 'roundUpOn'. */
+  function renderAvantageSettings(box, flag) {
     box.replaceChildren();
-
-    const buildGroup = (title, items, amountKey, first) => {
-      box.append(h('h3', { class: first ? 'h3' : 'h3 h3--gap' }, title));
+    const group = (title, items) => {
+      const count = h('span', { class: 'av-settings__count' });
+      const sync = () => {
+        const on = items.filter((it) => it[flag] !== false).length;
+        count.textContent = `${on} / ${items.length} active${on > 1 ? 's' : ''}`;
+      };
+      const head = h('div', { class: 'av-settings__group' },
+        h('h3', { class: 'h3' }, title, ' ', count));
+      box.append(head);
       if (!items.length) {
         box.append(h('p', { class: 'note' }, 'Aucune ligne pour le moment.'));
         return;
       }
-      for (const item of items) {
-        // Ne pas rappeler renderCashbackSettings() ici : ça recrée l'interrupteur
-        // avant que la transition CSS du curseur ait pu jouer. refresh() suffit,
-        // la case à cocher reflète déjà son propre état via :checked.
+      for (const it of items) {
+        // Ne pas recréer la liste à chaque clic : l'interrupteur perdrait
+        // l'animation de son curseur. On met juste à jour le compteur (sync).
         const input = h('input', {
-          type: 'checkbox', checked: item.cashbackOn !== false,
-          onchange: (e) => { item.cashbackOn = e.target.checked; refresh(); }
+          type: 'checkbox', checked: it[flag] !== false,
+          'aria-label': `${title} : ${it.nom}`,
+          onchange: (e) => { it[flag] = e.target.checked; sync(); refresh(); }
         });
-        const toggle = h('label', { class: 'switch' },
-          input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' })));
         box.append(h('div', { class: 'cb-row' },
-          h('div', { class: 'cb-row__text' },
-            h('span', { class: 'cb-row__name' }, item.nom),
-            h('span', { class: 'cb-row__amount' }, eur2.format(item[amountKey]))
-          ),
-          toggle
-        ));
+          h('div', { class: 'cb-row__text' }, h('span', { class: 'cb-row__name', title: it.nom }, it.nom)),
+          h('label', { class: 'switch' }, input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' })))));
       }
+      sync();
     };
+    group('Charges', state.charges);
+    group('Dépenses', state.depenses);
+  }
 
-    buildGroup('Charges', state.charges, 'mensuel', true);
-    buildGroup('Dépenses', state.depenses, 'montant', false);
+  function renderCashbackSettings() {
+    const box = $('#cashbackSettingsList');
+    if (!box) return;
+    syncCashbackRateUI();
+    renderAvantageSettings(box, 'cashbackOn');
   }
 
   function bindCashback() {
+    // Réglage (bouton Configurer et son pop-up) : onglet CashBack de backOrRound.html.
     const btn = $('#btnCashbackSettings');
-    if (!btn) return;
-    bindInfoModal('#btnCashbackSettings', '#cashbackSettingsOverlay', '#cashbackSettingsClose');
-    btn.addEventListener('click', renderCashbackSettings);
-    $('#cashbackRateInput').addEventListener('change', (e) => {
-      state.cashbackRate = readRate(e.target.value, 1);
-      syncCashbackRateUI();
-      refresh();
-    });
-    bindScrollArrows($('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
-    bindScrollArrows($('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
-    MOBILE_QUERY.addEventListener('change', renderCashback);
+    if (btn) {
+      bindInfoModal('#btnCashbackSettings', '#cashbackSettingsOverlay', '#cashbackSettingsClose');
+      btn.addEventListener('click', renderCashbackSettings);
+      $('#cashbackRateInput').addEventListener('change', (e) => {
+        state.cashbackRate = readRate(e.target.value, 1);
+        syncCashbackRateUI();
+        refresh();
+      });
+    }
+    // Tableaux Charges / Dépenses : cashback.html.
+    if ($('#cashbackChargesTableWrap')) {
+      bindScrollArrows($('#cashbackChargesTableWrap'), $('#cashbackChargesScrollLeft'), $('#cashbackChargesScrollRight'));
+      bindScrollArrows($('#cashbackDepensesTableWrap'), $('#cashbackDepensesScrollLeft'), $('#cashbackDepensesScrollRight'));
+    }
   }
 
   /* ==========================================================================
@@ -1445,9 +1455,21 @@
      Republic ; même logique de paramétrage ligne par ligne que CashBack.)
      ========================================================================== */
 
+  /** Ligne Total (tfoot) d'un tableau CashBack / RoundUp : somme des montants
+      et des gains des lignes affichées (format desktop et mobile). */
+  function setTableTotals(body, visible, amountKey, gainOf) {
+    const table = body.closest('table');
+    if (!table) return;
+    const montant = visible.reduce((t, item) => t + item[amountKey], 0);
+    const gain = visible.reduce((t, item) => t + gainOf(item[amountKey]), 0);
+    table.querySelectorAll('[data-total="montant"]').forEach((td) => { td.textContent = eur2.format(montant); });
+    table.querySelectorAll('[data-total="gain"]').forEach((td) => { td.textContent = eur2.format(gain); });
+  }
+
   function renderRoundUp() {
     const buildRows = (body, items, amountKey, wrap, leftBtn, rightBtn) => {
       const visible = items.filter((item) => item.roundUpOn !== false);
+      setTableTotals(body, visible, amountKey, roundUpAmount);
       body.replaceChildren();
       if (!visible.length) {
         body.append(h('tr', {}, h('td', { colspan: 3, class: 'empty' }, 'Aucune ligne soumise au round up pour le moment.')));
@@ -1460,9 +1482,8 @@
         const nameCell = h('td', {}, item.nom);
         const montantCell = h('td', { class: 'num' }, eur2.format(montant));
         const roundUpCell = h('td', { class: 'num' }, eur2.format(roundUp));
-        body.append(MOBILE_QUERY.matches
-          ? h('tr', {}, nameCell, roundUpCell, montantCell)
-          : h('tr', {}, nameCell, montantCell, roundUpCell));
+        // Même ordre en mobile et en bureau : libellé, coût / montant, round up.
+        body.append(h('tr', {}, nameCell, montantCell, roundUpCell));
       }
       updateScrollArrows(wrap, leftBtn, rightBtn);
     };
@@ -1473,79 +1494,283 @@
       buildRows($('#roundUpDepensesBody'), state.depenses, 'montant',
         $('#roundUpDepensesTableWrap'), $('#roundUpDepensesScrollLeft'), $('#roundUpDepensesScrollRight'));
     }
+    // Taux / multiple affichés (titres, réglage) : à jour sur toutes les pages.
+    syncRoundUpValueUI();
+    // Tuiles de résumé : seulement dans l'onglet de backOrRound.html.
     if (!$('#kpiRoundUpChargesSub')) return;
 
     const chargesRoundUp = state.charges.reduce((sum, c) => sum + (c.roundUpOn !== false ? roundUpAmount(c.mensuel) : 0), 0);
     const depensesRoundUp = state.depenses.reduce((sum, d) => sum + (d.roundUpOn !== false ? roundUpAmount(d.montant) : 0), 0);
-    // #kpiRoundUpCharges (montant mensuel brut) n'existe que sur roundUp.html ;
-    // backOrRound.html n'affiche que le total annuel (#kpiRoundUpChargesSub).
     if ($('#kpiRoundUpCharges')) $('#kpiRoundUpCharges').textContent = eur2.format(chargesRoundUp);
     $('#kpiRoundUpChargesSub').textContent = `${eur2.format(annual(chargesRoundUp))} par an`;
     $('#kpiRoundUpDepenses').textContent = eur2.format(depensesRoundUp);
-    if ($('#roundUpAchatsMoisSub')) $('#roundUpAchatsMoisSub').textContent = `Dépenses ${currentMonthWithPreposition()}`;
-    syncRoundUpValueUI();
+    if ($('#roundUpAchatsMoisSub')) $('#roundUpAchatsMoisSub').textContent = `en ${currentMonthName()}`;
+    // Ligne « Round Up du mois » du tableau : charges + dépenses du mois.
+    if ($('#kpiRoundUpMois')) $('#kpiRoundUpMois').textContent = `+${eur2.format(chargesRoundUp + depensesRoundUp)}`;
+  }
+
+  /* ==========================================================================
+     1quinquies. Page CashBack (backOrRound.html) : onglets CashBack / Round Up
+     et calendrier des gains du mois, jour par jour (même présentation que la
+     page Suivi). Les charges reviennent chaque mois au jour de leur ajout (à
+     partir du mois d'ajout ; le 1er pour une ligne sans date), les dépenses
+     comptent au jour de leur ajout. Les mois archivés n'ont plus le réglage
+     ligne par ligne : leurs dépenses comptent toutes.
+     ========================================================================== */
+
+  const AV_TAB_KEY = 'gestion-budget-avantage-onglet';
+  // Mois consulté dans le calendrier (« AAAA-MM »), le temps de la session :
+  // retrouvé en revenant de la vue liste (cashback.html / roundUp.html).
+  const AV_MONTH_KEY = 'gestion-budget-avantage-mois';
+  const avCal = { tab: 'cashback', year: 0, month: 0 };
+
+  /** Gain d'une ligne pour un onglet (l'affiché par défaut ; 0 si l'avantage y est désactivé). */
+  const avGain = (item, montant, tab = avCal.tab) => (tab === 'cashback'
+    ? (item.cashbackOn !== false ? montant * cashbackFraction() : 0)
+    : (item.roundUpOn !== false ? roundUpAmount(montant) : 0));
+
+  /** Gains du mois (y, m) par jour : { [jour]: [{ type, nom, montant, gain }] }. */
+  function avantagesOf(y, m, tab = avCal.tab) {
+    const byDay = {};
+    const last = new Date(y, m + 1, 0).getDate();
+    const monthStart = new Date(y, m, 1);
+    const push = (day, ev) => { if (ev.gain > 0.004) (byDay[day] ||= []).push(ev); };
+    for (const c of state.charges) {
+      const added = c.ajout ? new Date(c.ajout) : null;
+      if (added && new Date(added.getFullYear(), added.getMonth(), 1) > monthStart) continue;
+      push(Math.min(added ? added.getDate() : 1, last), { type: 'charge', nom: c.nom, montant: c.mensuel, gain: avGain(c, c.mensuel, tab) });
+    }
+    const fromKey = (key) => { const [yy, mm] = key.split('-').map(Number); return new Date(yy, mm - 1, 1); };
+    const depenses = [
+      ...state.depenses.map((d) => ({ d, mois: state.depensesMoisCourant })),
+      ...state.depensesHistorique.flatMap((hm) => hm.items.map((d) => ({ d, mois: hm.mois })))
+    ];
+    for (const { d, mois } of depenses) {
+      const date = d.ajout ? new Date(d.ajout) : fromKey(mois);
+      if (date.getFullYear() !== y || date.getMonth() !== m) continue;
+      push(date.getDate(), { type: 'depense', nom: d.nom, montant: d.montant, gain: avGain(d, d.montant, tab) });
+    }
+    return byDay;
+  }
+
+  function renderAvantagesCal() {
+    const grid = $('#avCalGrid');
+    if (!grid) return;
+    const { year, month } = avCal;
+    const today = new Date();
+    const last = new Date(year, month + 1, 0).getDate();
+    const byDay = avantagesOf(year, month);
+    const sumOf = (list) => list.reduce((t, ev) => t + ev.gain, 0);
+    const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const nom = avCal.tab === 'cashback' ? 'CashBack' : 'Round Up';
+
+    $('#avCalTitle').textContent = capitalize(new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' })
+      .format(new Date(year, month, 1)));
+
+    const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi en premier
+    const cells = Array.from({ length: offset }, () => h('li', { class: 'cal__cell cal__cell--pad', 'aria-hidden': 'true' }));
+    const isThisMonth = year === today.getFullYear() && month === today.getMonth();
+    for (let d = 1; d <= last; d++) {
+      const list = byDay[d] || [];
+      const gain = sumOf(list);
+      // Une pastille par type (charges, dépenses) avec son gain.
+      // Montants des cases en « 00,00 » : ni + (toujours positifs) ni €.
+      const chips = ['charge', 'depense'].map((type) => {
+        const evs = list.filter((ev) => ev.type === type);
+        if (!evs.length) return null;
+        const label = evs.length === 1 ? evs[0].nom : `${evs.length} ${type === 'charge' ? 'charges' : 'dépenses'}`;
+        return h('span', { class: `cal-chip cal-chip--${type}` },
+          h('span', { class: 'cal-chip__name' }, label), h('span', { class: 'cal-chip__amount' }, fmtCellGain(sumOf(evs))));
+      }).filter(Boolean);
+      // Case du jour : son gain et ses pastilles ; un clic ouvre le détail
+      // (seulement s'il y a des gains ce jour-là).
+      const cell = h('button', {
+        type: 'button', class: `cal__day${list.length ? '' : ' cal__day--static'}`, 'data-day': d,
+        'aria-label': `${fmtDay.format(new Date(year, month, d))}${gain ? `, ${nom} ${eur2.format(gain)}` : ''}`,
+        'aria-current': isThisMonth && d === today.getDate() ? 'date' : null,
+        'aria-haspopup': list.length ? 'dialog' : null,
+        onclick: () => { if (list.length) openAvantagesDay(d, list, nom); }
+      }, h('span', { class: 'cal__top' },
+        h('span', { class: 'cal__num' }, String(d)),
+        gain ? h('span', { class: 'cal__solde good', title: `${nom} du jour : ${eur2.format(gain)}`, 'data-gain': gain },
+          fmtCellGain(gain)) : null),
+      h('span', { class: 'cal__chips' }, chips));
+      cells.push(h('li', { class: `cal__cell${list.length ? ' has-events' : ''}` }, cell));
+    }
+    grid.replaceChildren(...cells);
+    fitGains(grid);
+    renderAvantagesTables();
+  }
+
+  /** Tableaux de résumé des deux onglets pour le mois affiché par le
+      calendrier : gain des charges (et son équivalent sur un an), gain des
+      dépenses « en <mois> », total du mois. */
+  function renderAvantagesTables() {
+    const { year, month } = avCal;
+    const now = new Date();
+    const mois = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date(year, month, 1));
+    const libelle = `en ${mois}${year !== now.getFullYear() ? ` ${year}` : ''}`;
+    for (const [tab, key, low] of [['cashback', 'Cashback', 'cashback'], ['roundup', 'RoundUp', 'roundUp']]) {
+      if (!$(`#kpi${key}Mois`)) continue;
+      const sum = { charge: 0, depense: 0 };
+      Object.values(avantagesOf(year, month, tab)).flat().forEach((ev) => { sum[ev.type] += ev.gain; });
+      $(`#kpi${key}Charges`).textContent = eur2.format(sum.charge);
+      $(`#kpi${key}ChargesSub`).textContent = `${eur2.format(annual(sum.charge))} par an`;
+      $(`#kpi${key}Depenses`).textContent = eur2.format(sum.depense);
+      $(`#${low}AchatsMoisSub`).textContent = libelle;
+      $(`#kpi${key}Mois`).textContent = `+${eur2.format(sum.charge + sum.depense)}`;
+    }
+  }
+
+  /** Gain du jour trop large pour sa case : arrondi à 1 décimale (« 12,5 »),
+      puis à l'euro (« 13 ») plutôt que coupé (« 12,… »). */
+  const GAIN_FORMATS = [2, 1, 0].map((n) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: n, maximumFractionDigits: n }));
+  /** Montant d'une case avec n décimales (2 par défaut), sans décimales s'il
+      tombe juste une fois arrondi : « 12,50 », mais « 12 » plutôt que « 12,00 ». */
+  const fmtCellGain = (v, n = 2) => {
+    const rounded = Math.round(v * 10 ** n) / 10 ** n;
+    return Number.isInteger(rounded) ? GAIN_FORMATS[2].format(rounded) : GAIN_FORMATS[2 - n].format(rounded);
+  };
+  function fitGains(grid) {
+    for (const el of grid.querySelectorAll('.cal__solde[data-gain]')) {
+      const v = Number(el.dataset.gain);
+      for (const n of [2, 1, 0]) {
+        el.textContent = fmtCellGain(v, n);
+        if (el.scrollWidth <= el.clientWidth + 0.5) break;
+      }
+    }
+  }
+
+  /** Pop-up du détail d'un jour : chaque charge / dépense, son montant et son
+      gain, puis le total du jour (dès deux lignes). */
+  function openAvantagesDay(d, list, nom) {
+    const overlay = $('#avZoomOverlay');
+    if (!overlay) return;
+    const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const total = list.reduce((t, ev) => t + ev.gain, 0);
+    $('#avDayTitle').textContent = capitalize(fmtDay.format(new Date(avCal.year, avCal.month, d)));
+    $('#avDayList').replaceChildren(
+      ...list.map((ev) => h('li', { class: `cal-ev cal-ev--${ev.type}` },
+        h('span', { class: 'sw', 'aria-hidden': 'true' }),
+        h('span', { class: 'cal-ev__name' }, ev.nom,
+          h('span', { class: 'cal-ev__cat' }, `${ev.type === 'charge' ? 'Charge' : 'Dépense'} · ${eur2.format(ev.montant)}`)),
+        h('span', { class: 'cal-ev__amount good' }, `+${eur2.format(ev.gain)}`))),
+      ...(list.length > 1 ? [h('li', { class: 'cal-ev cal-ev--solde' },
+        h('span', { class: 'sw', 'aria-hidden': 'true' }),
+        h('span', { class: 'cal-ev__name' }, `${nom} du jour`),
+        h('span', { class: 'cal-ev__amount good' }, `+${eur2.format(total)}`))] : []));
+    const close = openModal(overlay, {
+      focus: $('#avZoomClose'),
+      onClose: () => $('#avZoomClose').removeEventListener('click', close)
+    });
+    $('#avZoomClose').addEventListener('click', close);
+  }
+
+  function bindAvantages() {
+    // Croix des pop-ups « Configurer » : même effet que leur bouton Terminé.
+    for (const x of document.querySelectorAll('[data-close-for]')) {
+      x.addEventListener('click', () => $(`#${x.dataset.closeFor}`)?.click());
+    }
+    const tabs = [...document.querySelectorAll('.avantages__tabs .tab')];
+    if (!tabs.length) return;
+    const today = new Date();
+    Object.assign(avCal, { year: today.getFullYear(), month: today.getMonth() });
+    try {
+      if (localStorage.getItem(AV_TAB_KEY) === 'roundup') avCal.tab = 'roundup';
+      const mois = sessionStorage.getItem(AV_MONTH_KEY);
+      if (/^\d{4}-\d{2}$/.test(mois || '')) {
+        const [y, m] = mois.split('-').map(Number);
+        Object.assign(avCal, { year: y, month: m - 1 });
+      }
+    } catch { /* stockage indisponible */ }
+    // Arrivée par le bouton Calendrier d'une vue liste : l'onglet correspondant.
+    if (location.hash === '#cashback' || location.hash === '#roundup') avCal.tab = location.hash.slice(1);
+    const apply = () => {
+      tabs.forEach((t) => {
+        const on = t.dataset.avantage === avCal.tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+      });
+      $('#panel-cashback').hidden = avCal.tab !== 'cashback';
+      $('#panel-roundup').hidden = avCal.tab !== 'roundup';
+      // Lien sous le calendrier : vers la page détaillée de l'onglet choisi.
+      const more = $('#avMoreLink');
+      if (more) {
+        more.href = avCal.tab === 'cashback' ? 'cashback.html' : 'roundUp.html';
+      }
+      renderAvantagesCal();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => {
+        avCal.tab = t.dataset.avantage;
+        try { localStorage.setItem(AV_TAB_KEY, avCal.tab); } catch { /* stockage indisponible */ }
+        apply();
+      });
+      // Flèches gauche/droite : onglet suivant ou précédent.
+      t.addEventListener('keydown', (e) => {
+        const step = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        const next = tabs[(i + step + tabs.length) % tabs.length];
+        next.focus();
+        next.click();
+      });
+    });
+    const shift = (delta) => {
+      const d = new Date(avCal.year, avCal.month + delta, 1);
+      avCal.year = d.getFullYear();
+      avCal.month = d.getMonth();
+      try {
+        sessionStorage.setItem(AV_MONTH_KEY, `${avCal.year}-${String(avCal.month + 1).padStart(2, '0')}`);
+      } catch { /* stockage indisponible */ }
+      renderAvantagesCal();
+    };
+    // Largeur des cases changée : nouvel arrondi des gains si besoin.
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => fitGains($('#avCalGrid')), 150);
+    });
+    $('#avCalPrev').addEventListener('click', () => shift(-1));
+    $('#avCalNext').addEventListener('click', () => shift(1));
+    apply();
   }
 
   /** Synchronise l'affichage du multiple choisi (titre de page, titre du pop-up, select). */
   function syncRoundUpValueUI() {
     const label = `x${state.roundUpTo}`;
     if ($('#roundUpPageValue')) $('#roundUpPageValue').textContent = label;
-    if ($('#roundUpSettingsValue')) $('#roundUpSettingsValue').textContent = label;
-    const select = $('#roundUpSelect');
-    if (select) select.value = String(state.roundUpTo);
+    const radio = $(`input[name="roundUpTo"][value="${state.roundUpTo}"]`);
+    if (radio) radio.checked = true;
   }
 
-  /** Liste du pop-up de paramétrage : une section Charges puis Dépenses, chaque
-      ligne avec son interrupteur pour inclure ou non le round up. */
   function renderRoundUpSettings() {
     const box = $('#roundUpSettingsList');
     if (!box) return;
     syncRoundUpValueUI();
-    box.replaceChildren();
-
-    const buildGroup = (title, items, amountKey, first) => {
-      box.append(h('h3', { class: first ? 'h3' : 'h3 h3--gap' }, title));
-      if (!items.length) {
-        box.append(h('p', { class: 'note' }, 'Aucune ligne pour le moment.'));
-        return;
-      }
-      for (const item of items) {
-        // Ne pas rappeler renderRoundUpSettings() ici : voir la même remarque
-        // sur l'interrupteur CashBack (refresh() suffit, :checked s'en charge).
-        const input = h('input', {
-          type: 'checkbox', checked: item.roundUpOn !== false,
-          onchange: (e) => { item.roundUpOn = e.target.checked; refresh(); }
-        });
-        const toggle = h('label', { class: 'switch' },
-          input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' })));
-        box.append(h('div', { class: 'cb-row' },
-          h('div', { class: 'cb-row__text' },
-            h('span', { class: 'cb-row__name' }, item.nom),
-            h('span', { class: 'cb-row__amount' }, eur2.format(item[amountKey]))
-          ),
-          toggle
-        ));
-      }
-    };
-
-    buildGroup('Charges', state.charges, 'mensuel', true);
-    buildGroup('Dépenses', state.depenses, 'montant', false);
+    renderAvantageSettings(box, 'roundUpOn');
   }
 
   function bindRoundUp() {
+    // Réglage (bouton Configurer et son pop-up) : onglet Round Up de backOrRound.html.
     const btn = $('#btnRoundUpSettings');
-    if (!btn) return;
-    bindInfoModal('#btnRoundUpSettings', '#roundUpSettingsOverlay', '#roundUpSettingsClose');
-    btn.addEventListener('click', renderRoundUpSettings);
-    $('#roundUpSelect').addEventListener('change', (e) => {
-      const v = parseInt(e.target.value, 10);
-      state.roundUpTo = ROUND_UP_OPTIONS.includes(v) ? v : 1;
-      syncRoundUpValueUI();
-      refresh();
-    });
-    bindScrollArrows($('#roundUpChargesTableWrap'), $('#roundUpChargesScrollLeft'), $('#roundUpChargesScrollRight'));
-    bindScrollArrows($('#roundUpDepensesTableWrap'), $('#roundUpDepensesScrollLeft'), $('#roundUpDepensesScrollRight'));
-    MOBILE_QUERY.addEventListener('change', renderRoundUp);
+    if (btn) {
+      bindInfoModal('#btnRoundUpSettings', '#roundUpSettingsOverlay', '#roundUpSettingsClose');
+      btn.addEventListener('click', renderRoundUpSettings);
+      for (const radio of document.querySelectorAll('input[name="roundUpTo"]')) {
+        radio.addEventListener('change', (e) => {
+          const v = parseInt(e.target.value, 10);
+          state.roundUpTo = ROUND_UP_OPTIONS.includes(v) ? v : 1;
+          syncRoundUpValueUI();
+          refresh();
+        });
+      }
+    }
+    // Tableaux Charges / Dépenses : roundUp.html.
+    if ($('#roundUpChargesTableWrap')) {
+      bindScrollArrows($('#roundUpChargesTableWrap'), $('#roundUpChargesScrollLeft'), $('#roundUpChargesScrollRight'));
+      bindScrollArrows($('#roundUpDepensesTableWrap'), $('#roundUpDepensesScrollLeft'), $('#roundUpDepensesScrollRight'));
+    }
   }
 
   /* ==========================================================================
@@ -2751,6 +2976,7 @@
     renderSynthese();
     renderCashback();
     renderRoundUp();
+    renderAvantagesCal();
     save();
   }
 
@@ -2762,6 +2988,7 @@
     bindHabitudeSynth();
     bindCashback();
     bindRoundUp();
+    bindAvantages();
     bindScenarios();
     bindYield();
     bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
