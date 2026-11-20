@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.49.0...v1.50.0) (2026-11-20)
+
+
+### Features
+
+* **cashback:** onglets CashBack / Round Up avec calendrier des gains ([b3fe560](https://github.com/GT-Steeve/gestionBudget/commit/b3fe5604a9163fdea5e54230858f2e7512180701))
+
 # [1.49.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.48.0...v1.49.0) (2026-11-20)
 
 
