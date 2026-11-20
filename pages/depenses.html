@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.193">
-  <script src="../assets/js/loader.js?v=1.01.193"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.194">
+  <script src="../assets/js/loader.js?v=1.01.194"></script>
 </head>
 <body data-app="true">
 
@@ -269,8 +269,8 @@
 
 <!-- Ajout d'une dépense, guidé étape par étape (un champ à la fois) : plus
      pratique à remplir au clavier mobile qu'une ligne avec plusieurs champs
-     côte à côte. Première étape « Que suivre ? », puis selon la réponse :
-     - Achat (besoin général) : catégorie, montant, lieu ;
+     côte à côte. Première étape « Que suivre ? » (titre de la pop-up), puis :
+     - Dépense (besoin général) : catégorie, montant, lieu ;
      - Produit (besoin précis et répété) : produit (à choisir parmi ceux déjà
        suivis ou à nommer), sa catégorie s'il est nouveau, puis son prix, avec
        le total de l'achat s'il a été acheté avec d'autres articles ;
@@ -281,7 +281,7 @@
 <div id="depenseWizardOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wizard" role="dialog" aria-modal="true" aria-labelledby="depenseWizardTitle">
     <div class="wizard__head">
-      <p id="depenseWizardTitle" class="modal__title">Nouvelle dépense</p>
+      <p id="depenseWizardTitle" class="modal__title">Que suivre ?</p>
       <button type="button" id="depenseWizardClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
@@ -290,11 +290,11 @@
          les champs de l'autre parcours, vides, ne bloquent pas l'ajout. -->
     <form id="depenseForm" autocomplete="off" novalidate>
       <div class="wizard__step" data-step="suivi">
-        <p id="dSuiviQuestion" class="wizard__question">Que suivre ?</p>
-        <div class="choices choices--trio" role="radiogroup" aria-labelledby="dSuiviQuestion">
+        <!-- La question « Que suivre ? » est le titre de la pop-up à cette étape. -->
+        <div class="choices choices--trio" role="radiogroup" aria-labelledby="depenseWizardTitle">
           <label class="choice choice--compact">
             <input type="radio" name="dSuivi" value="general" checked>
-            <span class="choice__label">Achat</span>
+            <span class="choice__label">Dépense</span>
           </label>
           <label class="choice choice--compact">
             <input type="radio" name="dSuivi" value="produit">
@@ -339,6 +339,10 @@
         <label for="dNom">Où avez-vous fait cette dépense ?
           <input id="dNom" type="text" maxlength="60" placeholder="Ex. Carrefour, pharmacie, en ligne" required>
         </label>
+        <div id="dNomsBox" class="produit-picks" hidden>
+          <p class="produit-picks__title">Lieu déjà utilisé</p>
+          <div id="dNomsList" class="cat-picker produit-picks__list"></div>
+        </div>
       </div>
       <div class="wizard__step" data-step="motif" hidden>
         <label for="dMotif">Motif (facultatif)
@@ -395,12 +399,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.193"></script>
-<script src="../assets/js/ui.js?v=1.01.193"></script>
-<script src="../assets/js/nav.js?v=1.01.193"></script>
-<script src="../assets/js/calc.js?v=1.01.193"></script>
-<script src="../assets/js/state.js?v=1.01.193"></script>
-<script src="../assets/js/guide.js?v=1.01.193"></script>
-<script src="../assets/js/script.js?v=1.01.193"></script>
+<script src="../assets/js/profiles.js?v=1.01.194"></script>
+<script src="../assets/js/ui.js?v=1.01.194"></script>
+<script src="../assets/js/nav.js?v=1.01.194"></script>
+<script src="../assets/js/calc.js?v=1.01.194"></script>
+<script src="../assets/js/state.js?v=1.01.194"></script>
+<script src="../assets/js/guide.js?v=1.01.194"></script>
+<script src="../assets/js/script.js?v=1.01.194"></script>
 </body>
 </html>

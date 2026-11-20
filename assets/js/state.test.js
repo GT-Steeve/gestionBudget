@@ -176,4 +176,12 @@ describe('BudgetState.load — habitudes suivies', () => {
     }), NOW);
     expect(state.habitudes).toEqual([{ nom: 'Café', categorie: 'Alimentaire' }, { nom: 'Tabac', categorie: 'Autre' }]);
   });
+
+  it('cleans the removed suggestions (places and reasons)', () => {
+    expect(BudgetState.load(saved({}), NOW).suggestionsMasquees).toEqual({ lieux: [], motifs: [] });
+    const state = BudgetState.load(saved({
+      suggestionsMasquees: { lieux: [' Carrefour ', 'carrefour', 3, ''], motifs: 'Fatigue' }
+    }), NOW);
+    expect(state.suggestionsMasquees).toEqual({ lieux: ['Carrefour'], motifs: [] });
+  });
 });

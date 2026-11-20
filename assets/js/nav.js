@@ -127,6 +127,7 @@
         saved.depensesHistorique = [];
         saved.produits = [];
         saved.habitudes = [];
+        saved.suggestionsMasquees = { lieux: [], motifs: [] };
         store.set(STORAGE_KEY, saved);
         // Budget entièrement vidé : le guide de démarrage repart de zéro (comme script.js).
         // Ces pages sont toutes dans /pages/ : la Synthèse est un niveau au-dessus.

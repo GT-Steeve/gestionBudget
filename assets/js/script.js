@@ -657,6 +657,7 @@
         state.depensesHistorique = [];
         state.produits = [];
         state.habitudes = [];
+        state.suggestionsMasquees = { lieux: [], motifs: [] };
         renderLines('revenus');
         renderLines('charges');
         renderDepenses();
@@ -854,6 +855,49 @@
     state.depenses.forEach(relabel);
     state.depensesHistorique.forEach((m) => m.items.forEach(relabel));
   }
+  /** Appui long (3 s) sur un bouton : onLong() au lieu du clic. Le bouton se
+      remplit pendant l'appui (.is-pressing, voir CSS) ; bouger le doigt ou
+      relâcher avant annule. Au clavier : touche Suppr ou Retour arrière. */
+  const LONG_PRESS_MS = 3000;
+  function bindLongPress(btn, onLong) {
+    let timer = null;
+    let start = null;
+    let fired = false;
+    const cancel = () => {
+      clearTimeout(timer);
+      timer = null;
+      btn.classList.remove('is-pressing');
+    };
+    btn.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      fired = false;
+      start = { x: e.clientX, y: e.clientY };
+      btn.classList.add('is-pressing');
+      timer = setTimeout(() => {
+        cancel();
+        fired = true;
+        onLong();
+      }, LONG_PRESS_MS);
+    });
+    btn.addEventListener('pointermove', (e) => {
+      if (timer && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(type, cancel);
+    // Pas de menu contextuel (appui long sur mobile) ; pas de clic après l'appui long.
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    btn.addEventListener('click', (e) => {
+      if (!fired) return;
+      fired = false;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }, true);
+    btn.addEventListener('keydown', (e) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      e.preventDefault();
+      onLong();
+    });
+  }
+
   function bindDepenses() {
     bindNomPlaceholder('#dCat', '#dNom', NOM_PLACEHOLDERS.depenses);
     const form = $('#depenseForm');
@@ -862,7 +906,7 @@
     const avecAutres = () => $('input[name="dAvec"]:checked')?.value === 'avec';
     const produitNom = () => ($('#dProduit')?.value || '').trim();
     const habitudeNom = () => ($('#dHabitude')?.value || '').trim();
-    // Parcours choisi à la 1re étape « Que suivre ? » : 'general' (Achat),
+    // Parcours choisi à la 1re étape « Que suivre ? » : 'general' (Dépense),
     // 'produit' ou 'habitude'.
     const mode = () => $('input[name="dSuivi"]:checked')?.value || 'general';
     const isPrecis = () => mode() === 'produit';
@@ -890,11 +934,13 @@
     };
     let wizard = null;
 
-    /** Cartes des noms déjà saisis (produits, habitudes ou motifs), filtrées
-        par la saisie : un clic remplit le champ et passe à l'étape suivante.
-        Mêmes boutons que « Choisir la catégorie » (le nom saisi, s'il est
-        connu, mis en avant). */
-    const renderPicks = (names, input, box, list, confirmPick) => {
+    /** Cartes des noms déjà saisis (produits, habitudes, lieux ou motifs),
+        filtrées par la saisie : un clic remplit le champ et passe à l'étape
+        suivante. Mêmes boutons que « Choisir la catégorie » (le nom saisi,
+        s'il est connu, mis en avant). opts.confirmPick(nom, ok) : confirmation
+        avant de reprendre la carte ; opts.remove(nom) : retire la suggestion
+        (appui long de 3 s ou touche Suppr, après confirmation). */
+    const renderPicks = (names, input, box, list, opts = {}) => {
       const boxEl = $(box);
       const listEl = $(list);
       if (!boxEl || !listEl) return;
@@ -905,23 +951,54 @@
         $(input).value = nom;
         wizard?.next();
       };
-      listEl.replaceChildren(...matches.map((nom) => pickerOpt(nom, suiviKey(nom) === query,
-        () => (confirmPick ? confirmPick(nom, () => pick(nom)) : pick(nom)), { title: nom })));
+      listEl.replaceChildren(...matches.map((nom) => {
+        const btn = pickerOpt(nom, suiviKey(nom) === query,
+          () => (opts.confirmPick ? opts.confirmPick(nom, () => pick(nom)) : pick(nom)), { title: nom });
+        if (opts.remove) {
+          bindLongPress(btn, () => confirmDelete('Retirer cette suggestion ?', [['', nom]], () => {
+            opts.remove(nom);
+            save();
+            renderCurrentPicks();
+          }, { center: true, okLabel: 'Retirer' }));
+        }
+        return btn;
+      }));
     };
-    const renderProduitPicks = () => renderPicks(state.produits.map((p) => p.nom),
-      '#dProduit', '#dProduitsBox', '#dProduitsList');
-    const renderHabitudePicks = () => renderPicks(state.habitudes.map((p) => p.nom),
-      '#dHabitude', '#dHabitudesBox', '#dHabitudesList');
-    // Motifs : ceux des dépenses du mois et de l'historique, sans doublon.
-    const renderMotifPicks = () => {
-      const motifs = new Map();
+    /** Lieux ou motifs des dépenses du mois et de l'historique (field : 'nom'
+        ou 'motif'), sans doublon ni suggestion retirée. */
+    const pastValues = (field, keep, masques) => {
+      const hidden = new Set(masques.map(suiviKey));
+      const values = new Map();
       for (const d of [...state.depenses, ...state.depensesHistorique.flatMap((m) => m.items)]) {
-        if (d.motif && !motifs.has(suiviKey(d.motif))) motifs.set(suiviKey(d.motif), d.motif);
+        const v = d[field];
+        if (v && keep(d) && !hidden.has(suiviKey(v)) && !values.has(suiviKey(v))) values.set(suiviKey(v), v);
       }
-      // Carte coupée si le motif est long : il est confirmé en entier avant d'être repris.
-      renderPicks([...motifs.values()], '#dMotif', '#dMotifsBox', '#dMotifsList', (nom, ok) =>
-        confirmDelete('Est-ce bien le motif ?', [['', nom]], ok,
-          { center: true, okLabel: 'Oui', cancelLabel: 'Non', danger: false }));
+      return [...values.values()];
+    };
+    const sansNom = (list, nom) => list.filter((p) => suiviKey(p.nom) !== suiviKey(nom));
+    const renderProduitPicks = () => renderPicks(state.produits.map((p) => p.nom),
+      '#dProduit', '#dProduitsBox', '#dProduitsList',
+      { remove: (nom) => { state.produits = sansNom(state.produits, nom); } });
+    const renderHabitudePicks = () => renderPicks(state.habitudes.map((p) => p.nom),
+      '#dHabitude', '#dHabitudesBox', '#dHabitudesList',
+      { remove: (nom) => { state.habitudes = sansNom(state.habitudes, nom); } });
+    // Lieux des achats (dépenses sans produit suivi) : repris d'un clic à l'étape « Où ».
+    const renderNomPicks = () => renderPicks(
+      pastValues('nom', (d) => !d.produit && !d.habitude, state.suggestionsMasquees.lieux),
+      '#dNom', '#dNomsBox', '#dNomsList',
+      { remove: (nom) => { state.suggestionsMasquees.lieux.push(nom); } });
+    const renderMotifPicks = () => renderPicks(
+      pastValues('motif', () => true, state.suggestionsMasquees.motifs),
+      '#dMotif', '#dMotifsBox', '#dMotifsList', {
+        // Carte coupée si le motif est long : il est confirmé en entier avant d'être repris.
+        confirmPick: (nom, ok) => confirmDelete('Est-ce bien le motif ?', [['', nom]], ok,
+          { center: true, okLabel: 'Oui', cancelLabel: 'Non', danger: false }),
+        remove: (nom) => { state.suggestionsMasquees.motifs.push(nom); }
+      });
+    /** Cartes de l'étape affichée, redessinées après le retrait d'une suggestion. */
+    const renderCurrentPicks = () => {
+      const step = form?.querySelector('.wizard__step:not([hidden])')?.dataset.step;
+      ({ produit: renderProduitPicks, habitude: renderHabitudePicks, nom: renderNomPicks, motif: renderMotifPicks })[step]?.();
     };
 
     /** Étape Prix : le champ « total de l'achat » n'apparaît que si le produit
@@ -947,7 +1024,7 @@
         ['#dPrix', '#dTotal'], null],
       // Produit : produit, sa catégorie seulement s'il est nouveau, puis son
       // prix. Habitude : habitude, produit consommé (sa catégorie s'il est
-      // nouveau), son prix puis le motif. Achat : catégorie, montant, lieu.
+      // nouveau), son prix puis le motif. Dépense : catégorie, montant, lieu.
       flow: () => {
         const m = mode();
         if (m === 'produit') {
@@ -970,10 +1047,12 @@
       },
       onStep: (i) => {
         const m = mode();
-        // « Que suivre ? » : un clic sur Achat, Produit ou Habitude passe
+        // « Que suivre ? » : un clic sur Dépense, Produit ou Habitude passe
         // directement à l'étape 2, sans bouton Suivant.
         // (bindAddWizard a déjà masqué Suivant sur la dernière étape.)
         if (i === STEP.suivi) $('#depenseWizardNext').hidden = true;
+        // Titre : la question à l'étape 1, puis « Nouvelle dépense ».
+        $('#depenseWizardTitle').textContent = i === STEP.suivi ? 'Que suivre ?' : 'Nouvelle dépense';
         if (i === STEP.cat) {
           const nom = m === 'general' ? '' : produitNom();
           $('#dCatQuestion').textContent = nom ? `Dans quelle catégorie ranger « ${nom} » ?` : 'Dans quelle catégorie ?';
@@ -988,6 +1067,7 @@
           renderProduitPicks();
         }
         if (i === STEP.motif) renderMotifPicks();
+        if (i === STEP.nom) renderNomPicks();
         if (i === STEP.habitude) renderHabitudePicks();
         if (i === STEP.prix) {
           prefillPrix($('#dPrix'));
@@ -997,7 +1077,7 @@
           const montant = $('#dMontant');
           if (m === 'habitude') prefillPrix(montant);
           else if (montant.dataset.prefillFor !== undefined) {
-            // Retour à « Achat » après une habitude : pas de prix d'un produit.
+            // Retour à « Dépense » après une habitude : pas de prix d'un produit.
             montant.value = '';
             delete montant.dataset.prefillFor;
           }
@@ -1008,13 +1088,14 @@
     if (form) {
       $('#dProduit').addEventListener('input', renderProduitPicks);
       $('#dHabitude').addEventListener('input', renderHabitudePicks);
-      // Retour vers une étape à cartes (habitude, produit, motif) : champ vidé
+      // Retour vers une étape à cartes (habitude, produit, lieu, motif) : champ vidé
       // pour choisir de nouveau, toutes les cartes de nouveau visibles. Ce
       // listener passe après celui de bindAddWizard (étape déjà affichée).
       const PICK_STEPS = {
         habitude: ['#dHabitude', renderHabitudePicks],
         produit: ['#dProduit', renderProduitPicks],
-        motif: ['#dMotif', renderMotifPicks]
+        motif: ['#dMotif', renderMotifPicks],
+        nom: ['#dNom', renderNomPicks]
       };
       $('#depenseWizardBack').addEventListener('click', () => {
         const step = form.querySelector('.wizard__step:not([hidden])')?.dataset.step;
@@ -1035,6 +1116,7 @@
         });
       }
       $('#dMotif').addEventListener('input', renderMotifPicks);
+      $('#dNom').addEventListener('input', renderNomPicks);
       for (const radio of form.querySelectorAll('input[name="dAvec"]')) radio.addEventListener('change', syncPrix);
       $('#dPrix').addEventListener('input', syncPrix);
       $('#dTotal').addEventListener('input', syncPrix);
@@ -1082,6 +1164,9 @@
           }
           const prix = num($('#dMontant').value);
           const motif = $('#dMotif').value.trim().slice(0, 80);
+          // Motif retiré des suggestions puis saisi de nouveau : il revient.
+          state.suggestionsMasquees.motifs = state.suggestionsMasquees.motifs
+            .filter((m) => suiviKey(m) !== suiviKey(motif));
           state.depenses.push({
             id: uid(), categorie: produit.categorie, nom: produit.nom, montant: prix, ...avantages,
             produit: produit.nom, produitPrix: prix, habitude: habitude.nom, ...(motif ? { motif } : {})
@@ -1090,6 +1175,9 @@
         } else {
           const nom = $('#dNom').value.trim();
           if (!nom) return;
+          // Lieu retiré des suggestions puis saisi de nouveau : il revient.
+          state.suggestionsMasquees.lieux = state.suggestionsMasquees.lieux
+            .filter((l) => suiviKey(l) !== suiviKey(nom));
           state.depenses.push({ id: uid(), categorie: $('#dCat').value, nom, montant: num($('#dMontant').value), ...avantages });
           $('#dNom').value = '';
           $('#dMontant').value = '';

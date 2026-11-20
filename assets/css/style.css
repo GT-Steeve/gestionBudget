@@ -1048,6 +1048,17 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
    en plus court (la pop-up garde le champ et les boutons visibles). */
 .produit-picks__list.cat-picker { margin-top: 0; max-height: 196px; padding: 1px; }
 .produit-picks__list .cat-picker__opt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Appui long (3 s) pour retirer une suggestion : la carte se remplit de gauche
+   à droite pendant l'appui ; pas de sélection de texte ni de menu sur mobile. */
+.produit-picks__list .cat-picker__opt {
+  position: relative; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.produit-picks__list .cat-picker__opt::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--bad) 20%, transparent);
+  transform: scaleX(0); transform-origin: left;
+}
+.produit-picks__list .cat-picker__opt.is-pressing::after { transform: scaleX(1); transition: transform 3s linear; }
 #depProduitBreakdown .bd__name, #depHabitudeBreakdown .bd__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Répartition par produit / habitude : nom cliquable pour la renommer. */
 #depProduitBreakdown, #depHabitudeBreakdown { grid-template-columns: minmax(110px, 42%) 1fr auto auto; }

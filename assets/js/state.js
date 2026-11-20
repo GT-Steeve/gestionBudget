@@ -93,6 +93,7 @@
       ],
       produits: [],
       habitudes: [],
+      suggestionsMasquees: { lieux: [], motifs: [] },
       depensesMoisCourant: monthKey(now),
       cashbackRate: 1,
       roundUpTo: 1,
@@ -169,10 +170,27 @@
     }).slice(0, 200);
   };
 
+  /** Suggestions retirées par l'utilisateur (lieux et motifs proposés en
+      cartes dans la pop-up Dépense), sans doublon. */
+  const masques = (list, max) => {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter((x) => typeof x === 'string')
+      .map((x) => x.trim().slice(0, max)).filter((x) => {
+        const key = x.toLocaleLowerCase('fr');
+        if (!x || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 500);
+  };
+  const suggestionsMasquees = (v) => {
+    const o = v !== null && typeof v === 'object' && !Array.isArray(v) ? v : {};
+    return { lieux: masques(o.lieux, 60), motifs: masques(o.motifs, 80) };
+  };
+
   /** Budget vide (nouveau profil, première utilisation). */
   const emptyState = (now = new Date()) => ({
     revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], habitudes: [],
-    depensesMoisCourant: monthKey(now),
+    suggestionsMasquees: { lieux: [], motifs: [] }, depensesMoisCourant: monthKey(now),
     cashbackRate: 1, roundUpTo: 1, scenarios: [], appliquees: [], view: 'mois',
     yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
   });
@@ -211,6 +229,7 @@
       })).slice(0, 12),
       produits: suivis(saved.produits),
       habitudes: suivis(saved.habitudes),
+      suggestionsMasquees: suggestionsMasquees(saved.suggestionsMasquees),
       depensesMoisCourant: /^\d{4}-\d{2}$/.test(saved.depensesMoisCourant) ? saved.depensesMoisCourant : monthKey(now),
       cashbackRate: Number.isFinite(saved.cashbackRate) ? clamp(saved.cashbackRate, 0, MAX_RATE) : 1,
       roundUpTo: ROUND_UP_OPTIONS.includes(saved.roundUpTo) ? saved.roundUpTo : 1,

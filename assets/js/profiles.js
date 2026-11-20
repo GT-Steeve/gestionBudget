@@ -31,7 +31,7 @@
   // et dans les sélecteurs de fichiers mobiles (l'extension .gbudget reste).
   const PROFILE_MIME = 'application/json';
   const STATE_KEYS = ['revenus', 'charges', 'depenses', 'depensesHistorique', 'produits', 'habitudes',
-    'depensesMoisCourant', 'scenarios', 'appliquees', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
+    'suggestionsMasquees', 'depensesMoisCourant', 'scenarios', 'appliquees', 'cashbackRate', 'roundUpTo', 'view', 'yield'];
   const MAX_ITEMS = 5000;
   // Avancement du guide (page Guide) : étape en cours, ou « fini » une fois le
   // guide suivi, quitté ou remplacé par un budget simulé.
