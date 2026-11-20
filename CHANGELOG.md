@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.48.0...v1.49.0) (2026-11-20)
+
+
+### Features
+
+* **depenses:** lieux en cartes et retrait d'une suggestion par appui long ([31f9d52](https://github.com/GT-Steeve/gestionBudget/commit/31f9d525811e8b79cc2b4970534c4572969307a3))
+
 # [1.48.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.47.0...v1.48.0) (2026-11-18)
 
 
