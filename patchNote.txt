@@ -65,6 +65,7 @@ v1.20.1 = ajout bouton tracker un produit
 v1.20.2 = fusion tracker un produit et nouvelle dépense
 v1.21.0 = polish UX suivi.html
 v1.21.1 = polish UX nouvelle dépense + retirer suggestion carte
+v1.22.0 = rework onglet cashback
 
 ** Next idea **
 exporter / imprimer l'historique des dépenses via un calendrier + liste
