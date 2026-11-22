@@ -12,16 +12,18 @@
      passe alors sur la ligne en dessous.
    Toucher un jour avec activité agrandit sa case en pop-up (effet de zoom
    depuis la case) avec le détail : évènements, total (dès deux évènements)
-   et solde du jour.
+   et solde du jour. Toucher un évènement de ce pop-up ouvre son pop-up
+   Détail (le même que les autres pages, ui.js) : Modifier ou Effacer y
+   enregistrent le changement, puis le calendrier et le jour suivent.
    Un filtre (cases à cocher) choisit les évènements pris en compte : un type
    décoché disparaît des cases et du détail, et n'entre plus dans le cumul,
    le total ni le solde du jour (les totaux du mois, en haut, restent
-   complets). Il est mémorisé dans ce navigateur. Page en lecture seule : rien n'est enregistré.
+   complets). Il est mémorisé dans ce navigateur.
    ========================================================================== */
 'use strict';
 
 (() => {
-  const { $, h, eur2, capitalize, openModal } = UI;
+  const { $, h, eur2, capitalize, openModal, confirmDialog, itemDetails } = UI;
   const STORAGE_KEY = Profiles.dataKey();
   // Types décochés (et non cochés) : un type ajouté plus tard au filtre s'affiche par défaut.
   const FILTER_KEY = 'gestion-budget-suivi-masques';
@@ -59,13 +61,16 @@
   /** Premier jour du mois « AAAA-MM ». */
   const fromKey = (key) => { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1); };
 
-  /** Dépenses datées, mois en cours et historique (sans date : le 1er de leur mois). */
-  const depenses = [
-    ...state.depenses.map((d) => ({ ...d, mois: state.depensesMoisCourant })),
-    ...state.depensesHistorique.flatMap((m) => m.items.map((d) => ({ ...d, mois: m.mois })))
-  ].map((d) => ({ item: d, date: parseDate(d.ajout) || fromKey(d.mois) }));
+  const save = () => store.set(STORAGE_KEY, state);
 
-  /** Évènements du mois (y, m) regroupés par jour : { [jour]: [{ type, nom, categorie, montant }] }. */
+  /** Dépenses datées, mois en cours et historique (sans date : le 1er de leur
+      mois). item : la dépense elle-même (modifiable depuis le pop-up Détail). */
+  const depensesDatees = () => [
+    ...state.depenses.map((d) => ({ d, mois: state.depensesMoisCourant })),
+    ...state.depensesHistorique.flatMap((m) => m.items.map((d) => ({ d, mois: m.mois })))
+  ].map(({ d, mois }) => ({ item: d, date: parseDate(d.ajout) || fromKey(mois) }));
+
+  /** Évènements du mois (y, m) regroupés par jour : { [jour]: [{ type, nom, categorie, montant, item }] }. */
   function eventsOf(y, m, filter) {
     const byDay = {};
     const push = (day, ev) => { (byDay[day] ||= []).push(ev); };
@@ -78,16 +83,16 @@
         const added = parseDate(x.ajout);
         // Avant son mois d'ajout, la ligne n'existait pas encore.
         if (added && new Date(added.getFullYear(), added.getMonth(), 1) > monthStart) return;
-        push(Math.min(added ? added.getDate() : 1, last), { type, nom: x.nom, categorie: x.categorie, montant: x.mensuel });
+        push(Math.min(added ? added.getDate() : 1, last), { type, nom: x.nom, categorie: x.categorie, montant: x.mensuel, item: x });
       });
     };
     recurring(state.revenus, 'revenu');
     recurring(state.charges, 'charge');
 
     if (filter.has('depense')) {
-      depenses.forEach(({ item, date }) => {
+      depensesDatees().forEach(({ item, date }) => {
         if (date.getFullYear() !== y || date.getMonth() !== m) return;
-        push(date.getDate(), { type: 'depense', nom: item.nom, categorie: item.categorie, montant: item.montant });
+        push(date.getDate(), { type: 'depense', nom: item.nom, categorie: item.categorie, montant: item.montant, item });
       });
     }
 
@@ -163,7 +168,11 @@
       : [];
     $('#calDayTitle').textContent = capitalize(fmtDay.format(new Date(year, month, selected)));
     $('#calDayList').replaceChildren(...(list.length
-      ? list.map((ev) => h('li', { class: `cal-ev cal-ev--${ev.type}` },
+      ? list.map((ev) => h('li', {
+        class: `cal-ev cal-ev--${ev.type} cal-ev--open`, tabindex: '0', 'aria-label': `Voir le détail de ${ev.nom}`,
+        onclick: () => showEventDetails(ev),
+        onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showEventDetails(ev); } }
+      },
         h('span', { class: 'sw', 'aria-hidden': 'true' }),
         h('span', { class: 'cal-ev__name' }, ev.nom, h('span', { class: 'cal-ev__cat' }, `${TYPES[ev.type].label} · ${ev.categorie}`)),
         h('span', { class: 'cal-ev__amount' }, signed(ev)))).concat(cumulRow, soldeRow)
@@ -244,6 +253,32 @@
     render({ focus });
   }
 
+  /* ---------- Détail d'un évènement (Modifier / Effacer) ---------- */
+
+  const detailOverlay = $('#detailOverlay');
+  const KINDS = { revenu: 'revenus', charge: 'charges', depense: 'depenses' };
+
+  /** Pop-up Détail d'un évènement, par-dessus le pop-up du jour : le même que
+      les pages Revenus, Charges et Dépenses (ui.js). Valider ou Effacer
+      enregistre, puis le calendrier et le pop-up du jour suivent. */
+  function showEventDetails(ev) {
+    const kind = KINDS[ev.type];
+    const after = () => { save(); render(); };
+    const onDelete = (done) => {
+      const monthly = kind !== 'depenses';
+      confirmDialog(`Supprimer ${{ revenus: 'ce revenu', charges: 'cette charge', depenses: 'cette dépense' }[kind]} ?`, [
+        ['Catégorie', ev.item.categorie],
+        ['Libellé', ev.item.nom],
+        [monthly ? 'Valeur' : 'Montant', `${eur2.format(monthly ? ev.item.mensuel : ev.item.montant)}${monthly ? ' / mois' : ''}`]
+      ], () => {
+        BudgetState.removeItem(state, ev.item, kind);
+        done();
+        after();
+      });
+    };
+    itemDetails(ev.item, kind, { state, onSaved: after, onDelete });
+  }
+
   /* ---------- Zoom : détail du jour en pop-up ---------- */
 
   let hasActivity = () => false;
@@ -313,7 +348,8 @@
     closeZoom();
   }, true);
   window.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || !closeZoomNow) return;
+    // Détail d'un évènement ouvert par-dessus : Échap le ferme lui (ui.js), pas le jour.
+    if (e.key !== 'Escape' || !closeZoomNow || (detailOverlay && !detailOverlay.hidden)) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     closeZoom();

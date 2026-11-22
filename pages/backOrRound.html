@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.195">
-  <script src="../assets/js/loader.js?v=1.01.195"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.205">
+  <script src="../assets/js/loader.js?v=1.01.205"></script>
 </head>
 <body data-app="true">
 
@@ -88,8 +88,8 @@
   <!-- Effet dossier : les onglets sont posés au-dessus de la carte, dont le
        bord haut s'arrête au pied des onglets (l'onglet ouvert passe devant). -->
   <div class="tabs avantages__tabs" role="tablist" aria-label="Avantage affiché">
-      <button type="button" class="tab" role="tab" id="tab-cashback" data-avantage="cashback" aria-controls="panel-cashback" aria-selected="true">CashBack (<span id="cashbackPageRate">1 %</span>)</button>
       <button type="button" class="tab" role="tab" id="tab-roundup" data-avantage="roundup" aria-controls="panel-roundup" aria-selected="false" tabindex="-1">Round Up (<span id="roundUpPageValue">x1</span>)</button>
+      <button type="button" class="tab" role="tab" id="tab-cashback" data-avantage="cashback" aria-controls="panel-cashback" aria-selected="true">CashBack (<span id="cashbackPageRate">1 %</span>)</button>
   </div>
   <section class="card avantages" aria-label="CashBack et Round Up">
 
@@ -202,6 +202,29 @@
   </div>
 </div>
 
+<!-- Détail d'une charge / dépense du jour (appui sur une ligne du pop-up
+     ci-dessus), même pop-up Détail que les autres pages (ui.js) : Effacer à
+     gauche, Modifier à droite (Annuler / Valider en
+     modification). -->
+<div id="detailOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="wizard__head modal__head">
+      <p id="detailTitle" class="modal__title"></p>
+      <button type="button" id="detailClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p id="detailStamp" class="modal__stamp"><span id="detailDate"></span><span id="detailTime"></span></p>
+    <dl id="detailList" class="modal__details"></dl>
+    <div class="modal__actions modal__actions--split">
+      <button type="button" id="detailDelete" class="btn btn--ghost btn--ghost-danger">Effacer</button>
+      <button type="button" id="detailCancel" class="btn btn--ghost" hidden>Annuler</button>
+      <button type="button" id="detailEdit" class="btn">Modifier</button>
+      <button type="button" id="detailSave" class="btn" hidden>Valider</button>
+    </div>
+  </div>
+</div>
+
 <!-- Réglage du CashBack : taux, puis interrupteur ligne par ligne (script.js). -->
 <div id="cashbackSettingsOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wide av-settings" role="dialog" aria-modal="true" aria-labelledby="cashbackSettingsTitle">
@@ -261,19 +284,19 @@
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
     <dl id="confirmDetails" class="modal__details"></dl>
-    <div class="modal__actions">
+    <div class="modal__actions modal__actions--split">
       <button type="button" id="confirmCancel" class="btn btn--ghost">Annuler</button>
       <button type="button" id="confirmOk" class="btn btn--danger">Confirmer</button>
     </div>
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.195"></script>
-<script src="../assets/js/ui.js?v=1.01.195"></script>
-<script src="../assets/js/nav.js?v=1.01.195"></script>
-<script src="../assets/js/calc.js?v=1.01.195"></script>
-<script src="../assets/js/state.js?v=1.01.195"></script>
-<script src="../assets/js/guide.js?v=1.01.195"></script>
-<script src="../assets/js/script.js?v=1.01.195"></script>
+<script src="../assets/js/profiles.js?v=1.01.205"></script>
+<script src="../assets/js/ui.js?v=1.01.205"></script>
+<script src="../assets/js/nav.js?v=1.01.205"></script>
+<script src="../assets/js/calc.js?v=1.01.205"></script>
+<script src="../assets/js/state.js?v=1.01.205"></script>
+<script src="../assets/js/guide.js?v=1.01.205"></script>
+<script src="../assets/js/script.js?v=1.01.205"></script>
 </body>
 </html>

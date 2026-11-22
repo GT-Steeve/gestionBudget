@@ -185,3 +185,29 @@ describe('BudgetState.load — habitudes suivies', () => {
     expect(state.suggestionsMasquees).toEqual({ lieux: ['Carrefour'], motifs: [] });
   });
 });
+
+describe('BudgetState.removeItem', () => {
+  it('removes a charge with its comparisons and applied savings', () => {
+    const c1 = { id: 'a', nom: 'Box' };
+    const c2 = { id: 'b', nom: 'Gym' };
+    const state = {
+      charges: [c1, c2],
+      scenarios: [{ chargeId: 'a' }, { chargeId: 'b' }],
+      appliquees: [{ chargeId: 'a' }]
+    };
+    BudgetState.removeItem(state, c1, 'charges');
+    expect(state.charges).toEqual([c2]);
+    expect(state.scenarios).toEqual([{ chargeId: 'b' }]);
+    expect(state.appliquees).toEqual([]);
+  });
+
+  it('removes an expense from the current month or the archived months', () => {
+    const cur = { id: 'x' };
+    const old = { id: 'y' };
+    const state = { depenses: [cur], depensesHistorique: [{ mois: '2026-09', items: [old, { id: 'z' }] }] };
+    BudgetState.removeItem(state, old, 'depenses');
+    expect(state.depensesHistorique[0].items).toEqual([{ id: 'z' }]);
+    BudgetState.removeItem(state, cur, 'depenses');
+    expect(state.depenses).toEqual([]);
+  });
+});

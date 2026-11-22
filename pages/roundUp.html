@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.195">
-  <script src="../assets/js/loader.js?v=1.01.195"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.205">
+  <script src="../assets/js/loader.js?v=1.01.205"></script>
 </head>
 <body data-app="true">
 
@@ -91,36 +91,6 @@
       <a href="backOrRound.html#roundup" class="btn btn--ghost btn--sm btn--icon-text"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Calendrier</a>
     </div>
 
-    <h3 class="h3 h3--gap">Charges</h3>
-    <div class="table-scroll-wrap">
-      <div class="table-wrap" id="roundUpChargesTableWrap">
-        <table class="table" id="roundUpChargesTable">
-          <caption class="sr-only">RoundUp sur les charges</caption>
-          <thead>
-            <tr>
-              <th scope="col">Libellé</th>
-              <th scope="col" class="num">Coût</th>
-              <th scope="col" class="num">RoundUp</th>
-            </tr>
-          </thead>
-          <tbody id="roundUpChargesBody"></tbody>
-          <tfoot>
-            <tr>
-              <th scope="row">Total</th>
-              <td class="num" data-total="montant">–</td>
-              <td class="num" data-total="gain">–</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <button type="button" class="scroll-arrow scroll-arrow--left" id="roundUpChargesScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <button type="button" class="scroll-arrow scroll-arrow--right" id="roundUpChargesScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>
-
     <h3 class="h3 h3--gap">Dépenses</h3>
     <div class="table-scroll-wrap">
       <div class="table-wrap" id="roundUpDepensesTableWrap">
@@ -150,6 +120,36 @@
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
+
+    <h3 class="h3 h3--gap">Charges</h3>
+    <div class="table-scroll-wrap">
+      <div class="table-wrap" id="roundUpChargesTableWrap">
+        <table class="table" id="roundUpChargesTable">
+          <caption class="sr-only">RoundUp sur les charges</caption>
+          <thead>
+            <tr>
+              <th scope="col">Libellé</th>
+              <th scope="col" class="num">Coût</th>
+              <th scope="col" class="num">RoundUp</th>
+            </tr>
+          </thead>
+          <tbody id="roundUpChargesBody"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td class="num" data-total="montant">–</td>
+              <td class="num" data-total="gain">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button type="button" class="scroll-arrow scroll-arrow--left" id="roundUpChargesScrollLeft" aria-label="Faire défiler le tableau vers la gauche" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="scroll-arrow scroll-arrow--right" id="roundUpChargesScrollRight" aria-label="Faire défiler le tableau vers la droite" hidden>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
   </section>
 
   <p class="back-link"><a href="../index.html">← Retour au tableau de bord</a></p>
@@ -171,12 +171,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.195"></script>
-<script src="../assets/js/ui.js?v=1.01.195"></script>
-<script src="../assets/js/nav.js?v=1.01.195"></script>
-<script src="../assets/js/calc.js?v=1.01.195"></script>
-<script src="../assets/js/state.js?v=1.01.195"></script>
-<script src="../assets/js/guide.js?v=1.01.195"></script>
-<script src="../assets/js/script.js?v=1.01.195"></script>
+<script src="../assets/js/profiles.js?v=1.01.205"></script>
+<script src="../assets/js/ui.js?v=1.01.205"></script>
+<script src="../assets/js/nav.js?v=1.01.205"></script>
+<script src="../assets/js/calc.js?v=1.01.205"></script>
+<script src="../assets/js/state.js?v=1.01.205"></script>
+<script src="../assets/js/guide.js?v=1.01.205"></script>
+<script src="../assets/js/script.js?v=1.01.205"></script>
 </body>
 </html>

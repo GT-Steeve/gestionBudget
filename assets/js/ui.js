@@ -460,10 +460,207 @@
     return `${circle(r1)} ${circle(r0)}`;
   }
 
+  /** « Vendredi 13 Octobre 2026 » : jour et mois avec majuscule. */
+  const fmtAjoutDate = (d) => {
+    const jour = capitalize(d.toLocaleDateString('fr-FR', { weekday: 'long' }));
+    const mois = capitalize(d.toLocaleDateString('fr-FR', { month: 'long' }));
+    return `${jour} ${d.getDate()} ${mois} ${d.getFullYear()}`;
+  };
+
+  /** Round up d'un montant : différence jusqu'au multiple supérieur de n ; un
+      montant déjà pile sur un multiple est arrondi au multiple suivant (x1 →
+      1,00 €, x2 → 2,00 €…) plutôt qu'à 0,00 €. */
+  const roundUpOf = (montant, n) => {
+    if (montant <= 0) return 0;
+    const diff = Math.ceil(montant / n) * n - montant;
+    // Tolérance au centime : les flottants ne tombent pas toujours pile.
+    return diff < 0.005 ? n : diff;
+  };
+
+  /** Pop-up Détail (#detailOverlay) d'un revenu, d'une charge ou d'une
+      dépense (kind : 'revenus', 'charges', 'depenses'), avec mode Modifier :
+      Libellé, Catégorie, Montant, date et heure deviennent des champs ; les
+      valeurs calculées (annuel, cashback, round up) suivent la saisie.
+      opts.state : état du budget (taux de cashback, multiple du round up) ;
+      opts.onSaved() : après Valider (ligne déjà modifiée) ;
+      opts.onDelete(done) : affiche Effacer (#detailDelete, s'il existe), qui
+      demande confirmation puis appelle done() pour fermer le pop-up. */
+  function itemDetails(item, kind, { state, onSaved, onDelete } = {}) {
+    const overlay = $('#detailOverlay');
+    if (!overlay) return;
+    const isCharge = kind === 'charges';
+    const isRevenu = kind === 'revenus';
+    const monthly = isCharge || isRevenu; // montant mensuel (sinon ponctuel)
+    const key = monthly ? 'mensuel' : 'montant';
+    const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, num } = window.BudgetState;
+    const cats = [...(isCharge ? CATEGORIES : isRevenu ? REV_CATEGORIES : DEP_CATEGORIES)].sort((a, b) => a.localeCompare(b, 'fr'));
+    const editBtn = $('#detailEdit');
+    const closeBtn = $('#detailClose');
+    const cancelBtn = $('#detailCancel');
+    const saveBtn = $('#detailSave');
+    const deleteBtn = $('#detailDelete');
+    // Croix (icône) : reste visible pendant la modification ; l'ancien bouton
+    // texte « Fermer » laisse la place à Annuler / Valider.
+    const closeIsIcon = closeBtn.classList.contains('icon-btn');
+    let draft = null; // { nom, categorie, montant, ajout } pendant la modification
+
+    $('#detailTitle').textContent = isCharge ? 'Détail de la charge' : isRevenu ? 'Détail du revenu' : 'Détail de la dépense';
+    $('#detailStamp').hidden = false;
+    const fmtDate = (d) => (d ? fmtAjoutDate(d) : 'Date non connue');
+    const fmtTime = (d) => (d ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}` : '?? h ??');
+
+    /** Date (à gauche) et heure (à droite) d'ajout ; valeurs de repli pour les
+        lignes créées avant leur enregistrement. En modification : boutons
+        ouvrant le calendrier / le choix de l'heure. */
+    const renderStamp = () => {
+      if (!draft) {
+        const d = item.ajout ? new Date(item.ajout) : null;
+        $('#detailDate').replaceChildren(fmtDate(d));
+        $('#detailTime').replaceChildren(fmtTime(d));
+        return;
+      }
+      const dateBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Date d’ajout',
+        onclick: () => pickDate(draft.ajout, (y, m, day) => {
+          const base = draft.ajout || new Date(y, m, day, 0, 0);
+          draft.ajout = new Date(y, m, day, base.getHours(), base.getMinutes());
+          renderStamp();
+          $('#detailDate button').focus();
+        })
+      }, fmtDate(draft.ajout));
+      const timeBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Heure d’ajout',
+        onclick: () => pickTime(draft.ajout, (hr, mn) => {
+          const base = draft.ajout || new Date();
+          draft.ajout = new Date(base.getFullYear(), base.getMonth(), base.getDate(), hr, mn);
+          renderStamp();
+          $('#detailTime button').focus();
+        })
+      }, fmtTime(draft.ajout));
+      $('#detailDate').replaceChildren(dateBtn);
+      $('#detailTime').replaceChildren(timeBtn);
+    };
+
+    /** Valeurs calculées à partir d'un montant (affichées en lecture seule). */
+    const computed = (montant) => {
+      // Le taux et le multiple accompagnent l'intitulé, pas le montant.
+      const off = isCharge ? 'Non inclus' : 'Désactivé';
+      const rows = [];
+      if (monthly) rows.push(['Annuel', eur2.format(montant * 12)]);
+      // Les revenus n'ont ni cashback ni round up.
+      if (isRevenu) return rows;
+      rows.push(
+        [`Cashback (${fmtRate(state.cashbackRate)})`, item.cashbackOn !== false ? eur2.format(montant * state.cashbackRate / 100) : off],
+        [`RoundUp (x${state.roundUpTo})`, item.roundUpOn !== false ? eur2.format(roundUpOf(montant, state.roundUpTo)) : off]
+      );
+      return rows;
+    };
+    const row = ([label, value]) => [h('dt', {}, label), h('dd', {}, value)];
+
+    const render = () => {
+      const list = $('#detailList');
+      const suffix = monthly ? ' / mois' : '';
+      renderStamp();
+      if (!draft) {
+        list.replaceChildren(...[
+          ['Libellé', item.nom],
+          ['Catégorie', item.categorie],
+          ...(item.produit ? [['Produit suivi', `${item.produit} · ${eur2.format(item.produitPrix || 0)}`]] : []),
+          ...(item.habitude ? [['Habitude suivie', item.habitude]] : []),
+          ...(item.motif ? [['Motif', item.motif]] : []),
+          [monthly ? 'Mensuel' : 'Montant', `${eur2.format(item[key])}${suffix}`],
+          ...computed(item[key])
+        ].flatMap(row));
+        return;
+      }
+      const computedDds = [];
+      const updateComputed = () => computed(draft.montant).forEach(([, v], i) => { computedDds[i].textContent = v; });
+      const nomInput = h('input', {
+        type: 'text', class: 'detail-field', maxlength: '60', required: true, 'aria-label': 'Libellé',
+        oninput: (e) => { draft.nom = e.target.value; }
+      });
+      nomInput.value = draft.nom;
+      const catBtn = h('button', {
+        type: 'button', class: 'select-btn detail-field', 'aria-label': 'Catégorie',
+        onclick: () => pickCategory(cats, draft.categorie, (cat) => { draft.categorie = cat; catBtn.textContent = cat; catBtn.focus(); })
+      }, draft.categorie);
+      const montantInput = h('input', {
+        type: 'number', class: 'detail-field detail-field--num', min: '0', step: '0.01', inputmode: 'decimal',
+        'aria-label': monthly ? 'Mensuel' : 'Montant',
+        oninput: (e) => { draft.montant = num(e.target.value); fitWidth(); updateComputed(); }
+      });
+      // Largeur ajustée au contenu : nombre de caractères saisis + 2.
+      const fitWidth = () => { montantInput.style.width = `calc(${montantInput.value.length + 2}ch + 24px)`; };
+      montantInput.value = String(draft.montant);
+      fitWidth();
+      const computedRows = computed(draft.montant).map(([label, value]) => {
+        const dd = h('dd', {}, value);
+        computedDds.push(dd);
+        return [h('dt', {}, label), dd];
+      });
+      list.replaceChildren(
+        h('dt', {}, 'Libellé'), h('dd', {}, nomInput),
+        h('dt', {}, 'Catégorie'), h('dd', {}, catBtn),
+        h('dt', {}, monthly ? 'Mensuel' : 'Montant'), h('dd', {}, montantInput),
+        ...computedRows.flat()
+      );
+      nomInput.focus();
+    };
+
+    const setEditing = (on) => {
+      draft = on ? { nom: item.nom, categorie: item.categorie, montant: item[key], ajout: item.ajout ? new Date(item.ajout) : null } : null;
+      editBtn.hidden = on;
+      closeBtn.hidden = on && !closeIsIcon;
+      if (deleteBtn) deleteBtn.hidden = on || !onDelete;
+      cancelBtn.hidden = !on;
+      saveBtn.hidden = !on;
+      render();
+      if (!on) editBtn.focus();
+    };
+    const onEdit = () => setEditing(true);
+    // Effacer : confirmation par-dessus le pop-up ; une fois confirmée, la
+    // ligne est supprimée et le pop-up de détail se ferme.
+    const onDeleteClick = () => onDelete(() => close());
+    const onCancel = () => setEditing(false);
+    const onSave = () => {
+      const nom = draft.nom.trim();
+      if (!nom) { $('.detail-field', overlay)?.reportValidity(); return; }
+      item.nom = nom.slice(0, 60);
+      item.categorie = draft.categorie;
+      item[key] = draft.montant;
+      if (draft.ajout) item.ajout = draft.ajout.toISOString();
+      onSaved?.();
+      setEditing(false);
+    };
+    // Entrée dans un champ = Valider.
+    const onListKey = (e) => {
+      if (e.key === 'Enter' && draft && e.target.tagName === 'INPUT') { e.preventDefault(); onSave(); }
+    };
+
+    editBtn.addEventListener('click', onEdit);
+    cancelBtn.addEventListener('click', onCancel);
+    saveBtn.addEventListener('click', onSave);
+    if (deleteBtn && onDelete) deleteBtn.addEventListener('click', onDeleteClick);
+    $('#detailList').addEventListener('keydown', onListKey);
+    setEditing(false);
+    const close = openModal(overlay, {
+      focus: closeBtn,
+      onClose: () => {
+        editBtn.removeEventListener('click', onEdit);
+        cancelBtn.removeEventListener('click', onCancel);
+        saveBtn.removeEventListener('click', onSave);
+        if (deleteBtn) deleteBtn.removeEventListener('click', onDeleteClick);
+        closeBtn.removeEventListener('click', close);
+        $('#detailList').removeEventListener('keydown', onListKey);
+      }
+    });
+    closeBtn.addEventListener('click', close);
+  }
+
   window.UI = {
     $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
     currentMonthName, currentMonthWithPreposition, openModal, closeModal, confirmDialog, bindInfoModal, openPicker,
     pickerOpt, pickCategory, pickDate, pickTime, bindAddWizard, bindResponsiveTrigger,
-    niceScale, arcPath, ringPath
+    niceScale, arcPath, ringPath, fmtAjoutDate, roundUpOf, itemDetails
   };
 })();

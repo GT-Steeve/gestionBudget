@@ -252,6 +252,7 @@ html[data-zoom="large"] { --zoom: var(--zoom-large); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
 .btn--ghost { background: transparent; color: var(--ink); border-color: var(--border); }
 .btn--ghost:hover { background: var(--wash); filter: none; }
+.btn--ghost-danger { color: var(--bad); }
 .btn--sm { height: 30px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
 
 label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--ink-2); }
@@ -463,6 +464,8 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
    Charges) : deux lignes d'en-tête/pied prêtes dans le HTML, une seule
    affichée selon le format (voir .row-desktop ci-dessous sous 640px). */
 .row-mobile { display: none; }
+/* Dépenses, Charges, Revenus : tableau complet (bureau) ou simplifié (mobile et tablette, ≤ 900px). */
+.row-compact { display: none; }
 .table--compact { font-size: 14px; min-width: 640px; }
 .table--compact th, .table--compact td { padding: 6px 10px; }
 
@@ -1061,6 +1064,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .modal__text { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 12px 0 20px; text-align: justify; }
 .modal__text--tight { margin-bottom: 16px; }
 .modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
+/* Pop-up Détail et confirmation de suppression (Dépenses) : bouton de
+   retrait / Annuler à gauche, action principale à droite. Placé avant
+   --center pour que celui-ci l'emporte si les deux sont présents. */
+.modal__actions--split { justify-content: space-between; }
 .modal__actions--center { justify-content: center; }
 /* .btn impose display:inline-flex, qui l'emporte sinon sur l'attribut
    hidden natif (même piège que .modal-overlay[hidden] ci-dessus) : utile
@@ -1433,6 +1440,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .cal-ev__cat { display: block; font-size: 12px; color: var(--muted); }
 .cal-ev__amount { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cal-ev--revenu .cal-ev__amount { color: var(--good); }
+/* Évènement du jour : un appui ouvre son pop-up Détail. */
+.cal-ev--open { cursor: pointer; border-radius: 8px; margin: 0 -6px; padding-left: 6px; padding-right: 6px; }
+.cal-ev--open:hover, .cal-ev--open:active { background: var(--wash); }
+.cal-ev--open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .cal-day__empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
 
 /* ---------- Responsive ----------
@@ -1449,6 +1460,20 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   #btnPrint { display: none; }
   /* Même règle pour l'onglet Imprimer (.nav a.desk-only l'emporte sur .nav a). */
   .desk-only, .nav a.desk-only { display: none; }
+
+  /* Dépenses, Charges et Revenus : Libellé et Montant / Mensuel seuls, en texte ; un
+     appui sur la ligne ouvre son pop-up de détail (catégorie, annuel,
+     modification, suppression). */
+  .row-full { display: none; }
+  .row-compact { display: table-row; }
+  #depensesTable, #chargesTable, #revenusTable { table-layout: fixed; min-width: 0; }
+  .table .row-open { cursor: pointer; }
+  .table .row-open:active { background: var(--wash); }
+  .table .row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .table .row-open .cell-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #depensesTable th:nth-child(2), #depensesTable td:nth-child(2),
+  #chargesTable th:nth-child(2), #chargesTable td:nth-child(2),
+  #revenusTable th:nth-child(2), #revenusTable td:nth-child(2) { width: 40%; }
 }
 
 /* Bureau et tablette : plus de barre du haut. Le <header> devient une barre
@@ -1707,55 +1732,10 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   #synMsg { text-align: center; }
   .seg { margin: 0 auto; }
 
-  /* Dépenses : bascule vers l'ordre Libellé, Montant, Catégorie — largeurs
-     fixes pour que Montant reste visible sans défilement (au lieu d'être
-     repoussé au bord par la colonne Libellé, qui n'a pas de largeur max). */
+  /* Bascule des en-têtes / pieds de tableau selon le format (Charges,
+     Revenus, Économie ; Dépenses a sa propre bascule .row-compact). */
   .row-desktop { display: none; }
   .row-mobile { display: table-row; }
-  /* min-width 590px : Catégorie (~180px) affiche « Entretien ménager » en
-     entier, tandis que Libellé (~186px) + Montant (~154px) tiennent sans
-     défilement dès 390px d'écran. */
-  #depensesTable { table-layout: fixed; min-width: 590px; }
-  #depensesTable th:nth-child(1), #depensesTable td:nth-child(1) { width: 31.5%; }
-  #depensesTable th:nth-child(2), #depensesTable td:nth-child(2) { width: 26%; }
-  #depensesTable th:nth-child(3), #depensesTable td:nth-child(3) { width: 30.5%; }
-  #depensesTable th:nth-child(4), #depensesTable td:nth-child(4) { width: 12%; }
-  /* Œil + corbeille : boutons resserrés pour rapprocher les deux icônes. */
-  #depensesTable .row-actions .icon-btn { width: 24px; }
-  /* Catégorie alignée à droite : colle la valeur aux boutons œil/corbeille
-     pour les catégories courtes, sans retirer la place nécessaire aux noms
-     longs (« Entretien ménager ») qui occupent déjà toute la largeur. */
-  #depensesTable td:nth-child(3) .cell--pick { text-align: right; }
-  #depensesTable thead tr.row-mobile th:nth-child(3) { text-align: right; }
-
-  /* Revenus/Charges : bascule vers l'ordre Libellé, Mensuel, Catégorie, Annuel
-     — Libellé et Mensuel passent en premier pour rester visibles sans
-     défilement, Libellé reçoit nettement plus de place qu'avant (pour les
-     libellés longs) ; Catégorie/Annuel restent accessibles en défilant. */
-  #revenusTable, #chargesTable { table-layout: fixed; }
-  #revenusTable th:nth-child(1), #revenusTable td:nth-child(1),
-  #chargesTable th:nth-child(1), #chargesTable td:nth-child(1) { width: 38%; }
-  #revenusTable th:nth-child(2), #revenusTable td:nth-child(2),
-  #chargesTable th:nth-child(2), #chargesTable td:nth-child(2) { width: 22%; }
-  #revenusTable th:nth-child(3), #revenusTable td:nth-child(3),
-  #chargesTable th:nth-child(3), #chargesTable td:nth-child(3) { width: 18%; }
-  #revenusTable th:nth-child(4), #revenusTable td:nth-child(4),
-  #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 14%; }
-  #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
-  #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 8%; }
-  /* Charges/Revenus : min-width 640px pour afficher Catégorie en entier (~154px,
-     « Abonnements ») et loger œil + corbeille, sans rogner Libellé/Mensuel. */
-  #chargesTable, #revenusTable { min-width: 640px; }
-  #revenusTable th:nth-child(1), #revenusTable td:nth-child(1),
-  #chargesTable th:nth-child(1), #chargesTable td:nth-child(1) { width: 30%; }
-  #revenusTable th:nth-child(2), #revenusTable td:nth-child(2),
-  #chargesTable th:nth-child(2), #chargesTable td:nth-child(2) { width: 19%; }
-  #revenusTable th:nth-child(3), #revenusTable td:nth-child(3),
-  #chargesTable th:nth-child(3), #chargesTable td:nth-child(3) { width: 24%; }
-  #revenusTable th:nth-child(4), #revenusTable td:nth-child(4),
-  #chargesTable th:nth-child(4), #chargesTable td:nth-child(4) { width: 16%; }
-  #revenusTable th:nth-child(5), #revenusTable td:nth-child(5),
-  #chargesTable th:nth-child(5), #chargesTable td:nth-child(5) { width: 11%; }
 
   /* CashBack/RoundUp : bascule vers l'ordre Libellé, Cashback/RoundUp,
      Mensuel/Montant — les deux premières colonnes (ce qui compte le plus ici)

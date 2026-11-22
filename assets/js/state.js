@@ -269,6 +269,22 @@
       chargement de l'app en un nouveau mois) : la liste en cours repart à zéro,
       l'ancienne reste consultable dans l'historique (12 mois glissants max).
       Renvoie true si l'état a changé (à enregistrer). */
+  /** Supprime une ligne (objet de state) selon son type : 'revenus',
+      'charges' (avec ses comparaisons et économies appliquées) ou 'depenses'
+      (mois en cours ou archivé). */
+  function removeItem(state, item, kind) {
+    if (kind === 'depenses') {
+      state.depenses = state.depenses.filter((x) => x !== item);
+      state.depensesHistorique.forEach((m) => { m.items = m.items.filter((x) => x !== item); });
+      return;
+    }
+    state[kind] = state[kind].filter((x) => x !== item);
+    if (kind === 'charges') {
+      state.scenarios = state.scenarios.filter((x) => x.chargeId !== item.id);
+      state.appliquees = state.appliquees.filter((x) => x.chargeId !== item.id);
+    }
+  }
+
   function archiveMonth(state, now = new Date()) {
     const nowKey = monthKey(now);
     if (state.depensesMoisCourant === nowKey) return false;
@@ -285,6 +301,6 @@
 
   return {
     CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, DEFAULT_RATES, MAX_RATE, ROUND_UP_OPTIONS,
-    uid, num, clamp, monthKey, readRate, emptyState, exampleState, load, archiveMonth
+    uid, num, clamp, monthKey, readRate, emptyState, exampleState, load, archiveMonth, removeItem
   };
 });

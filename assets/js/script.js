@@ -79,8 +79,8 @@
     uid, num, clamp, readRate } = BudgetState;
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
     currentMonthName, openModal, confirmDialog: confirmDelete, bindInfoModal,
-    openPicker, pickerOpt, pickCategory, pickDate, pickTime, bindAddWizard, bindResponsiveTrigger,
-    niceScale, arcPath, ringPath } = UI;
+    openPicker, pickerOpt, pickCategory, bindAddWizard, bindResponsiveTrigger,
+    niceScale, arcPath, ringPath, roundUpOf, itemDetails } = UI;
 
   /* ---------- Utilitaires ---------- */
 
@@ -151,16 +151,8 @@
   /** Taux de cashback configurable (state.cashbackRate, en %), en fraction (0.01 = 1 %). */
   const cashbackFraction = () => state.cashbackRate / 100;
 
-  /** Différence jusqu'au multiple supérieur de state.roundUpTo ; un montant
-      déjà pile sur un multiple est arrondi au multiple suivant (x1 → 1,00 €,
-      x2 → 2,00 €…) plutôt qu'à 0,00 €. */
-  const roundUpAmount = (montant) => {
-    const n = state.roundUpTo;
-    if (montant <= 0) return 0;
-    const diff = Math.ceil(montant / n) * n - montant;
-    // Tolérance au centime : les flottants ne tombent pas toujours pile.
-    return diff < 0.005 ? n : diff;
-  };
+  /** Round up au multiple state.roundUpTo (règle dans ui.js, partagée avec la page Suivi). */
+  const roundUpAmount = (montant) => roundUpOf(montant, state.roundUpTo);
   const project = Calc.project;
   const totalMonthly = () => state.charges.reduce((sum, c) => sum + c.mensuel, 0);
   const totalRevenus = () => state.revenus.reduce((sum, r) => sum + r.mensuel, 0);
@@ -176,15 +168,19 @@
       body: '#revenusBody', cats: sortAlpha(REV_CATEGORIES),
       empty: 'Aucun revenu pour le moment. Ajoutez votre première ligne ci-dessus.',
       wrap: '#revenusTableWrap', left: '#revenusScrollLeft', right: '#revenusScrollRight',
-      newestFirst: true
+      newestFirst: true, compact: true
     },
     charges: {
       body: '#chargesBody', cats: sortAlpha(CATEGORIES),
       empty: 'Aucune charge pour le moment. Ajoutez votre première ligne ci-dessus.',
       wrap: '#chargesTableWrap', left: '#chargesScrollLeft', right: '#chargesScrollRight',
-      newestFirst: true
+      newestFirst: true, compact: true
     }
   };
+
+  // Mobile et tablette (même seuil que la règle CSS « Tablette ») : tableaux
+  // simplifiés (Dépenses, Charges, Revenus), voir renderDepenses et renderLines.
+  const COMPACT_QUERY = window.matchMedia('(max-width: 900px)');
 
   function renderLineForms() {
     bindCategoryButton('#rCatBtn', '#rCat', sortAlpha(REV_CATEGORIES));
@@ -207,184 +203,26 @@
 
   const EYE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 
-  /** « Vendredi 13 Octobre 2026 » : jour et mois avec majuscule. */
-  const fmtAjoutDate = (d) => {
-    const jour = capitalize(d.toLocaleDateString('fr-FR', { weekday: 'long' }));
-    const mois = capitalize(d.toLocaleDateString('fr-FR', { month: 'long' }));
-    return `${jour} ${d.getDate()} ${mois} ${d.getFullYear()}`;
-  };
-
-  /** Pop-up de détails d'une charge ou d'une dépense (bouton œil), avec mode
-      Modifier : Libellé, Catégorie et Montant deviennent des champs ; les
-      valeurs calculées (annuel, cashback, round up) suivent la saisie. */
-  function showItemDetails(item, kind) {
-    const overlay = $('#detailOverlay');
-    if (!overlay) return;
-    const isCharge = kind === 'charges';
-    const isRevenu = kind === 'revenus';
-    const monthly = isCharge || isRevenu; // montant mensuel (sinon ponctuel)
-    const key = monthly ? 'mensuel' : 'montant';
-    const cats = sortAlpha(isCharge ? CATEGORIES : isRevenu ? REV_CATEGORIES : DEP_CATEGORIES);
-    const editBtn = $('#detailEdit');
-    const closeBtn = $('#detailClose');
-    const cancelBtn = $('#detailCancel');
-    const saveBtn = $('#detailSave');
-    let draft = null; // { nom, categorie, montant, ajout } pendant la modification
-
-    $('#detailTitle').textContent = isCharge ? 'Détail de la charge' : isRevenu ? 'Détail du revenu' : 'Détail de la dépense';
-    $('#detailStamp').hidden = false;
-    const fmtDate = (d) => (d ? fmtAjoutDate(d) : 'Date non connue');
-    const fmtTime = (d) => (d ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}` : '?? h ??');
-
-    /** Date (à gauche) et heure (à droite) d'ajout ; valeurs de repli pour les
-        lignes créées avant leur enregistrement. En modification : boutons
-        ouvrant le calendrier / le choix de l'heure. */
-    const renderStamp = () => {
-      if (!draft) {
-        const d = item.ajout ? new Date(item.ajout) : null;
-        $('#detailDate').replaceChildren(fmtDate(d));
-        $('#detailTime').replaceChildren(fmtTime(d));
-        return;
-      }
-      const dateBtn = h('button', {
-        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Date d’ajout',
-        onclick: () => pickDate(draft.ajout, (y, m, day) => {
-          const base = draft.ajout || new Date(y, m, day, 0, 0);
-          draft.ajout = new Date(y, m, day, base.getHours(), base.getMinutes());
-          renderStamp();
-          $('#detailDate button').focus();
-        })
-      }, fmtDate(draft.ajout));
-      const timeBtn = h('button', {
-        type: 'button', class: 'select-btn detail-field detail-field--stamp', 'aria-label': 'Heure d’ajout',
-        onclick: () => pickTime(draft.ajout, (hr, mn) => {
-          const base = draft.ajout || new Date();
-          draft.ajout = new Date(base.getFullYear(), base.getMonth(), base.getDate(), hr, mn);
-          renderStamp();
-          $('#detailTime button').focus();
-        })
-      }, fmtTime(draft.ajout));
-      $('#detailDate').replaceChildren(dateBtn);
-      $('#detailTime').replaceChildren(timeBtn);
-    };
-
-    /** Valeurs calculées à partir d'un montant (affichées en lecture seule). */
-    const computed = (montant) => {
-      // Le taux et le multiple accompagnent l'intitulé, pas le montant.
-      const off = isCharge ? 'Non inclus' : 'Désactivé';
-      const rows = [];
-      if (monthly) rows.push(['Annuel', eur2.format(annual(montant))]);
-      // Les revenus n'ont ni cashback ni round up.
-      if (isRevenu) return rows;
-      rows.push(
-        [`Cashback (${fmtRate(state.cashbackRate)})`, item.cashbackOn !== false ? eur2.format(montant * cashbackFraction()) : off],
-        [`RoundUp (x${state.roundUpTo})`, item.roundUpOn !== false ? eur2.format(roundUpAmount(montant)) : off]
-      );
-      return rows;
-    };
-    const row = ([label, value]) => [h('dt', {}, label), h('dd', {}, value)];
-
-    const render = () => {
-      const list = $('#detailList');
-      const suffix = monthly ? ' / mois' : '';
-      renderStamp();
-      if (!draft) {
-        list.replaceChildren(...[
-          ['Libellé', item.nom],
-          ['Catégorie', item.categorie],
-          ...(item.produit ? [['Produit suivi', `${item.produit} · ${eur2.format(item.produitPrix || 0)}`]] : []),
-          ...(item.habitude ? [['Habitude suivie', item.habitude]] : []),
-          ...(item.motif ? [['Motif', item.motif]] : []),
-          [monthly ? 'Mensuel' : 'Montant', `${eur2.format(item[key])}${suffix}`],
-          ...computed(item[key])
-        ].flatMap(row));
-        return;
-      }
-      const computedDds = [];
-      const updateComputed = () => computed(draft.montant).forEach(([, v], i) => { computedDds[i].textContent = v; });
-      const nomInput = h('input', {
-        type: 'text', class: 'detail-field', maxlength: '60', required: true, 'aria-label': 'Libellé',
-        oninput: (e) => { draft.nom = e.target.value; }
-      });
-      nomInput.value = draft.nom;
-      const catBtn = h('button', {
-        type: 'button', class: 'select-btn detail-field', 'aria-label': 'Catégorie',
-        onclick: () => pickCategory(cats, draft.categorie, (cat) => { draft.categorie = cat; catBtn.textContent = cat; catBtn.focus(); })
-      }, draft.categorie);
-      const montantInput = h('input', {
-        type: 'number', class: 'detail-field detail-field--num', min: '0', step: '0.01', inputmode: 'decimal',
-        'aria-label': monthly ? 'Mensuel' : 'Montant',
-        oninput: (e) => { draft.montant = num(e.target.value); fitWidth(); updateComputed(); }
-      });
-      // Largeur ajustée au contenu : nombre de caractères saisis + 2.
-      const fitWidth = () => { montantInput.style.width = `calc(${montantInput.value.length + 2}ch + 24px)`; };
-      montantInput.value = String(draft.montant);
-      fitWidth();
-      const computedRows = computed(draft.montant).map(([label, value]) => {
-        const dd = h('dd', {}, value);
-        computedDds.push(dd);
-        return [h('dt', {}, label), dd];
-      });
-      list.replaceChildren(
-        h('dt', {}, 'Libellé'), h('dd', {}, nomInput),
-        h('dt', {}, 'Catégorie'), h('dd', {}, catBtn),
-        h('dt', {}, monthly ? 'Mensuel' : 'Montant'), h('dd', {}, montantInput),
-        ...computedRows.flat()
-      );
-      nomInput.focus();
-    };
-
-    const setEditing = (on) => {
-      draft = on ? { nom: item.nom, categorie: item.categorie, montant: item[key], ajout: item.ajout ? new Date(item.ajout) : null } : null;
-      editBtn.hidden = on;
-      closeBtn.hidden = on;
-      cancelBtn.hidden = !on;
-      saveBtn.hidden = !on;
-      render();
-      if (!on) editBtn.focus();
-    };
-    const onEdit = () => setEditing(true);
-    const onCancel = () => setEditing(false);
-    const onSave = () => {
-      const nom = draft.nom.trim();
-      if (!nom) { $('.detail-field', overlay)?.reportValidity(); return; }
-      item.nom = nom.slice(0, 60);
-      item.categorie = draft.categorie;
-      item[key] = draft.montant;
-      if (draft.ajout) item.ajout = draft.ajout.toISOString();
-      if (monthly) renderLines(kind); else renderDepenses();
-      refresh();
-      setEditing(false);
-    };
-    // Entrée dans un champ = Valider.
-    const onListKey = (e) => {
-      if (e.key === 'Enter' && draft && e.target.tagName === 'INPUT') { e.preventDefault(); onSave(); }
-    };
-
-    editBtn.addEventListener('click', onEdit);
-    cancelBtn.addEventListener('click', onCancel);
-    saveBtn.addEventListener('click', onSave);
-    $('#detailList').addEventListener('keydown', onListKey);
-    setEditing(false);
-    const close = openModal(overlay, {
-      focus: closeBtn,
-      onClose: () => {
-        editBtn.removeEventListener('click', onEdit);
-        cancelBtn.removeEventListener('click', onCancel);
-        saveBtn.removeEventListener('click', onSave);
-        closeBtn.removeEventListener('click', close);
-        $('#detailList').removeEventListener('keydown', onListKey);
+  /** Pop-up Détail d'une ligne (ui.js) : Modifier, et Effacer si onDelete
+      est donné. Après Valider, les tableaux et totaux de la page suivent ;
+      onSaved (facultatif) : mise à jour en plus (pop-up du jour…). */
+  function showItemDetails(item, kind, onDelete, onSaved) {
+    itemDetails(item, kind, {
+      state, onDelete,
+      onSaved: () => {
+        if (kind === 'depenses') renderDepenses(); else renderLines(kind);
+        refresh();
+        onSaved?.();
       }
     });
-    closeBtn.addEventListener('click', close);
   }
 
   /** Bouton œil d'une charge ou d'une dépense : toutes ses informations, cashback
       et round up compris (lus au clic, donc toujours à jour des modifications). */
-  function detailButton(item, kind) {
+  function detailButton(item, kind, onDelete) {
     const btn = h('button', {
       class: 'icon-btn icon-btn--view', type: 'button', 'aria-label': `Voir le détail de ${item.nom}`, title: 'Voir le détail',
-      onclick: () => showItemDetails(item, kind)
+      onclick: () => showItemDetails(item, kind, onDelete)
     });
     btn.innerHTML = EYE_ICON;
     return btn;
@@ -395,9 +233,11 @@
     const body = $(cfg.body);
     if (!body) return;
     body.replaceChildren();
+    // Charges et revenus en mobile/tablette : Libellé et Mensuel seuls, ligne cliquable.
+    const compact = cfg.compact && COMPACT_QUERY.matches;
 
     if (!state[type].length) {
-      body.append(h('tr', {}, h('td', { colspan: 5, class: 'empty' }, cfg.empty)));
+      body.append(h('tr', {}, h('td', { colspan: compact ? 2 : 5, class: 'empty' }, cfg.empty)));
       updateScrollArrows($(cfg.wrap), $(cfg.left), $(cfg.right));
       return;
     }
@@ -407,6 +247,35 @@
     const items = cfg.newestFirst ? [...state[type]].reverse() : state[type];
 
     for (const c of items) {
+      /** Suppression confirmée ; done() (facultatif) ferme le pop-up de détail. */
+      const askDelete = (done) => {
+        confirmDelete(`Supprimer ${type === 'revenus' ? 'ce revenu' : 'cette charge'} ?`, [
+          ['Catégorie', c.categorie],
+          ['Libellé', c.nom],
+          ['Valeur', `${eur2.format(c.mensuel)} / mois`]
+        ], () => {
+          BudgetState.removeItem(state, c, type);
+          done?.();
+          renderLines(type);
+          refresh();
+        });
+      };
+
+      // Ni champ, ni œil, ni corbeille, ni Catégorie / Annuel : un appui sur
+      // la ligne ouvre le pop-up de détail (modification, suppression).
+      if (compact) {
+        const open = () => showItemDetails(c, type, askDelete);
+        body.append(h('tr', {
+          class: 'row-open', tabindex: '0', 'aria-label': `Voir le détail de ${c.nom}`,
+          onclick: open,
+          onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }
+        },
+        h('td', { class: 'cell-text' }, c.nom),
+        h('td', { class: 'num' }, eur2.format(c.mensuel))
+        ));
+        continue;
+      }
+
       const annualCell = h('td', { class: 'num' }, eur2.format(annual(c.mensuel)));
 
       const nameInput = h('input', {
@@ -433,24 +302,10 @@
 
       const del = h('button', {
         class: 'icon-btn', type: 'button', 'aria-label': `Effacer ${c.nom}`, title: 'Effacer',
-        onclick: () => {
-          confirmDelete(`Supprimer ${type === 'revenus' ? 'ce revenu' : 'cette charge'} ?`, [
-            ['Catégorie', c.categorie],
-            ['Libellé', c.nom],
-            ['Valeur', `${eur2.format(c.mensuel)} / mois`]
-          ], () => {
-            state[type] = state[type].filter((x) => x.id !== c.id);
-            if (type === 'charges') {
-              state.scenarios = state.scenarios.filter((x) => x.chargeId !== c.id);
-              state.appliquees = state.appliquees.filter((x) => x.chargeId !== c.id);
-            }
-            renderLines(type);
-            refresh();
-          });
-        }
+        onclick: () => askDelete()
       });
       del.innerHTML = TRASH_ICON;
-      const actions = h('td', { class: 'num row-actions' }, detailButton(c, type), del);
+      const actions = h('td', { class: 'num row-actions' }, detailButton(c, type, askDelete), del);
 
       body.append(MOBILE_QUERY.matches
         ? h('tr', {},
@@ -629,6 +484,7 @@
       const wrap = $(cfg.wrap);
       if (wrap) bindScrollArrows(wrap, $(cfg.left), $(cfg.right));
       if ($(cfg.body)) MOBILE_QUERY.addEventListener('change', () => renderLines(type));
+      if ($(cfg.body) && cfg.compact) COMPACT_QUERY.addEventListener('change', () => renderLines(type));
     }
 
     const clearCharges = () => {
@@ -698,7 +554,7 @@
     body.replaceChildren();
 
     if (!state.depenses.length) {
-      body.append(h('tr', {}, h('td', { colspan: 4, class: 'empty' }, 'Aucune dépense pour le moment. Ajoutez votre premier achat ci-dessus.')));
+      body.append(h('tr', {}, h('td', { colspan: COMPACT_QUERY.matches ? 2 : 4, class: 'empty' }, 'Aucune dépense pour le moment. Ajoutez votre premier achat ci-dessus.')));
       updateScrollArrows($('#depensesTableWrap'), $('#depensesScrollLeft'), $('#depensesScrollRight'));
       return;
     }
@@ -708,6 +564,36 @@
     const ordered = [...state.depenses].reverse();
 
     for (const d of ordered) {
+      /** Suppression confirmée ; done() (facultatif) ferme le pop-up de détail. */
+      const askDelete = (done) => {
+        confirmDelete('Supprimer cette dépense ?', [
+          ['Catégorie', d.categorie],
+          ['Libellé', d.nom],
+          ['Montant', eur2.format(d.montant)]
+        ], () => {
+          state.depenses = state.depenses.filter((x) => x.id !== d.id);
+          done?.();
+          renderDepenses();
+          refresh();
+        });
+      };
+
+      // Mobile et tablette : ni champ, ni œil, ni corbeille, ni colonne
+      // Catégorie ; un appui sur la ligne ouvre le pop-up de détail, d'où
+      // l'on modifie ou efface la dépense.
+      if (COMPACT_QUERY.matches) {
+        const open = () => showItemDetails(d, 'depenses', askDelete);
+        body.append(h('tr', {
+          class: 'row-open', tabindex: '0', 'aria-label': `Voir le détail de ${d.nom}`,
+          onclick: open,
+          onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }
+        },
+        h('td', { class: 'cell-text' }, d.nom),
+        h('td', { class: 'num' }, eur2.format(d.montant))
+        ));
+        continue;
+      }
+
       const nameInput = h('input', {
         class: 'cell', type: 'text', maxlength: 60, value: d.nom, 'aria-label': 'Libellé',
         onchange: (e) => {
@@ -728,34 +614,17 @@
 
       const del = h('button', {
         class: 'icon-btn', type: 'button', 'aria-label': `Effacer ${d.nom}`, title: 'Effacer',
-        onclick: () => {
-          confirmDelete('Supprimer cette dépense ?', [
-            ['Catégorie', d.categorie],
-            ['Libellé', d.nom],
-            ['Montant', eur2.format(d.montant)]
-          ], () => {
-            state.depenses = state.depenses.filter((x) => x.id !== d.id);
-            renderDepenses();
-            refresh();
-          });
-        }
+        onclick: () => askDelete()
       });
       del.innerHTML = TRASH_ICON;
-      const actions = h('td', { class: 'num row-actions' }, detailButton(d, 'depenses'), del);
+      const actions = h('td', { class: 'num row-actions' }, detailButton(d, 'depenses', askDelete), del);
 
-      body.append(MOBILE_QUERY.matches
-        ? h('tr', {},
-          h('td', {}, nameInput),
-          h('td', { class: 'num' }, amountInput),
-          h('td', {}, catCell),
-          actions
-        )
-        : h('tr', {},
-          h('td', {}, catCell),
-          h('td', {}, nameInput),
-          h('td', { class: 'num' }, amountInput),
-          actions
-        ));
+      body.append(h('tr', {},
+        h('td', {}, catCell),
+        h('td', {}, nameInput),
+        h('td', { class: 'num' }, amountInput),
+        actions
+      ));
     }
     updateScrollArrows($('#depensesTableWrap'), $('#depensesScrollLeft'), $('#depensesScrollRight'));
   }
@@ -1190,7 +1059,7 @@
     }
     const wrap = $('#depensesTableWrap');
     if (wrap) bindScrollArrows(wrap, $('#depensesScrollLeft'), $('#depensesScrollRight'));
-    if ($('#depensesTable')) MOBILE_QUERY.addEventListener('change', renderDepenses);
+    if ($('#depensesTable')) COMPACT_QUERY.addEventListener('change', renderDepenses);
 
     const btnClearDepenses = $('#btnClearDepenses');
     if (btnClearDepenses) {
@@ -1529,7 +1398,7 @@
     ? (item.cashbackOn !== false ? montant * cashbackFraction() : 0)
     : (item.roundUpOn !== false ? roundUpAmount(montant) : 0));
 
-  /** Gains du mois (y, m) par jour : { [jour]: [{ type, nom, montant, gain }] }. */
+  /** Gains du mois (y, m) par jour : { [jour]: [{ type, nom, montant, gain, item }] }. */
   function avantagesOf(y, m, tab = avCal.tab) {
     const byDay = {};
     const last = new Date(y, m + 1, 0).getDate();
@@ -1538,7 +1407,7 @@
     for (const c of state.charges) {
       const added = c.ajout ? new Date(c.ajout) : null;
       if (added && new Date(added.getFullYear(), added.getMonth(), 1) > monthStart) continue;
-      push(Math.min(added ? added.getDate() : 1, last), { type: 'charge', nom: c.nom, montant: c.mensuel, gain: avGain(c, c.mensuel, tab) });
+      push(Math.min(added ? added.getDate() : 1, last), { type: 'charge', nom: c.nom, montant: c.mensuel, gain: avGain(c, c.mensuel, tab), item: c });
     }
     const fromKey = (key) => { const [yy, mm] = key.split('-').map(Number); return new Date(yy, mm - 1, 1); };
     const depenses = [
@@ -1548,7 +1417,7 @@
     for (const { d, mois } of depenses) {
       const date = d.ajout ? new Date(d.ajout) : fromKey(mois);
       if (date.getFullYear() !== y || date.getMonth() !== m) continue;
-      push(date.getDate(), { type: 'depense', nom: d.nom, montant: d.montant, gain: avGain(d, d.montant, tab) });
+      push(date.getDate(), { type: 'depense', nom: d.nom, montant: d.montant, gain: avGain(d, d.montant, tab), item: d });
     }
     return byDay;
   }
@@ -1643,14 +1512,42 @@
 
   /** Pop-up du détail d'un jour : chaque charge / dépense, son montant et son
       gain, puis le total du jour (dès deux lignes). */
+  let avDay = null;   // { d, close } : pop-up du jour ouvert
   function openAvantagesDay(d, list, nom) {
     const overlay = $('#avZoomOverlay');
     if (!overlay) return;
+    renderAvantagesDay(d, list, nom);
+    const close = openModal(overlay, {
+      focus: $('#avZoomClose'),
+      onClose: () => {
+        avDay = null;
+        $('#avZoomClose').removeEventListener('click', close);
+      }
+    });
+    avDay = { d, close };
+    $('#avZoomClose').addEventListener('click', close);
+  }
+
+  /** Après une modification ou une suppression : pop-up du jour recalculé
+      (le jour peut avoir changé de gains), fermé s'il n'en a plus. */
+  function refreshAvantagesDay() {
+    if (!avDay) return;
+    const list = avantagesOf(avCal.year, avCal.month)[avDay.d] || [];
+    if (!list.length) { avDay.close(); return; }
+    renderAvantagesDay(avDay.d, list, avCal.tab === 'cashback' ? 'CashBack' : 'Round Up');
+  }
+
+  /** Contenu du pop-up du jour : titre, lignes et total. */
+  function renderAvantagesDay(d, list, nom) {
     const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const total = list.reduce((t, ev) => t + ev.gain, 0);
     $('#avDayTitle').textContent = capitalize(fmtDay.format(new Date(avCal.year, avCal.month, d)));
     $('#avDayList').replaceChildren(
-      ...list.map((ev) => h('li', { class: `cal-ev cal-ev--${ev.type}` },
+      ...list.map((ev) => h('li', {
+        class: `cal-ev cal-ev--${ev.type} cal-ev--open`, tabindex: '0', 'aria-label': `Voir le détail de ${ev.nom}`,
+        onclick: () => openAvantageDetails(ev),
+        onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAvantageDetails(ev); } }
+      },
         h('span', { class: 'sw', 'aria-hidden': 'true' }),
         h('span', { class: 'cal-ev__name' }, ev.nom,
           h('span', { class: 'cal-ev__cat' }, `${ev.type === 'charge' ? 'Charge' : 'Dépense'} · ${eur2.format(ev.montant)}`)),
@@ -1659,11 +1556,27 @@
         h('span', { class: 'sw', 'aria-hidden': 'true' }),
         h('span', { class: 'cal-ev__name' }, `${nom} du jour`),
         h('span', { class: 'cal-ev__amount good' }, `+${eur2.format(total)}`))] : []));
-    const close = openModal(overlay, {
-      focus: $('#avZoomClose'),
-      onClose: () => $('#avZoomClose').removeEventListener('click', close)
-    });
-    $('#avZoomClose').addEventListener('click', close);
+  }
+
+  /** Pop-up Détail (modifiable) d'une charge ou d'une dépense du pop-up du
+      jour, ouvert par-dessus lui : après Valider ou Effacer, le calendrier et
+      le pop-up du jour suivent (fermé s'il n'a plus de gain). */
+  function openAvantageDetails(ev) {
+    const kind = ev.type === 'charge' ? 'charges' : 'depenses';
+    const montant = () => (kind === 'charges' ? ev.item.mensuel : ev.item.montant);
+    const onDelete = (done) => {
+      confirmDelete(`Supprimer ${kind === 'charges' ? 'cette charge' : 'cette dépense'} ?`, [
+        ['Catégorie', ev.item.categorie],
+        ['Libellé', ev.item.nom],
+        [kind === 'charges' ? 'Valeur' : 'Montant', `${eur2.format(montant())}${kind === 'charges' ? ' / mois' : ''}`]
+      ], () => {
+        BudgetState.removeItem(state, ev.item, kind);
+        done();
+        refresh();
+        refreshAvantagesDay();
+      });
+    };
+    showItemDetails(ev.item, kind, onDelete, refreshAvantagesDay);
   }
 
   function bindAvantages() {
