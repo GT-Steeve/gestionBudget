@@ -1612,9 +1612,14 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
      place habituelle dans le menu. */
   .nav a.nav-home { display: none; }
   /* Même principe pour Profil et Paramètres : icônes en haut à droite
-     (.top-actions) plutôt qu'onglets. Guide aussi : accessible depuis la
-     page Profil (« Revoir le guide »). */
-  .nav a[href$="profil.html"], .nav a[href$="parametres.html"], .nav a[href$="guide.html"] { display: none; }
+     (.top-actions) plutôt qu'onglets. */
+  .nav a[href$="profil.html"], .nav a[href$="parametres.html"] { display: none; }
+  /* Ordre des onglets mobiles (sans toucher au HTML, commun au bureau) :
+     Guide en premier, avant Revenus ; Annexe juste après Sauvegarder, puis
+     À propos en dernier. */
+  .nav a[href$="guide.html"] { order: -1; }
+  .nav a[href$="annexe.html"] { order: 1; }
+  .nav a[href$="apropos.html"] { order: 2; }
   /* display: contents fait passer .nav et .top-actions comme des enfants directs de
      .topbar__in, pour pouvoir les placer via grid-area. */
   .site-menu { display: contents; }
