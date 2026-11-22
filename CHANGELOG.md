@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.50.0...v1.51.0) (2026-11-22)
+
+
+### Features
+
+* **details:** pop-up Détail tactile, modifiable depuis les calendriers ([2571341](https://github.com/GT-Steeve/gestionBudget/commit/2571341f7785323d897ceedfb3c33bbca4ae8b14))
+
 # [1.50.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.49.0...v1.50.0) (2026-11-20)
 
 
