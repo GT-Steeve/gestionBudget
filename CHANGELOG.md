@@ -1,3 +1,10 @@
+## [1.51.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.51.0...v1.51.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **nav:** ordre des onglets et texte du guide ([4fd1bc7](https://github.com/GT-Steeve/gestionBudget/commit/4fd1bc748be403ab49c8dcea735640b77c441818))
+
 # [1.51.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.50.0...v1.51.0) (2026-11-22)
 
 
