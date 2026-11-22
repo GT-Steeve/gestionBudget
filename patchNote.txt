@@ -66,8 +66,10 @@ v1.20.2 = fusion tracker un produit et nouvelle dépense
 v1.21.0 = polish UX suivi.html
 v1.21.1 = polish UX nouvelle dépense + retirer suggestion carte
 v1.22.0 = rework onglet cashback
+v1.23.0 = modifier valeur simplement dans les calendrier
 
 ** Next idea **
+inversé les onglet cashback et roundup + réfléchir liste suivi comme cashback
 exporter / imprimer l'historique des dépenses via un calendrier + liste
 exporter / imprimer le suivi des charges via un calendrier + liste
 revoir l'impression -> l'user doit indiquer la période et élements désiré
