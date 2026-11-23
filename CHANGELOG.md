@@ -1,3 +1,10 @@
+# [1.52.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.51.1...v1.52.0) (2026-11-23)
+
+
+### Features
+
+* **loader:** animation CoinStory en deux versions pour l'écran de chargement ([22a2fe3](https://github.com/GT-Steeve/gestionBudget/commit/22a2fe38a4ea428417148a95e980414b54cc6429))
+
 ## [1.51.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.51.0...v1.51.1) (2026-11-22)
 
 
