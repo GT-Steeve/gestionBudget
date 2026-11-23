@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.23.1 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.24.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -104,10 +104,18 @@ placement, exemples de produits financiers et synthèse visuelle,
   défaut) ou agrandie (130 %), comme le zoom du navigateur, et thème clair ou sombre (automatique selon le système
   tant qu'aucun choix n'est fait).
 - **Écran de chargement** — si une page met plus d'un quart de seconde à
-  s'afficher, des pièces tombent et s'empilent avec l'étape en cours
-  (revenus, charges, dépenses, économies, synthèse), puis le contenu arrive
-  bloc par bloc. Rien ne s'affiche sur un chargement rapide, et la pile reste
-  fixe si l'appareil demande des animations réduites.
+  s'afficher, une animation de pièces se joue avec l'étape en cours
+  (revenus, charges, dépenses, économies, synthèse) : un joli tas, trois
+  piles, puis une pyramide d'où sort une étoile, avec des monnaies tirées au
+  hasard (€ $ £ ¥ ₱ ₩). Le contenu arrive ensuite bloc par bloc. Rien ne
+  s'affiche sur un chargement rapide, et l'animation reste figée sur sa
+  dernière étape si l'appareil demande des animations réduites.
+  L'animation existe en **deux versions** :
+  - **version 2** (par défaut) — utilisée par l'écran de chargement de
+    toutes les pages ;
+  - **version 1** — la même, précédée d'une pluie de pièces (« Les pièces
+    tombent ») ; elle est **réservée à la page Placement** pour de futures
+    fonctionnalités et n'est utilisée nulle part pour l'instant.
 - **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
   qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
   onglets sous le titre, avec Profil et Paramètres en icônes.
@@ -148,7 +156,7 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
-- `assets/js/loader.js` — écran de chargement « pile de pièces », inclus dans le `<head>` de chaque page
+- `assets/js/loader.js` — écran de chargement « pièces » (animation CoinStory en deux versions : v2 par défaut, v1 avec pluie de pièces réservée à la page Placement), inclus dans le `<head>` de chaque page
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
 - `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)

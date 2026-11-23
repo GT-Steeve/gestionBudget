@@ -68,6 +68,7 @@ v1.21.1 = polish UX nouvelle dépense + retirer suggestion carte
 v1.22.0 = rework onglet cashback
 v1.23.0 = modifier valeur simplement dans les calendrier
 v1.23.1 = swap onglet menu mobile
+v1.24.0 = polish animation chargement
 
 ** Next idea **
 inversé les onglet cashback et roundup + réfléchir liste suivi comme cashback
