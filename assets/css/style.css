@@ -1809,10 +1809,11 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 
 /* ---------- Écran de chargement (loader.js) ----------
    html.is-pending : contenu masqué pendant le chargement ; html.is-loading :
-   pile de pièces affichée (seulement si le chargement dépasse 250 ms) ;
-   html.is-revealing : arrivée en cascade du contenu. Chaque pièce est un
-   disque vu de face qui tournoie en tombant (scaleY) puis se pose à plat
-   (scaleY 0.3) : son ombre portée devient la tranche. */
+   animation de pièces affichée (seulement si le chargement dépasse 250 ms) ;
+   html.is-revealing : arrivée en cascade du contenu. Animation CoinStory
+   (loader.js) : pluie de pièces → tas → piles → pyramide et étoile. Une pièce
+   est un disque vu de face qui s'aplatit (scaleY 0.3) : son ombre portée
+   devient la tranche. */
 html.is-pending main.wrap > *, html.is-pending .foot { opacity: 0; }
 html.is-revealing main.wrap > *, html.is-revealing .foot { animation: page-in 360ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards; }
 html.is-revealing main.wrap > :nth-child(2) { animation-delay: 50ms; }
@@ -1824,88 +1825,98 @@ html.is-revealing main.wrap > :nth-child(n+4), html.is-revealing .foot { animati
   position: fixed; inset: 56px 0 0; z-index: 5; pointer-events: none;
   display: grid; place-content: center; justify-items: center; gap: 14px;
   transition: opacity 220ms ease, transform 260ms ease;
-  --coin-face: inset 0 0 0 3px var(--coin-rim), 0 0 0 var(--coin-edge);
-  --coin-flat: inset 0 0 0 3px var(--coin-rim), 0 12px 0 var(--coin-edge);
 }
 html:not(.is-loading) .page-loader { opacity: 0; transform: translateY(-8px); }
-.page-loader__stack { position: relative; width: 56px; height: 92px; }
-.page-loader__stack::before {
-  content: ""; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 12px; border-radius: 50%;
-  background: radial-gradient(closest-side, var(--coin-floor), transparent);
-}
-.page-loader .coin {
-  position: absolute; left: 4px; width: 48px; height: 48px; border-radius: 50%;
-  transform-origin: 50% 100%; opacity: 0;
-  background: radial-gradient(circle at 35% 30%, var(--coin-hi), var(--coin) 52%, var(--coin-deep));
-  box-shadow: var(--coin-face);
-  display: grid; place-items: center;
-  animation: 2.6s linear infinite;
-}
-.page-loader .coin::before { content: "€"; font: 800 24px/1 system-ui, sans-serif; color: var(--coin-edge); opacity: 0.75; text-shadow: 0 1px 0 var(--coin-hi); }
-.page-loader .coin:nth-child(1) { bottom: 4px; z-index: 1; animation-name: coin-drop-1; }
-.page-loader .coin:nth-child(2) { bottom: 10px; z-index: 2; animation-name: coin-drop-2; }
-.page-loader .coin:nth-child(3) { bottom: 16px; z-index: 3; animation-name: coin-drop-3; }
-.page-loader .coin:nth-child(4) { bottom: 22px; z-index: 4; animation-name: coin-drop-4; }
-.page-loader .coin:nth-child(5) { bottom: 28px; z-index: 5; animation-name: coin-drop-5; }
+.page-loader .coin-story { --cs-size: 180px; }
 .page-loader__label { font-size: 14px; color: var(--muted); min-width: 24ch; text-align: center; }
 .page-loader__label::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: loader-dots 1.2s steps(4, end) infinite; }
 @keyframes loader-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
-@keyframes coin-drop-1 {
-  0% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
-  1.92% { opacity: 1; }
-  5.65% { transform: translateY(-50px) scaleY(0.08); }
-  11.31% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
-  16.15% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
-  18.85% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
-  21.54%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
-  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+
+/* Animation CoinStory (loader.js) */
+.coin-story {
+  --cs-size: 320px;
+  position: relative;
+  width: var(--cs-size);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  user-select: none;
 }
-@keyframes coin-drop-2 {
-  0%, 12.31% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
-  14.23% { opacity: 1; }
-  17.96% { transform: translateY(-50px) scaleY(0.08); }
-  23.62% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
-  28.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
-  31.15% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
-  33.85%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
-  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+.cs-world {
+  position: absolute;
+  left: 0; top: 0;
+  width: 320px; height: 320px;
+  transform-origin: 0 0;
+  isolation: isolate;
 }
-@keyframes coin-drop-3 {
-  0%, 24.62% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
-  26.54% { opacity: 1; }
-  30.27% { transform: translateY(-50px) scaleY(0.08); }
-  35.92% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
-  40.77% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
-  43.46% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
-  46.15%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
-  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+.cs-floor {
+  position: absolute;
+  left: 20px; top: 268px;
+  width: 280px; height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--coin-floor, rgba(60, 45, 20, .14)), transparent);
+  transition: opacity .5s;
+  z-index: -2;
 }
-@keyframes coin-drop-4 {
-  0%, 36.92% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
-  38.85% { opacity: 1; }
-  42.58% { transform: translateY(-50px) scaleY(0.08); }
-  48.23% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
-  53.08% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
-  55.77% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
-  58.46%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
-  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+.cs-coin {
+  position: absolute;
+  left: 0; top: 0;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 35% 30%,
+    var(--coin-hi, #fbe8a6), var(--coin, #e3b341) 52%, var(--coin-deep, #c8941f));
+  box-shadow: inset 0 0 0 3px var(--coin-rim, rgba(140, 95, 10, .35));
+  will-change: transform, opacity;
 }
-@keyframes coin-drop-5 {
-  0%, 49.23% { opacity: 0; transform: translateY(-78px) scaleY(1); box-shadow: var(--coin-face); animation-timing-function: ease-in; }
-  51.15% { opacity: 1; }
-  54.88% { transform: translateY(-50px) scaleY(0.08); }
-  60.54% { transform: translateY(-22px) scaleY(0.9); box-shadow: var(--coin-face); }
-  65.38% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); animation-timing-function: ease-out; }
-  68.08% { transform: translateY(-5px) scaleY(0.3); animation-timing-function: ease-in; }
-  70.77%, 88.46% { opacity: 1; transform: translateY(0) scaleY(0.3); box-shadow: var(--coin-flat); }
-  100% { opacity: 0; transform: translateY(-14px) scaleY(0.3); box-shadow: var(--coin-flat); }
+.cs-coin::before {
+  content: attr(data-sym);
+  font: 800 24px/1 system-ui, sans-serif;
+  color: var(--coin-edge, #9c6f12);
+  opacity: .75;
+  text-shadow: 0 1px 0 var(--coin-hi, #fbe8a6);
+}
+/* Étoile de la dernière scène */
+.cs-star {
+  position: absolute;
+  left: 118px; top: 90px;
+  width: 84px; height: 84px;
+  z-index: -1;               /* derrière les piles */
+  opacity: 0;
+  transform: translateY(150px);
+  pointer-events: none;
+}
+.cs-star svg { width: 100%; height: 100%; overflow: visible; }
+.cs-star .cs-stop1 { stop-color: var(--coin-hi, #fbe8a6); }
+.cs-star .cs-stop2 { stop-color: var(--coin, #e3b341); }
+.cs-star .cs-stop3 { stop-color: var(--coin-deep, #c8941f); }
+.cs-star .cs-star-shape { stroke: var(--coin-edge, #9c6f12); stroke-width: 2.5; stroke-linejoin: round; }
+.cs-star .cs-rays { stroke: var(--coin, #e3b341); stroke-width: 5; stroke-linecap: round; transform-origin: 50px 50px; }
+/* L'étoile monte de derrière la pile centrale, puis ses traits brillent */
+.cs-star .cs-rays { opacity: 0; }
+.cs-star.is-on { animation: cs-star-rise 1s cubic-bezier(.25, .8, .35, 1) var(--cs-star-delay, .9s) forwards; }
+.cs-star.is-on .cs-rays { animation: cs-rays 1.4s ease-in-out calc(var(--cs-star-delay, .9s) + 1s) infinite; }
+.cs-star.is-off { animation: cs-star-out .35s ease-in forwards; }
+@keyframes cs-star-rise {
+  from { opacity: 1; transform: translateY(150px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cs-star-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: none; }
+}
+@keyframes cs-rays {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .45; transform: scale(1.12); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .site-menu, .menu-icon { transition: none; }
-  /* Pile fixe, texte sans points animés, contenu en simple fondu. */
-  .page-loader .coin { animation: none; opacity: 1; transform: scaleY(0.3); box-shadow: var(--coin-flat); }
+  /* Pyramide fixe, texte sans points animés, contenu en simple fondu. */
+  /* CoinStory affiche directement la pyramide finale, sans mouvement. */
+  .cs-star.is-on, .cs-star.is-on .cs-rays { animation: none; opacity: 1; transform: none; }
   .page-loader__label::after { animation: none; content: "…"; }
   html.is-revealing main.wrap > *, html.is-revealing .foot { animation-name: page-fade; }
 }
