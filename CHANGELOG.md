@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.53.0...v1.54.0) (2026-11-24)
+
+
+### Features
+
+* **cashback:** détail d'une ligne sur les pages CashBack et Round Up ([313c011](https://github.com/GT-Steeve/gestionBudget/commit/313c011d5562ba8e6a030ad4a78622740e8ae56e))
+
 # [1.53.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.52.0...v1.53.0) (2026-11-24)
 
 
