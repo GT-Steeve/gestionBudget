@@ -69,6 +69,8 @@ v1.22.0 = rework onglet cashback
 v1.23.0 = modifier valeur simplement dans les calendrier
 v1.23.1 = swap onglet menu mobile
 v1.24.0 = polish animation chargement
+v1.24.1 = ajout visuel démo v1 et v2
+v1.24.2 = animation v2 plus courte
 
 ** Next idea **
 inversé les onglet cashback et roundup + réfléchir liste suivi comme cashback

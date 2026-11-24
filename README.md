@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.24.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.24.2 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -161,6 +161,7 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
 - `assets/img/` — favicons et image de partage (Open Graph)
+- `animation-pieces/` — démo autonome de l'animation CoinStory (ouvrir `animation-pieces/index.html`) : lecture, pause, navigation entre les étapes, thème clair/sombre et bascule entre la version 1 et la version 2. Hors site publié.
 
 ## Contribuer
 
