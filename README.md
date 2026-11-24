@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.24.2 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.24.3 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -42,6 +42,9 @@ placement, exemples de produits financiers et synthèse visuelle,
   l'arrondi automatique (différence mise de côté, comme sur Trade Republic),
   activables ligne par ligne dès l'ajout d'une charge ou d'une dépense. Un
   montant déjà rond est arrondi au multiple suivant (x1 → 1,00 €, x2 → 2,00 €).
+  Sous le calendrier des gains, **Tout voir** ouvre la liste CashBack ou
+  Round Up : un appui sur une ligne affiche son détail (modifiable et
+  effaçable).
 - **Économie potentielle** — comparez une charge à une alternative
   (fournisseur moins cher, autre offre…) et voyez l'économie mensuelle/annuelle.
   Avant de l'appliquer, chaque comparaison se modifie en ligne (poste de
