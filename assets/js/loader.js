@@ -49,7 +49,9 @@ class CoinStory {
       // sans la pluie : le joli tas devient la 1re étape et apparaît en fondu
       this.scenes.shift();
       this.labels.shift();
-      this.scenes[0] = { ...this.scenes[0], blend: 'fade' };
+      this.scenes[0] = { ...this.scenes[0], blend: 'fade', dur: 1000 };
+      // passage du tas aux trois piles plus court (≈ 0,8 s au lieu de ≈ 1,3 s)
+      this.scenes[1] = { ...this.scenes[1], moveDur: 500, stagger: 10, dur: 1300 }; // piles visibles 0,5 s une fois en place
     }
     this.cur = Array.from({ length: this.N }, () => ({ x: 160, y: -60, sy: 1, r: 0, o: 0, z: 0 }));
     this.index = -1;
@@ -195,9 +197,10 @@ class CoinStory {
     const sc = this.scenes[this.index], s0 = this.s0[i];
     const target = sc.state(i, t, s0) || { ...s0, o: 0 };
     if (sc.blend === 'fade') {
-      const F = 350;
+      // fondu de sortie seulement si des pièces sont visibles (pas au tout premier démarrage)
+      const F = this._fadeOut;
       if (t < F) return { ...s0, o: s0.o * (1 - t / F) };
-      return { ...target, o: target.o * Math.min(1, (t - F) / 300) };
+      return { ...target, o: target.o * Math.min(1, (t - F) / 200) };
     }
     if (sc.blend === 'move') {
       const M = sc.moveDur ?? 750, st = sc.stagger ?? 18, rank = sc.order ? sc.order[i] : i;
@@ -229,7 +232,7 @@ class CoinStory {
       this.goTo(this.index + 1);
     }
     // nouveau tirage des monnaies à chaque boucle, quand les pièces sont invisibles
-    if (this.index === 0 && !this._shuffled && this.t >= 350) { this._shuffleSymbols(); this._shuffled = true; }
+    if (this.index === 0 && !this._shuffled && this.t >= this._fadeOut) { this._shuffleSymbols(); this._shuffled = true; }
     for (let i = 0; i < this.N; i++) this._apply(i, this._stateAt(i, this.t));
     this._raf = requestAnimationFrame(this._frame);
   }
@@ -244,6 +247,7 @@ class CoinStory {
     const len = this.scenes.length;
     n = ((n % len) + len) % len;
     this.s0 = this.cur.map(s => ({ ...s }));
+    this._fadeOut = this.cur.some(s => s.o > 0.01) ? 350 : 0;
     this.index = n;
     this.t = 0;
     this._shuffled = false;
