@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.212">
-  <script src="../assets/js/loader.js?v=1.01.212"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.213">
+  <script src="../assets/js/loader.js?v=1.01.213"></script>
 </head>
 <body data-app="true">
 
@@ -160,6 +160,29 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
 
+<!-- Détail d'une ligne du tableau (appui sur la ligne) : toutes ses
+     informations, cashback et round up compris. Croix en haut à droite ;
+     Effacer en bas à gauche, Modifier en bas à droite (Annuler / Valider
+     pendant la modification). -->
+<div id="detailOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="wizard__head modal__head">
+      <p id="detailTitle" class="modal__title"></p>
+      <button type="button" id="detailClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p id="detailStamp" class="modal__stamp"><span id="detailDate"></span><span id="detailTime"></span></p>
+    <dl id="detailList" class="modal__details"></dl>
+    <div class="modal__actions modal__actions--split">
+      <button type="button" id="detailDelete" class="btn btn--ghost btn--ghost-danger">Effacer</button>
+      <button type="button" id="detailCancel" class="btn btn--ghost" hidden>Annuler</button>
+      <button type="button" id="detailEdit" class="btn">Modifier</button>
+      <button type="button" id="detailSave" class="btn" hidden>Valider</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="modal-overlay" hidden>
   <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <p id="confirmTitle" class="modal__title">Confirmer la suppression</p>
@@ -171,12 +194,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.212"></script>
-<script src="../assets/js/ui.js?v=1.01.212"></script>
-<script src="../assets/js/nav.js?v=1.01.212"></script>
-<script src="../assets/js/calc.js?v=1.01.212"></script>
-<script src="../assets/js/state.js?v=1.01.212"></script>
-<script src="../assets/js/guide.js?v=1.01.212"></script>
-<script src="../assets/js/script.js?v=1.01.212"></script>
+<script src="../assets/js/profiles.js?v=1.01.213"></script>
+<script src="../assets/js/ui.js?v=1.01.213"></script>
+<script src="../assets/js/nav.js?v=1.01.213"></script>
+<script src="../assets/js/calc.js?v=1.01.213"></script>
+<script src="../assets/js/state.js?v=1.01.213"></script>
+<script src="../assets/js/guide.js?v=1.01.213"></script>
+<script src="../assets/js/script.js?v=1.01.213"></script>
 </body>
 </html>

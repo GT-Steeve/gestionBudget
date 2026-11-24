@@ -454,6 +454,13 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .table tbody tr { border-bottom: 1px solid var(--grid); }
 .table tbody tr:hover { background: var(--wash); }
 .table tbody tr.is-sel { background: var(--wash); box-shadow: inset 3px 0 0 var(--accent); }
+/* Ligne qui ouvre son pop-up Détail (appui, Entrée ou Espace) : tableaux
+   CashBack / Round Up, et Dépenses / Charges / Revenus en mobile. */
+.table .row-open { cursor: pointer; }
+.table .row-open:active { background: var(--wash); }
+.table .row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.table .row-open .cell-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (hover: hover) { .table tbody .row-open:hover { background: var(--wash); } }
 .table tbody tr.is-sel th { font-weight: 700; }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .table tfoot th, .table tfoot td { font-weight: 700; border-top: 1px solid var(--axis); padding-top: 12px; }
@@ -1467,10 +1474,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   .row-full { display: none; }
   .row-compact { display: table-row; }
   #depensesTable, #chargesTable, #revenusTable { table-layout: fixed; min-width: 0; }
-  .table .row-open { cursor: pointer; }
-  .table .row-open:active { background: var(--wash); }
-  .table .row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .table .row-open .cell-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #depensesTable th:nth-child(2), #depensesTable td:nth-child(2),
   #chargesTable th:nth-child(2), #chargesTable td:nth-child(2),
   #revenusTable th:nth-child(2), #revenusTable td:nth-child(2) { width: 40%; }

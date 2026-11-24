@@ -217,6 +217,35 @@
     });
   }
 
+  /** Effacer depuis le pop-up Détail d'une charge ou d'une dépense :
+      confirmation, suppression, puis done() ferme le pop-up et after()
+      (facultatif) met à jour ce qui en dépend (pop-up du jour…). */
+  function askDeleteItem(item, kind, done, after) {
+    const isCharge = kind === 'charges';
+    confirmDelete(`Supprimer ${isCharge ? 'cette charge' : 'cette dépense'} ?`, [
+      ['Catégorie', item.categorie],
+      ['Libellé', item.nom],
+      [isCharge ? 'Valeur' : 'Montant', isCharge ? `${eur2.format(item.mensuel)} / mois` : eur2.format(item.montant)]
+    ], () => {
+      BudgetState.removeItem(state, item, kind);
+      done();
+      refresh();
+      after?.();
+    });
+  }
+
+  /** Ligne d'un tableau CashBack / Round Up (cashback.html, roundUp.html) :
+      un appui (ou Entrée / Espace) ouvre le pop-up Détail de la charge ou de
+      la dépense, modifiable et effaçable. */
+  function avantageRow(item, kind, ...cells) {
+    const open = () => showItemDetails(item, kind, (done) => askDeleteItem(item, kind, done));
+    return h('tr', {
+      class: 'row-open', tabindex: '0', 'aria-label': `Voir le détail de ${item.nom}`,
+      onclick: open,
+      onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }
+    }, ...cells);
+  }
+
   /** Bouton œil d'une charge ou d'une dépense : toutes ses informations, cashback
       et round up compris (lus au clic, donc toujours à jour des modifications). */
   function detailButton(item, kind, onDelete) {
@@ -1218,7 +1247,7 @@
         const montantCell = h('td', { class: 'num' }, eur2.format(montant));
         const cashbackCell = h('td', { class: 'num' }, eur2.format(cashback));
         // Même ordre en mobile et en bureau : libellé, coût / montant, cashback.
-        body.append(h('tr', {}, nameCell, montantCell, cashbackCell));
+        body.append(avantageRow(item, amountKey === 'mensuel' ? 'charges' : 'depenses', nameCell, montantCell, cashbackCell));
       }
       updateScrollArrows(wrap, leftBtn, rightBtn);
     };
@@ -1352,7 +1381,7 @@
         const montantCell = h('td', { class: 'num' }, eur2.format(montant));
         const roundUpCell = h('td', { class: 'num' }, eur2.format(roundUp));
         // Même ordre en mobile et en bureau : libellé, coût / montant, round up.
-        body.append(h('tr', {}, nameCell, montantCell, roundUpCell));
+        body.append(avantageRow(item, amountKey === 'mensuel' ? 'charges' : 'depenses', nameCell, montantCell, roundUpCell));
       }
       updateScrollArrows(wrap, leftBtn, rightBtn);
     };
@@ -1563,19 +1592,7 @@
       le pop-up du jour suivent (fermé s'il n'a plus de gain). */
   function openAvantageDetails(ev) {
     const kind = ev.type === 'charge' ? 'charges' : 'depenses';
-    const montant = () => (kind === 'charges' ? ev.item.mensuel : ev.item.montant);
-    const onDelete = (done) => {
-      confirmDelete(`Supprimer ${kind === 'charges' ? 'cette charge' : 'cette dépense'} ?`, [
-        ['Catégorie', ev.item.categorie],
-        ['Libellé', ev.item.nom],
-        [kind === 'charges' ? 'Valeur' : 'Montant', `${eur2.format(montant())}${kind === 'charges' ? ' / mois' : ''}`]
-      ], () => {
-        BudgetState.removeItem(state, ev.item, kind);
-        done();
-        refresh();
-        refreshAvantagesDay();
-      });
-    };
+    const onDelete = (done) => askDeleteItem(ev.item, kind, done, refreshAvantagesDay);
     showItemDetails(ev.item, kind, onDelete, refreshAvantagesDay);
   }
 
