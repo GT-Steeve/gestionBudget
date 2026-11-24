@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Animation pièces</title>
+  <link rel="stylesheet" href="coin-story.css">
+  <style>
+    /* Reprise des variables de style.css (Gestion budget) */
+    :root {
+      color-scheme: light;
+      --page: #ece6d8; --surface: #f5f0e4; --ink: #2a251c; --muted: #7a7161; --border: rgba(60,45,20,.13);
+      --accent: #256abf;
+      --coin-hi: #fbe8a6; --coin: #e3b341; --coin-deep: #c8941f;
+      --coin-rim: rgba(140,95,10,.35); --coin-edge: #9c6f12; --coin-floor: rgba(60,45,20,.14);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:where(:not([data-theme="light"])) {
+        color-scheme: dark;
+        --page: #0b1719; --surface: #122427; --ink: #eef5f5; --muted: #8aa4a6; --border: rgba(214,240,240,.10);
+        --coin-hi: #ffe596; --coin: #ebbd45; --coin-deep: #b98a1c;
+        --coin-rim: rgba(110,75,5,.4); --coin-edge: #8a6410; --coin-floor: rgba(0,0,0,.35);
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #0b1719; --surface: #122427; --ink: #eef5f5; --muted: #8aa4a6; --border: rgba(214,240,240,.10);
+      --coin-hi: #ffe596; --coin: #ebbd45; --coin-deep: #b98a1c;
+      --coin-rim: rgba(110,75,5,.4); --coin-edge: #8a6410; --coin-floor: rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      background: var(--page); color: var(--ink); font: 16px/1.5 system-ui, sans-serif;
+    }
+    .card {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 28px 28px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    }
+    #coins { --cs-size: min(340px, 80vw); }
+    .label { margin: 0; font-weight: 600; min-height: 1.5em; }
+    .dots { display: flex; gap: 6px; }
+    .dots button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%; background: var(--border); cursor: pointer; }
+    .dots button.on { background: var(--coin); }
+    .controls { display: flex; gap: 8px; }
+    .controls button {
+      min-width: 44px; height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--page); color: var(--ink); font: inherit; cursor: pointer;
+    }
+    .controls button:hover { border-color: var(--coin-deep); }
+    .controls button:focus-visible, .dots button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="coins"></div>
+    <p class="label" id="label"></p>
+    <div class="dots" id="dots"></div>
+    <div class="controls">
+      <button id="prev" aria-label="Scène précédente">◀</button>
+      <button id="toggle">Pause</button>
+      <button id="next" aria-label="Scène suivante">▶</button>
+      <button id="restart" aria-label="Recommencer">↺</button>
+      <button id="theme" aria-label="Changer de thème">◐</button>
+      <button id="version">Version 2</button>
+    </div>
+  </div>
+
+  <script src="coin-story.js"></script>
+  <script>
+  {
+    const el = document.getElementById('coins');
+    const dots = document.getElementById('dots');
+    const label = document.getElementById('label');
+    const toggle = document.getElementById('toggle');
+
+    el.addEventListener('coinstory:scene', e => {
+      label.textContent = e.detail.label;
+      [...dots.children].forEach((d, i) => d.classList.toggle('on', i === e.detail.index));
+    });
+
+    // version 2 par défaut (sans « Les pièces tombent ») ; le bouton bascule en version 1
+    let version = 2, story;
+    const start = () => {
+      if (story) story.destroy();
+      dots.innerHTML = '';
+      story = new CoinStory(el, { loop: true, version });
+      dots.innerHTML = story.labels.map((l, i) => `<button aria-label="${l}" data-i="${i}"></button>`).join('');
+      dots.children[story.index]?.classList.add('on');
+      label.textContent = story.labels[story.index];
+      document.getElementById('version').textContent = 'Version ' + version;
+      sync();
+    };
+    const sync = () => { if (story) toggle.textContent = story.playing ? 'Pause' : 'Lecture'; };
+    start();
+    document.getElementById('version').onclick = () => { version = version === 2 ? 1 : 2; start(); };
+
+    dots.addEventListener('click', e => { if (e.target.dataset.i) story.goTo(+e.target.dataset.i); });
+    toggle.onclick = () => { story.playing ? story.pause() : story.play(); sync(); };
+    document.getElementById('prev').onclick = () => story.prev();
+    document.getElementById('next').onclick = () => story.next();
+    document.getElementById('restart').onclick = () => { story.restart(); sync(); };
+    document.getElementById('theme').onclick = () => {
+      const r = document.documentElement;
+      const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      r.dataset.theme = dark ? 'light' : 'dark';
+    };
+  }
+  </script>
+</body>
+</html>
