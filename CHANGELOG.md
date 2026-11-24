@@ -1,3 +1,15 @@
+# [1.53.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.52.0...v1.53.0) (2026-11-24)
+
+
+### Bug Fixes
+
+* **loader:** animation v2 plus courte ([04c805b](https://github.com/GT-Steeve/gestionBudget/commit/04c805bf0c6943caea5c7542211d34af0a218f18))
+
+
+### Features
+
+* **demo:** page de démo de l'animation CoinStory (versions 1 et 2) ([baa536c](https://github.com/GT-Steeve/gestionBudget/commit/baa536cf83ffe2af0496e970003b3d9eafb18d0d))
+
 # [1.52.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.51.1...v1.52.0) (2026-11-23)
 
 
