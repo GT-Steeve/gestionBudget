@@ -40,19 +40,15 @@ jobs:
         run: npm run build
 
   release:
-    name: Release & déploiement
+    name: Release
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       contents: write
       issues: write
       pull-requests: write
       pages: write
-      id-token: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -81,6 +77,20 @@ jobs:
         with:
           path: _site
 
+  # Déploiement dans un job à part (schéma recommandé par GitHub Pages) :
+  # dans le même job que l'envoi, deploy-pages interrogeait l'API quelques
+  # secondes trop tôt et ne trouvait pas encore l'artefact « github-pages ».
+  deploy:
+    name: Déploiement GitHub Pages
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
 
