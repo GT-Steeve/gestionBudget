@@ -73,6 +73,7 @@ v1.24.1 = ajout visuel démo v1 et v2
 v1.24.2 = animation v2 plus courte
 v1.24.3 = voir les détails sur la page roundUp et cashback
 v1.25.0 = sauvegarder / imprimer suivi activité + afficher les répartition en détail
+v1.25.1 = review code
 
 ** Next idea **
 revoir l'impression -> l'user peut indiquer la période et élements désiré

@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.25.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.25.1 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -169,12 +169,13 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
 - `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
-- `assets/js/loader.js` — écran de chargement « pièces » (animation CoinStory en deux versions : v2 par défaut, v1 avec pluie de pièces réservée à la page Placement), inclus dans le `<head>` de chaque page
+- `assets/js/coin-story.js` — animation CoinStory (source unique, deux versions : v2 par défaut, v1 avec pluie de pièces réservée à la page Placement), utilisée par l'écran de chargement et par la démo
+- `assets/js/loader.js` — écran de chargement « pièces » (CoinStory version 2), inclus dans le `<head>` de chaque page juste après `coin-story.js`
 - `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
 - `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
 - `assets/img/` — favicons et image de partage (Open Graph)
-- `animation-pieces/` — démo autonome de l'animation CoinStory (ouvrir `animation-pieces/index.html`) : lecture, pause, navigation entre les étapes, thème clair/sombre et bascule entre la version 1 et la version 2. Hors site publié.
+- `animation-pieces/` — démo de l'animation CoinStory (ouvrir `animation-pieces/index.html`, qui charge `assets/js/coin-story.js` et `assets/css/style.css`) : lecture, pause, navigation entre les étapes, thème clair/sombre et bascule entre la version 1 et la version 2. Hors site publié.
 
 ## Contribuer
 
