@@ -27,8 +27,8 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.213">
-  <script src="../assets/js/loader.js?v=1.01.213"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.225">
+  <script src="../assets/js/loader.js?v=1.01.225"></script>
 </head>
 <body data-app="true">
 
@@ -213,6 +213,20 @@
   </div>
 </div>
 
+<!-- Détail d'une catégorie de la répartition (appui sur sa ligne) : libellé,
+     date, heure et montant de chaque ligne, puis le total (script.js). -->
+<div id="bdOverlay" class="modal-overlay" hidden>
+  <div class="modal cal-zoom" role="dialog" aria-modal="true" aria-labelledby="bdTitle">
+    <div class="wizard__head">
+      <p class="modal__title" id="bdTitle"></p>
+      <button type="button" id="bdClose" class="icon-btn wizard__close" aria-label="Fermer le détail">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <ul class="cal-day__list" id="bdList"></ul>
+  </div>
+</div>
+
 <!-- Détails d'une ligne du tableau (bouton œil, ou appui sur la ligne en
      mobile/tablette) : toutes ses informations, cashback et round up compris.
      Croix en haut à droite ; Effacer en bas à gauche, Modifier en bas à
@@ -250,6 +264,18 @@
 <div id="historiqueOverlay" class="modal-overlay" hidden>
   <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="historiqueTitle">
     <p id="historiqueTitle" class="modal__title modal__title--center">Historique des mois précédents</p>
+    <!-- Un mois à la fois, comme la page Suivi : flèche gauche = mois archivé
+         précédent, droite = suivant ; une flèche sans mois de ce côté est
+         masquée (script.js). -->
+    <div class="cal-nav historique-nav" id="historiqueNav" hidden>
+      <button type="button" id="historiquePrev" class="icon-btn icon-btn--view" aria-label="Mois précédent">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h3 id="historiqueMois" class="cal-title" aria-live="polite"></h3>
+      <button type="button" id="historiqueNext" class="icon-btn icon-btn--view" aria-label="Mois suivant">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
     <div id="historiqueList" class="modal-list"></div>
     <div class="modal__actions">
       <button type="button" id="historiqueExportPdf" class="btn btn--ghost">Exporter en PDF</button>
@@ -403,12 +429,12 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.213"></script>
-<script src="../assets/js/ui.js?v=1.01.213"></script>
-<script src="../assets/js/nav.js?v=1.01.213"></script>
-<script src="../assets/js/calc.js?v=1.01.213"></script>
-<script src="../assets/js/state.js?v=1.01.213"></script>
-<script src="../assets/js/guide.js?v=1.01.213"></script>
-<script src="../assets/js/script.js?v=1.01.213"></script>
+<script src="../assets/js/profiles.js?v=1.01.225"></script>
+<script src="../assets/js/ui.js?v=1.01.225"></script>
+<script src="../assets/js/nav.js?v=1.01.225"></script>
+<script src="../assets/js/calc.js?v=1.01.225"></script>
+<script src="../assets/js/state.js?v=1.01.225"></script>
+<script src="../assets/js/guide.js?v=1.01.225"></script>
+<script src="../assets/js/script.js?v=1.01.225"></script>
 </body>
 </html>

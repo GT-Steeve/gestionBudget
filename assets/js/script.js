@@ -80,7 +80,7 @@
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
     currentMonthName, openModal, confirmDialog: confirmDelete, bindInfoModal,
     openPicker, pickerOpt, pickCategory, bindAddWizard, bindResponsiveTrigger,
-    niceScale, arcPath, ringPath, roundUpOf, itemDetails } = UI;
+    niceScale, arcPath, ringPath, roundUpOf, itemDetails, fmtAjoutDate } = UI;
 
   /* ---------- Utilitaires ---------- */
 
@@ -368,18 +368,62 @@
     document.querySelectorAll(selector).forEach((el) => { el.textContent = text; });
   }
 
-  /** Répartition par catégorie (barres proportionnelles + montant + part du total). */
-  function renderBreakdown(box, cats, items, amountOf, total, emptyMsg) {
-    renderShareBars(box, cats.map((cat) => ({
-      label: cat, total: items.filter((x) => x.categorie === cat).reduce((a, x) => a + amountOf(x), 0)
-    })), total, emptyMsg);
+  /** Répartition par catégorie (barres proportionnelles + montant + part du
+      total) ; kind ('revenus', 'charges', 'depenses') : un appui sur une
+      catégorie ouvre le détail de ses lignes (pop-up #bdOverlay). */
+  function renderBreakdown(box, cats, items, amountOf, total, emptyMsg, kind) {
+    renderShareBars(box, cats.map((cat) => {
+      const lines = items.filter((x) => x.categorie === cat);
+      return {
+        label: cat, total: lines.reduce((a, x) => a + amountOf(x), 0),
+        open: kind && $('#bdOverlay') ? () => openBreakdownDetails(cat, kind, (x) => x.categorie === cat) : null
+      };
+    }), total, emptyMsg);
+  }
+
+  /** Pop-up simplifié de la répartition (lecture seule) pour une catégorie,
+      un produit ou une habitude : chaque ligne avec son libellé, sa date et
+      son heure d'ajout et son montant, de la plus ancienne à la plus
+      récente, puis le total. Lu à l'ouverture, donc toujours à jour.
+      kind : 'revenus', 'charges' ou 'depenses' ; match(x) : lignes retenues ;
+      amountOf(x) : montant affiché (par défaut mensuel ou montant). */
+  function openBreakdownDetails(title, kind, match, amountOf) {
+    const overlay = $('#bdOverlay');
+    const monthly = kind !== 'depenses';
+    amountOf ||= (x) => (monthly ? x.mensuel : x.montant);
+    const type = { revenus: 'revenu', charges: 'charge', depenses: 'depense' }[kind];
+    const lines = state[kind].filter((x) => match(x) && amountOf(x) > 0)
+      .sort((a, b) => (a.ajout ? Date.parse(a.ajout) : Infinity) - (b.ajout ? Date.parse(b.ajout) : Infinity));
+    const when = (iso) => {
+      if (!iso) return 'Date non connue';
+      const d = new Date(iso);
+      return `${fmtAjoutDate(d)} · ${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`;
+    };
+    const suffix = monthly ? ' / mois' : '';
+    const total = lines.reduce((t, x) => t + amountOf(x), 0);
+    $('#bdTitle').textContent = title;
+    $('#bdList').replaceChildren(
+      ...lines.map((x) => h('li', { class: `cal-ev cal-ev--${type}` },
+        h('span', { class: 'sw', 'aria-hidden': 'true' }),
+        h('span', { class: 'cal-ev__name' }, x.nom, h('span', { class: 'cal-ev__cat' }, when(x.ajout))),
+        h('span', { class: 'cal-ev__amount' }, `${eur2.format(amountOf(x))}${suffix}`))),
+      ...(lines.length > 1 ? [h('li', { class: 'cal-ev cal-ev--solde' },
+        h('span', { class: 'sw', 'aria-hidden': 'true' }),
+        h('span', { class: 'cal-ev__name' }, 'Total'),
+        h('span', { class: 'cal-ev__amount' }, `${eur2.format(total)}${suffix}`))] : []));
+    const close = openModal(overlay, {
+      focus: '#bdClose',
+      onClose: () => $('#bdClose').removeEventListener('click', close)
+    });
+    $('#bdClose').addEventListener('click', close);
   }
 
   /** Barres de répartition (libellé, barre, montant, part du total), de la
       plus grosse à la plus petite ; les lignes à 0 sont ignorées. Une ligne
       avec rename (nom actuel + callback) affiche un libellé cliquable qui se
       change en champ pour la renommer (Entrée ou clic ailleurs : valider,
-      Échap : annuler). */
+      Échap : annuler). Une ligne avec open s'ouvre d'un appui n'importe où ;
+      avec openBar (lignes renommables), seule la barre ouvre le détail. */
   function renderShareBars(box, rows, total, emptyMsg) {
     box.replaceChildren();
     const sorted = rows.filter((x) => x.total > 0).sort((a, b) => b.total - a.total);
@@ -389,11 +433,18 @@
       return;
     }
     const max = sorted[0].total;
-    for (const { label, title, total: rowTotal, rename } of sorted) {
-      box.append(h('div', { class: 'bd' },
-        rename ? renameLabel(label, rename) : h('span', { class: 'bd__name', title: title || label }, label),
-        h('div', { class: 'bd__track', role: 'presentation' },
-          h('div', { class: 'bd__bar', style: `width:${(rowTotal / max) * 100}%` })),
+    for (const { label, title, total: rowTotal, rename, open, openBar } of sorted) {
+      // open : toute la ligne ouvre le détail ; le libellé, en bouton, la rend accessible au clavier.
+      const name = rename ? renameLabel(label, rename)
+        : open ? h('button', { type: 'button', class: 'bd__name bd__name--open', title: `Voir le détail de ${label}` }, label)
+          : h('span', { class: 'bd__name', title: title || label }, label);
+      box.append(h('div', { class: open ? 'bd bd--open' : 'bd', onclick: open },
+        name,
+        openBar
+          ? h('button', { type: 'button', class: 'bd__track bd__track--open', 'aria-label': `Voir le détail de ${label}`, title: 'Voir le détail', onclick: openBar },
+            h('span', { class: 'bd__bar', style: `width:${(rowTotal / max) * 100}%` }))
+          : h('div', { class: 'bd__track', role: 'presentation' },
+            h('div', { class: 'bd__bar', style: `width:${(rowTotal / max) * 100}%` })),
         h('span', { class: 'bd__amt' }, eur2.format(rowTotal)),
         h('span', { class: 'bd__pct' }, total > 0 ? pct1.format(rowTotal / total) : '')
       ));
@@ -453,7 +504,7 @@
     else msg.append('Vos revenus couvrent exactement vos charges.');
 
     renderBreakdown($('#revBreakdown'), REV_CATEGORIES, state.revenus, (r) => r.mensuel, rev,
-      'Ajoutez des revenus pour voir leur répartition.');
+      'Ajoutez des revenus pour voir leur répartition.', 'revenus');
   }
 
   function renderChargeTotals() {
@@ -463,7 +514,7 @@
     setAllText('.chg-tot-annuel', eur2.format(annual(m)));
 
     renderBreakdown($('#breakdown'), CATEGORIES, state.charges, (c) => c.mensuel, m,
-      'Ajoutez des charges pour voir leur répartition.');
+      'Ajoutez des charges pour voir leur répartition.', 'charges');
   }
 
   function bindLines() {
@@ -671,7 +722,7 @@
     if ($('#depAchatsMoisSub')) $('#depAchatsMoisSub').textContent = moisNom.charAt(0).toUpperCase() + moisNom.slice(1);
 
     renderBreakdown($('#depBreakdown'), DEP_CATEGORIES, state.depenses, (d) => d.montant, total,
-      'Ajoutez des dépenses pour voir leur répartition.');
+      'Ajoutez des dépenses pour voir leur répartition.', 'depenses');
 
     // Produits suivis du mois (seuls ou consommés par une habitude) : prix
     // seul de chacun (cumulé s'il a été racheté), en part des dépenses du mois.
@@ -710,7 +761,9 @@
     renderShareBars($(kind.breakdown), rows.map((r) => ({
       label: r.fois > 1 ? `${r.nom} (×${r.fois})` : r.nom,
       total: r.total,
-      rename: { value: r.nom, onRename: (nom) => { renameSuivi(kind, r.nom, nom); renderDepenses(); refresh(); } }
+      rename: { value: r.nom, onRename: (nom) => { renameSuivi(kind, r.nom, nom); renderDepenses(); refresh(); } },
+      // Appui sur la barre : dépenses du mois de ce produit / cette habitude (le libellé sert à renommer).
+      openBar: $('#bdOverlay') ? () => openBreakdownDetails(r.nom, 'depenses', (d) => suiviKey(nameOf(d) || '') === suiviKey(r.nom), amountOf) : null
     })), total, '');
     return rows;
   }
@@ -1102,37 +1155,54 @@
     }
   }
 
-  /** Contenu du pop-up Historique : un bloc par mois archivé, le plus récent en premier. */
+  /** Pop-up Historique : un mois archivé à la fois, comme la page Suivi.
+      state.depensesHistorique va du plus récent au plus ancien ; histIndex
+      est le mois affiché (0 = le plus récent, ouvert en premier). La flèche
+      gauche recule d'un mois archivé, la droite avance ; une flèche sans
+      mois de ce côté est masquée. */
+  let histIndex = 0;
   function renderHistorique() {
     const box = $('#historiqueList');
     if (!box) return;
-    box.replaceChildren();
-
-    if (!state.depensesHistorique.length) {
-      box.append(h('p', { class: 'note' }, 'Aucun mois précédent enregistré pour le moment.'));
+    const months = state.depensesHistorique;
+    const nav = $('#historiqueNav');
+    nav.hidden = !months.length;
+    if (!months.length) {
+      box.replaceChildren(h('p', { class: 'note' }, 'Aucun mois précédent enregistré pour le moment.'));
       return;
     }
-
-    for (const m of state.depensesHistorique) {
-      const section = h('div', { class: 'historique-month' },
-        h('h3', { class: 'h3' }, `${monthLabel(m.mois)} — ${eur2.format(m.total)}`)
-      );
-      if (m.items.length) {
-        section.append(h('table', { class: 'table' },
-          h('thead', {}, h('tr', {},
-            h('th', { scope: 'col' }, 'Catégorie'),
-            h('th', { scope: 'col' }, 'Libellé'),
-            h('th', { scope: 'col', class: 'num' }, 'Montant (€)')
-          )),
-          h('tbody', {}, ...m.items.map((d) => h('tr', {},
-            h('td', {}, d.categorie),
-            h('td', {}, d.nom),
-            h('td', { class: 'num' }, eur2.format(d.montant))
-          )))
-        ));
-      }
-      box.append(section);
+    histIndex = Math.min(Math.max(histIndex, 0), months.length - 1);
+    const m = months[histIndex];
+    $('#historiqueMois').textContent = capitalize(monthLabel(m.mois));
+    // visibility (et non hidden) : le titre reste centré entre les deux emplacements.
+    const prev = $('#historiquePrev');
+    const next = $('#historiqueNext');
+    const hasPrev = histIndex < months.length - 1;
+    const hasNext = histIndex > 0;
+    // Flèche masquée sous le focus : on le rend à l'autre flèche (ou au titre du pop-up).
+    if ((!hasPrev && document.activeElement === prev) || (!hasNext && document.activeElement === next)) {
+      (hasPrev ? prev : hasNext ? next : $('#historiqueClose')).focus();
     }
+    prev.style.visibility = hasPrev ? '' : 'hidden';
+    next.style.visibility = hasNext ? '' : 'hidden';
+    prev.disabled = !hasPrev;
+    next.disabled = !hasNext;
+
+    const items = [...m.items].sort((x, y) => String(x.ajout || '').localeCompare(String(y.ajout || '')));
+    box.replaceChildren(items.length
+      ? h('table', { class: 'table' },
+        h('thead', {}, h('tr', {},
+          h('th', { scope: 'col' }, 'Catégorie'),
+          h('th', { scope: 'col' }, 'Libellé'),
+          h('th', { scope: 'col', class: 'num' }, 'Montant (€)'))),
+        h('tbody', {}, ...items.map((d) => h('tr', {},
+          h('td', {}, d.categorie),
+          h('td', {}, d.nom),
+          h('td', { class: 'num' }, eur2.format(d.montant))))),
+        h('tfoot', {}, h('tr', {},
+          h('th', { scope: 'row', colspan: 2 }, 'Total'),
+          h('td', { class: 'num' }, eur2.format(m.total)))))
+      : h('p', { class: 'note' }, 'Aucune dépense ce mois-là.'));
   }
 
   /* ---------- Synthèse des habitudes ---------- */
@@ -1216,7 +1286,20 @@
     const btn = $('#btnHistorique');
     if (!btn) return;
     bindInfoModal('#btnHistorique', '#historiqueOverlay', '#historiqueClose');
-    btn.addEventListener('click', renderHistorique);
+    // Ouverture : toujours sur le mois archivé le plus récent.
+    btn.addEventListener('click', () => { histIndex = 0; renderHistorique(); });
+    const step = (delta) => { histIndex += delta; renderHistorique(); };
+    $('#historiquePrev').addEventListener('click', () => step(1));
+    $('#historiqueNext').addEventListener('click', () => step(-1));
+    // Flèches du clavier, comme sur la page Suivi.
+    $('#historiqueOverlay').addEventListener('keydown', (e) => {
+      const delta = { ArrowLeft: 1, ArrowRight: -1 }[e.key];
+      if (!delta || e.target.closest('input, textarea, select')) return;
+      const target = histIndex + delta;
+      if (target < 0 || target >= state.depensesHistorique.length) return;
+      e.preventDefault();
+      step(delta);
+    });
     $('#historiqueExportPdf')?.addEventListener('click', () => window.print());
     // Mobile : reprend sa position d'origine, à côté du titre. Tablette/bureau :
     // reste dans la tuile « Dépenses de ce mois », en haut à droite.
@@ -1567,10 +1650,12 @@
   }
 
   /** Contenu du pop-up du jour : titre, lignes et total. */
+  const AV_DAY_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  let avDayView = null; // contenu affiché par le pop-up du jour (sauvegarder / imprimer)
   function renderAvantagesDay(d, list, nom) {
-    const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const total = list.reduce((t, ev) => t + ev.gain, 0);
-    $('#avDayTitle').textContent = capitalize(fmtDay.format(new Date(avCal.year, avCal.month, d)));
+    avDayView = { date: new Date(avCal.year, avCal.month, d), list, nom, total };
+    $('#avDayTitle').textContent = capitalize(AV_DAY_FMT.format(avDayView.date));
     $('#avDayList').replaceChildren(
       ...list.map((ev) => h('li', {
         class: `cal-ev cal-ev--${ev.type} cal-ev--open`, tabindex: '0', 'aria-label': `Voir le détail de ${ev.nom}`,
@@ -1596,7 +1681,35 @@
     showItemDetails(ev.item, kind, onDelete, refreshAvantagesDay);
   }
 
+  /** Activité du jour du pop-up (onglet CashBack ou Round Up), en rapport
+      court : chaque charge / dépense, son montant, son gain et le total. */
+  function avantagesDayReport() {
+    const { date, list, nom, total } = avDayView;
+    return {
+      title: `${nom} du jour`,
+      subtitle: `${capitalize(AV_DAY_FMT.format(date))} · Profil « ${Profiles.active().nom} »`,
+      sections: [{
+        title: '',
+        // Taux entre parenthèses dans l'en-tête de la colonne CashBack : « CashBack (1 %) ».
+        blocks: [Report.reportTable(['Type', 'Libellé', 'Montant', avCal.tab === 'cashback' ? `${nom} (${fmtRate(state.cashbackRate)})` : nom],
+          list.map((ev) => [ev.type === 'charge' ? 'Charge' : 'Dépense', ev.nom, eur2.format(ev.montant), `+${eur2.format(ev.gain)}`]),
+          { textCols: 2, foot: list.length > 1 ? ['Total', '', '', `+${eur2.format(total)}`] : undefined })]
+      }]
+    };
+  }
+
   function bindAvantages() {
+    if ($('#avZoomOverlay') && window.Report) {
+      Report.bindPopupExport($('#avZoomOverlay'), {
+        build: avantagesDayReport,
+        name: () => {
+          const d = avDayView.date;
+          const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return `gestion-budget-${avCal.tab === 'cashback' ? 'cashback' : 'roundup'}-${iso}`;
+        },
+        label: 'l’activité du jour'
+      });
+    }
     // Croix des pop-ups « Configurer » : même effet que leur bouton Terminé.
     for (const x of document.querySelectorAll('[data-close-for]')) {
       x.addEventListener('click', () => $(`#${x.dataset.closeFor}`)?.click());

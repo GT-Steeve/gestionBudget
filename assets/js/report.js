@@ -2,8 +2,10 @@
    Gestion budget — export (pages Sauvegarder et Imprimer) : un même rapport,
    rendu en HTML pour le PDF et l'impression (fenêtre d'impression du
    navigateur), ou en fichier .docx pour Word et Google Docs (docx.js).
-   Format du rapport : voir docx.js. Chargé seulement par ces deux pages,
-   avant script.js, qui appelle Report.bindExport avec l'état du profil.
+   Format du rapport : voir docx.js. Chargé par ces deux pages, avant
+   script.js, qui appelle Report.bindExport avec l'état du profil, et par les
+   pages Suivi et CashBack pour sauvegarder / imprimer l'activité d'un jour
+   (Report.bindPopupExport, rapport court sans page de garde ni sommaire).
    ========================================================================== */
 'use strict';
 
@@ -11,11 +13,246 @@
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, fmtRate, capitalize, monthLabel,
     currentMonthWithPreposition, openModal, closeModal, bindAddWizard, niceScale, arcPath, ringPath } = UI;
   const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES } = BudgetState;
-  const annual = Calc.annual;
+
+  /** Tableau du rapport, ou une phrase si la liste est vide (extra.empty : autre phrase). */
+  const reportTable = (head, rows, { empty, ...extra } = {}) => (rows.length
+    ? { type: 'table', head, rows, align: head.map((_, i) => (i >= (extra.textCols || 1) ? 'right' : 'left')), ...extra }
+    : { type: 'p', text: empty || 'Aucune donnée pour le moment.' });
+
+  /** Camembert du rapport + légende (libellé, montant, part et barre de proportion). */
+  function reportDonut(c) {
+    const SIZE = 180, C = SIZE / 2, R1 = 86, R0 = 56;
+    const svg = s('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, width: SIZE, height: SIZE, 'aria-hidden': 'true' });
+    let a = -Math.PI / 2;
+    for (const sl of c.slices) {
+      const a1 = a + sl.share * 2 * Math.PI;
+      svg.append(s('path', {
+        d: sl.share >= 0.9999 ? ringPath(C, C, R0, R1) : arcPath(C, C, R0, R1, a, a1),
+        'fill-rule': 'evenodd', fill: sl.color, stroke: '#fff', 'stroke-width': 1.5
+      }));
+      a = a1;
+    }
+    svg.append(
+      s('text', { class: 'report__c1', x: C, y: C - 5, 'text-anchor': 'middle' }, c.centerLabel),
+      s('text', { class: 'report__c2', x: C, y: C + 17, 'text-anchor': 'middle' }, c.centerValue)
+    );
+    const max = Math.max(...c.slices.map((sl) => sl.share));
+    return h('div', { class: 'report__chart' },
+      svg,
+      h('ul', { class: 'report__legend' }, c.slices.map((sl) => h('li', {},
+        h('span', { class: 'sw', style: `--c:${sl.color}` }),
+        h('span', { class: 'rl-name' }, sl.label),
+        h('span', { class: 'rl-val' }, eur2.format(sl.value)),
+        h('span', { class: 'rl-pct' }, pct1.format(sl.share)),
+        h('span', { class: 'rl-bar' }, h('span', { style: `width:${(sl.share / max) * 100}%;background:${sl.color}` }))
+      ))));
+  }
+
+  /** Courbes du rapport (capital année par année), au-dessus du tableau du placement. */
+  function reportGrowth(c) {
+    const W = 640, H = 220, m0 = { t: 14, r: 12, b: 26, l: 58 };
+    const iw = W - m0.l - m0.r, ih = H - m0.t - m0.b;
+    const last = c.years.length - 1;
+    const { max: yMax, step } = niceScale(Math.max(1, ...c.series.flatMap((sr) => sr.values)), 4);
+    const X = (i) => m0.l + (last ? (i / last) * iw : iw / 2);
+    const Y = (v) => m0.t + ih - (v / yMax) * ih;
+    const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', 'aria-hidden': 'true' });
+    for (let v = 0; v <= yMax + 1e-9; v += step) {
+      svg.append(
+        s('line', { class: v === 0 ? 'report__axis' : 'report__grid', x1: m0.l, x2: W - m0.r, y1: Y(v), y2: Y(v) }),
+        s('text', { class: 'report__tick', x: m0.l - 8, y: Y(v) + 4, 'text-anchor': 'end' }, eurCompact.format(v))
+      );
+    }
+    const every = Math.max(1, Math.ceil(c.years.length / 10));
+    c.years.forEach((year, i) => {
+      // Dernière année toujours affichée ; la graduation précédente saute si elle la chevauche.
+      if (i === last || (i % every === 0 && last - i > every / 2)) {
+        svg.append(s('text', { class: 'report__tick', x: X(i), y: H - 8, 'text-anchor': 'middle' }, year ? `${year} an${year > 1 ? 's' : ''}` : 'Départ'));
+      }
+    });
+    for (const sr of c.series) {
+      svg.append(s('polyline', {
+        points: sr.values.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' '),
+        fill: 'none', stroke: sr.color, 'stroke-width': sr.dashed ? 1.5 : 2.5,
+        'stroke-dasharray': sr.dashed ? '5 4' : 'none', 'stroke-linejoin': 'round'
+      }));
+    }
+    return h('div', { class: 'report__growth' },
+      svg,
+      h('ul', { class: 'report__keys' }, c.series.map((sr) => h('li', {},
+        h('span', { class: `sw${sr.dashed ? ' sw--dashed' : ''}`, style: `--c:${sr.color}` }), sr.label))));
+  }
+
+  /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Sauvegarder).
+      dataUrl : lien « Gestion budget » de la page de garde, qui porte les
+      données du profil pour l'import du PDF (pdflink.js). */
+  function renderReportHtml(report, box, { dataUrl } = {}) {
+    const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
+    const block = (b) => {
+      if (b.type === 'h3') return h('h3', {}, b.text);
+      if (b.type === 'p') return h('p', {}, b.text);
+      if (b.type === 'kv' && b.tiles) {
+        return h('div', { class: 'report__tiles' }, b.tiles.map((t) => h('div', { class: `report__tile${t.tone ? ` is-${t.tone}` : ''}` },
+          h('span', {}, t.label), h('strong', {}, t.value), t.sub ? h('small', {}, t.sub) : null)));
+      }
+      if (b.type === 'kv') {
+        return h('table', { class: 'report__kv' },
+          h('tbody', {}, b.rows.map(([k, v]) => h('tr', {}, h('th', { scope: 'row' }, k), h('td', { class: 'num' }, v)))));
+      }
+      if (b.chart?.kind === 'donut') return reportDonut(b.chart);
+      return [
+        b.chart?.kind === 'growth' ? reportGrowth(b.chart) : null,
+        h('table', {},
+          h('thead', {}, h('tr', {}, cells('th', b.head, b.align))),
+          h('tbody', {}, b.rows.map((r) => h('tr', {}, cells('td', r, b.align)))),
+          b.foot ? h('tfoot', {}, h('tr', {}, cells('td', b.foot, b.align))) : null)
+      ];
+    };
+    const num = (i) => String(i + 1).padStart(2, '0');
+    const { cover } = report;
+    // Rapport court (activité d'un jour) : sans page de garde ni sommaire,
+    // un seul bloc sous un en-tête titre + sous-titre.
+    if (!cover) {
+      box.replaceChildren(h('section', { class: 'report__chapter' },
+        h('header', { class: 'report__chapter-head' },
+          h('span', { class: 'report__chapter-num' }, 'Gestion budget'),
+          h('h2', {}, report.title),
+          report.subtitle ? h('p', {}, report.subtitle) : null),
+        report.sections.flatMap((sec) => [sec.title ? h('h3', {}, sec.title) : null, ...sec.blocks.flatMap(block)])));
+      return;
+    }
+    box.replaceChildren(
+      // Page de garde
+      h('div', { class: 'report__cover' },
+        h('p', { class: 'report__brand' }, dataUrl ? h('a', { href: dataUrl }, 'Gestion budget') : 'Gestion budget'),
+        h('div', { class: 'report__cover-main' },
+          h('p', { class: 'report__kicker' }, `Modèle ${cover.model}`),
+          h('h1', {}, 'Rapport de compte'),
+          h('p', { class: 'report__sub' }, `Profil « ${cover.profile} »`))),
+      // Sommaire
+      h('nav', { class: 'report__toc', 'aria-label': 'Sommaire' },
+        h('h2', {}, 'Sommaire'),
+        h('ol', {}, report.sections.map((sec, i) => h('li', {},
+          h('a', { href: `#report-ch-${i + 1}` },
+            h('span', { class: 'toc-num' }, num(i)),
+            h('span', { class: 'toc-text' }, h('strong', {}, sec.title), sec.summary ? h('small', {}, sec.summary) : null)))))),
+      // Chapitres
+      ...report.sections.map((sec, i) => h('section', { class: 'report__chapter', id: `report-ch-${i + 1}` },
+        h('header', { class: 'report__chapter-head' },
+          h('span', { class: 'report__chapter-num' }, `Chapitre ${num(i)}`),
+          h('h2', {}, sec.title),
+          sec.summary ? h('p', {}, sec.summary) : null),
+        sec.blocks.flatMap(block)))
+    );
+  }
+
+  function downloadFile(bytes, mime, filename) {
+    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const link = h('a', { href: url, download: filename });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  /** Imprime le rapport (ou l'enregistre en PDF, même fenêtre) : dans la zone
+      #printReport de la page (Sauvegarder, Imprimer), ou dans une zone créée
+      le temps de l'impression (pop-ups du jour), pour qu'un Ctrl+P ordinaire
+      imprime ensuite la page elle-même. */
+  function printReport(report, opts) {
+    let box = $('#printReport');
+    if (!box) {
+      box = h('section', { id: 'printReport', class: 'report', 'aria-hidden': 'true' });
+      $('main').append(box);
+      window.addEventListener('afterprint', () => box.remove(), { once: true });
+    }
+    renderReportHtml(report, box, opts);
+    window.print();
+  }
+
+  /** Sauvegarde le rapport au format choisi (pdf, print, word, gdocs) ;
+      renvoie le message à afficher. data : données du profil embarquées
+      (lien de la page de garde du PDF, partie invisible du .docx). */
+  function saveReport(report, format, baseName, { data } = {}) {
+    if (format === 'print' || format === 'pdf') {
+      // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
+      // navigateur propose « Enregistrer au format PDF » comme destination.
+      printReport(report, { dataUrl: data && PdfLink.url(data) });
+      return format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
+    }
+    downloadFile(Docx.build(report, { data }), Docx.MIME, `${baseName}.docx`);
+    // Google Docs : aucune connexion n'est possible depuis l'application,
+    // le même fichier .docx s'importe dans Google Drive.
+    return format === 'gdocs'
+      ? 'Fichier .docx téléchargé. Pour l\'ouvrir dans Google Docs : sur Google Drive, Nouveau → Importer un fichier, puis « Ouvrir avec Google Docs ».'
+      : 'Fichier Word (.docx) téléchargé.';
+  }
+
+  /* ---------- Sauvegarder / imprimer le contenu d'un pop-up ---------- */
+
+  // Mêmes icônes que les onglets Sauvegarder et Imprimer du menu.
+  const SAVE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5a1 1 0 0 1 1-1h7.3l2.7 2.7v7.3a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.2 2.5v3h5v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="4.7" y="9" width="6.6" height="4.5" rx="0.6" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+  const PRINT_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 5.5v-4h7v4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="2" y="5.5" width="12" height="5.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 9.5h7v5h-7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  // Mêmes formats que la page Sauvegarder.
+  const SAVE_FORMATS = [
+    ['pdf', 'PDF', 'Via la fenêtre d\'impression : « Enregistrer au format PDF »'],
+    ['word', 'Word', 'Fichier .docx, à ouvrir avec Word ou LibreOffice'],
+    ['gdocs', 'Google Docs', 'Fichier .docx à importer dans Google Drive']
+  ];
+
+  /** Pop-up « Sauvegarder » (choix du format), créé une fois par page et
+      ouvert par-dessus le pop-up du jour. */
+  let saveDialog = null;
+  function openSaveDialog(build, name) {
+    if (!saveDialog) {
+      const status = h('p', { class: 'note', role: 'status', 'aria-live': 'polite' });
+      const form = h('form', { class: 'modal popup-save', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'popupSaveTitle' },
+        h('p', { id: 'popupSaveTitle', class: 'modal__title' }, 'Sauvegarder'),
+        h('div', { class: 'choices choices--list', role: 'radiogroup', 'aria-label': 'Format' },
+          SAVE_FORMATS.map(([value, label, sub], i) => h('label', { class: 'choice' },
+            h('input', { type: 'radio', name: 'format', value, checked: i === 0 }),
+            h('span', { class: 'choice__label' }, label),
+            h('span', { class: 'choice__sub' }, sub)))),
+        status,
+        h('div', { class: 'modal__actions modal__actions--split' },
+          h('button', { type: 'button', class: 'btn btn--ghost', onclick: () => closeModal(saveDialog.overlay) }, 'Fermer'),
+          h('button', { type: 'submit', class: 'btn' }, 'Sauvegarder')));
+      const overlay = h('div', { class: 'modal-overlay', hidden: true }, form);
+      document.body.append(overlay);
+      saveDialog = { overlay, form, status, build: null, name: null };
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        status.textContent = saveReport(saveDialog.build(), form.elements.format.value, saveDialog.name());
+      });
+    }
+    Object.assign(saveDialog, { build, name });
+    saveDialog.status.textContent = '';
+    openModal(saveDialog.overlay, { focus: 'input[name="format"]:checked' });
+  }
+
+  /** Icônes Sauvegarder (toujours) et Imprimer (bureau seulement : .desk-only,
+      comme l'onglet Imprimer) dans l'en-tête d'un pop-up, à gauche de sa
+      croix. build() : rapport du contenu affiché ; name() : nom du fichier,
+      sans extension ; label : ce qui est sauvegardé (bulles et lecteurs d'écran). */
+  function bindPopupExport(overlay, { build, name, label }) {
+    const head = $('.wizard__head', overlay);
+    const close = $('.wizard__close', head);
+    if (!head || !close) return;
+    const btn = (icon, text, onclick, cls = '') => {
+      const b = h('button', { type: 'button', class: `icon-btn icon-btn--view ${cls}`.trim(), 'aria-label': `${text} ${label}`, title: text, onclick });
+      b.innerHTML = icon;
+      return b;
+    };
+    head.append(h('div', { class: 'modal__tools' },
+      btn(SAVE_ICON, 'Sauvegarder', () => openSaveDialog(build, name)),
+      btn(PRINT_ICON, 'Imprimer', () => printReport(build()), 'desk-only'),
+      close));
+  }
 
   /** Relie le formulaire d'export. ctx : état du profil actif et calculs de
       script.js (totaux, économies, placement, CashBack, RoundUp, couleurs). */
   function bindExport({ state, totalRevenus, totalMonthly, computeSavings, computeYield, cashbackFraction, roundUpAmount, CAT_KEY }) {
+    const annual = Calc.annual;
     const EXPORT_MODELS = {
       simple: { label: 'Simple', sections: ['synthese', 'depenses'] },
       standard: { label: 'Standard', sections: ['synthese', 'revenus', 'depenses', 'charges', 'placement'] },
@@ -26,10 +263,6 @@
     };
 
     const fmtDay = (iso) => (iso ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(new Date(iso)) : '–');
-    /** Tableau du rapport, ou une phrase si la liste est vide. */
-    const reportTable = (head, rows, extra = {}) => (rows.length
-      ? { type: 'table', head, rows, align: head.map((_, i) => (i >= (extra.textCols || 1) ? 'right' : 'left')), ...extra }
-      : { type: 'p', text: 'Aucune donnée pour le moment.' });
     /* Graphiques du rapport (PDF / impression uniquement, ignorés par docx.js) :
        un bloc table peut porter un champ `chart` (camembert qui remplace le
        tableau, ou courbe de capital affichée au-dessus) et un bloc kv un champ
@@ -284,131 +517,6 @@
       };
     }
 
-    /** Camembert du rapport + légende (libellé, montant, part et barre de proportion). */
-    function reportDonut(c) {
-      const SIZE = 180, C = SIZE / 2, R1 = 86, R0 = 56;
-      const svg = s('svg', { viewBox: `0 0 ${SIZE} ${SIZE}`, width: SIZE, height: SIZE, 'aria-hidden': 'true' });
-      let a = -Math.PI / 2;
-      for (const sl of c.slices) {
-        const a1 = a + sl.share * 2 * Math.PI;
-        svg.append(s('path', {
-          d: sl.share >= 0.9999 ? ringPath(C, C, R0, R1) : arcPath(C, C, R0, R1, a, a1),
-          'fill-rule': 'evenodd', fill: sl.color, stroke: '#fff', 'stroke-width': 1.5
-        }));
-        a = a1;
-      }
-      svg.append(
-        s('text', { class: 'report__c1', x: C, y: C - 5, 'text-anchor': 'middle' }, c.centerLabel),
-        s('text', { class: 'report__c2', x: C, y: C + 17, 'text-anchor': 'middle' }, c.centerValue)
-      );
-      const max = Math.max(...c.slices.map((sl) => sl.share));
-      return h('div', { class: 'report__chart' },
-        svg,
-        h('ul', { class: 'report__legend' }, c.slices.map((sl) => h('li', {},
-          h('span', { class: 'sw', style: `--c:${sl.color}` }),
-          h('span', { class: 'rl-name' }, sl.label),
-          h('span', { class: 'rl-val' }, eur2.format(sl.value)),
-          h('span', { class: 'rl-pct' }, pct1.format(sl.share)),
-          h('span', { class: 'rl-bar' }, h('span', { style: `width:${(sl.share / max) * 100}%;background:${sl.color}` }))
-        ))));
-    }
-
-    /** Courbes du rapport (capital année par année), au-dessus du tableau du placement. */
-    function reportGrowth(c) {
-      const W = 640, H = 220, m0 = { t: 14, r: 12, b: 26, l: 58 };
-      const iw = W - m0.l - m0.r, ih = H - m0.t - m0.b;
-      const last = c.years.length - 1;
-      const { max: yMax, step } = niceScale(Math.max(1, ...c.series.flatMap((sr) => sr.values)), 4);
-      const X = (i) => m0.l + (last ? (i / last) * iw : iw / 2);
-      const Y = (v) => m0.t + ih - (v / yMax) * ih;
-      const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', 'aria-hidden': 'true' });
-      for (let v = 0; v <= yMax + 1e-9; v += step) {
-        svg.append(
-          s('line', { class: v === 0 ? 'report__axis' : 'report__grid', x1: m0.l, x2: W - m0.r, y1: Y(v), y2: Y(v) }),
-          s('text', { class: 'report__tick', x: m0.l - 8, y: Y(v) + 4, 'text-anchor': 'end' }, eurCompact.format(v))
-        );
-      }
-      const every = Math.max(1, Math.ceil(c.years.length / 10));
-      c.years.forEach((year, i) => {
-        // Dernière année toujours affichée ; la graduation précédente saute si elle la chevauche.
-        if (i === last || (i % every === 0 && last - i > every / 2)) {
-          svg.append(s('text', { class: 'report__tick', x: X(i), y: H - 8, 'text-anchor': 'middle' }, year ? `${year} an${year > 1 ? 's' : ''}` : 'Départ'));
-        }
-      });
-      for (const sr of c.series) {
-        svg.append(s('polyline', {
-          points: sr.values.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' '),
-          fill: 'none', stroke: sr.color, 'stroke-width': sr.dashed ? 1.5 : 2.5,
-          'stroke-dasharray': sr.dashed ? '5 4' : 'none', 'stroke-linejoin': 'round'
-        }));
-      }
-      return h('div', { class: 'report__growth' },
-        svg,
-        h('ul', { class: 'report__keys' }, c.series.map((sr) => h('li', {},
-          h('span', { class: `sw${sr.dashed ? ' sw--dashed' : ''}`, style: `--c:${sr.color}` }), sr.label))));
-    }
-
-    /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Sauvegarder).
-        dataUrl : lien « Gestion budget » de la page de garde, qui porte les
-        données du profil pour l'import du PDF (pdflink.js). */
-    function renderReportHtml(report, box, { dataUrl } = {}) {
-      const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
-      const block = (b) => {
-        if (b.type === 'h3') return h('h3', {}, b.text);
-        if (b.type === 'p') return h('p', {}, b.text);
-        if (b.type === 'kv' && b.tiles) {
-          return h('div', { class: 'report__tiles' }, b.tiles.map((t) => h('div', { class: `report__tile${t.tone ? ` is-${t.tone}` : ''}` },
-            h('span', {}, t.label), h('strong', {}, t.value), t.sub ? h('small', {}, t.sub) : null)));
-        }
-        if (b.type === 'kv') {
-          return h('table', { class: 'report__kv' },
-            h('tbody', {}, b.rows.map(([k, v]) => h('tr', {}, h('th', { scope: 'row' }, k), h('td', { class: 'num' }, v)))));
-        }
-        if (b.chart?.kind === 'donut') return reportDonut(b.chart);
-        return [
-          b.chart?.kind === 'growth' ? reportGrowth(b.chart) : null,
-          h('table', {},
-            h('thead', {}, h('tr', {}, cells('th', b.head, b.align))),
-            h('tbody', {}, b.rows.map((r) => h('tr', {}, cells('td', r, b.align)))),
-            b.foot ? h('tfoot', {}, h('tr', {}, cells('td', b.foot, b.align))) : null)
-        ];
-      };
-      const num = (i) => String(i + 1).padStart(2, '0');
-      const { cover } = report;
-      box.replaceChildren(
-        // Page de garde
-        h('div', { class: 'report__cover' },
-          h('p', { class: 'report__brand' }, dataUrl ? h('a', { href: dataUrl }, 'Gestion budget') : 'Gestion budget'),
-          h('div', { class: 'report__cover-main' },
-            h('p', { class: 'report__kicker' }, `Modèle ${cover.model}`),
-            h('h1', {}, 'Rapport de compte'),
-            h('p', { class: 'report__sub' }, `Profil « ${cover.profile} »`))),
-        // Sommaire
-        h('nav', { class: 'report__toc', 'aria-label': 'Sommaire' },
-          h('h2', {}, 'Sommaire'),
-          h('ol', {}, report.sections.map((sec, i) => h('li', {},
-            h('a', { href: `#report-ch-${i + 1}` },
-              h('span', { class: 'toc-num' }, num(i)),
-              h('span', { class: 'toc-text' }, h('strong', {}, sec.title), sec.summary ? h('small', {}, sec.summary) : null)))))),
-        // Chapitres
-        ...report.sections.map((sec, i) => h('section', { class: 'report__chapter', id: `report-ch-${i + 1}` },
-          h('header', { class: 'report__chapter-head' },
-            h('span', { class: 'report__chapter-num' }, `Chapitre ${num(i)}`),
-            h('h2', {}, sec.title),
-            sec.summary ? h('p', {}, sec.summary) : null),
-          sec.blocks.flatMap(block)))
-      );
-    }
-
-    function downloadFile(bytes, mime, filename) {
-      const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
-      const link = h('a', { href: url, download: filename });
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
     /** Document sur mobile : sous MOBILE_QUERY, le formulaire passe dans une
         pop-up guidée, une étape par choix (Format, Modèle), comme « Nouvelle
         dépense » ; il revient dans la page au-delà. Un seul formulaire, donc
@@ -504,20 +612,7 @@
         // Les documents ne contiennent que le rapport (champ caché « non ») : les
         // données du profil se sauvegardent à part, en fichier .gbudget.
         const data = form.elements.donnees?.value === 'oui' ? Profiles.exportData(state) : null;
-        if (format === 'print' || format === 'pdf') {
-          // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
-          // navigateur propose « Enregistrer au format PDF » comme destination.
-          status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
-          renderReportHtml(report, $('#printReport'), { dataUrl: data && PdfLink.url(data) });
-          window.print();
-          return;
-        }
-        downloadFile(Docx.build(report, { data }), Docx.MIME, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}.docx`);
-        // Google Docs : aucune connexion n'est possible depuis l'application,
-        // le même fichier .docx s'importe dans Google Drive.
-        status.textContent = format === 'gdocs'
-          ? 'Fichier .docx téléchargé. Pour l\'ouvrir dans Google Docs : sur Google Drive, Nouveau → Importer un fichier, puis « Ouvrir avec Google Docs ».'
-          : 'Fichier Word (.docx) téléchargé.';
+        status.textContent = saveReport(report, format, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}`, { data });
       });
     }
 
@@ -526,5 +621,5 @@
     bindSaveChoice();
   }
 
-  window.Report = { bindExport };
+  window.Report = { bindExport, bindPopupExport, reportTable };
 })();

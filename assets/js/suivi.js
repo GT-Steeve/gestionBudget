@@ -117,6 +117,8 @@
 
   const fmtTitle = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
   const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  /** « 2026-11-24 » (date locale, pour les noms de fichier). */
+  const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const signed = (ev) => `${TYPES[ev.type].sign > 0 ? '+' : '−'}${eur2.format(ev.montant)}`;
   /** Variation du jour : somme signée des évènements affichés (revenus − charges − dépenses). */
   const daySum = (list) => list.reduce((sum, ev) => sum + TYPES[ev.type].sign * ev.montant, 0);
@@ -147,6 +149,9 @@
     $('#suiviSolde').textContent = fmtBalance(solde);
   }
 
+  /** Contenu affiché par le pop-up du jour (pour le sauvegarder / l'imprimer). */
+  let dayView = null;
+
   function renderDay(byDay, balances, showSolde) {
     const list = byDay[selected] || [];
     const total = balances[selected];
@@ -166,7 +171,8 @@
         h('span', { class: 'cal-ev__name' }, 'Solde en fin de journée'),
         h('span', { class: `cal-ev__amount ${trend}` }, fmtBalance(total)))]
       : [];
-    $('#calDayTitle').textContent = capitalize(fmtDay.format(new Date(year, month, selected)));
+    dayView = { date: new Date(year, month, selected), list, cum, total, showSolde };
+    $('#calDayTitle').textContent = capitalize(fmtDay.format(dayView.date));
     $('#calDayList').replaceChildren(...(list.length
       ? list.map((ev) => h('li', {
         class: `cal-ev cal-ev--${ev.type} cal-ev--open`, tabindex: '0', 'aria-label': `Voir le détail de ${ev.nom}`,
@@ -255,7 +261,6 @@
 
   /* ---------- Détail d'un évènement (Modifier / Effacer) ---------- */
 
-  const detailOverlay = $('#detailOverlay');
   const KINDS = { revenu: 'revenus', charge: 'charges', depense: 'depenses' };
 
   /** Pop-up Détail d'un évènement, par-dessus le pop-up du jour : le même que
@@ -341,6 +346,31 @@
   }
 
   $('#calZoomClose').addEventListener('click', closeZoom);
+
+  /** Activité du jour affichée (types cochés), en rapport court : un
+      tableau des évènements, leur total et le solde en fin de journée. */
+  function dayReport() {
+    const { date, list, cum, total, showSolde } = dayView;
+    const sign = (v) => (v > 0.004 ? '+' : v < -0.004 ? '−' : '');
+    return {
+      title: 'Activité du jour',
+      subtitle: `${capitalize(fmtDay.format(date))} · Profil « ${profil.nom} »`,
+      sections: [{
+        title: '',
+        blocks: [
+          Report.reportTable(['Type', 'Catégorie', 'Libellé', 'Montant'],
+            list.map((ev) => [TYPES[ev.type].label, ev.categorie, ev.nom, signed(ev)]),
+            { textCols: 3, empty: 'Aucun évènement affiché ce jour-là.', foot: list.length > 1 ? ['Total', '', '', `${sign(cum)}${eur2.format(Math.abs(cum))}`] : undefined }),
+          ...(showSolde ? [{ type: 'kv', rows: [['Solde en fin de journée', fmtBalance(total)]] }] : [])
+        ]
+      }]
+    };
+  }
+  Report.bindPopupExport(zoomOverlay, {
+    build: dayReport,
+    name: () => `gestion-budget-suivi-${isoDay(dayView.date)}`,
+    label: 'l’activité du jour'
+  });
   // Fond et Échap : on passe avant la gestion commune des pop-ups (ui.js) pour animer la fermeture.
   zoomOverlay.addEventListener('click', (e) => {
     if (e.target !== zoomOverlay) return;
@@ -348,8 +378,10 @@
     closeZoom();
   }, true);
   window.addEventListener('keydown', (e) => {
-    // Détail d'un évènement ouvert par-dessus : Échap le ferme lui (ui.js), pas le jour.
-    if (e.key !== 'Escape' || !closeZoomNow || (detailOverlay && !detailOverlay.hidden)) return;
+    // Détail d'un évènement ou choix du format ouvert par-dessus : Échap le
+    // ferme lui (ui.js), pas le jour.
+    if (e.key !== 'Escape' || !closeZoomNow
+      || [...document.querySelectorAll('.modal-overlay:not([hidden])')].some((o) => o !== zoomOverlay)) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     closeZoom();

@@ -23,6 +23,7 @@ module.exports = [
         Prefs: 'readonly',
         Docx: 'readonly',
         PdfLink: 'readonly',
+        Report: 'readonly',
         Flash: 'readonly',
       },
     },
