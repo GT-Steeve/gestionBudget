@@ -392,8 +392,11 @@
     const monthly = kind !== 'depenses';
     amountOf ||= (x) => (monthly ? x.mensuel : x.montant);
     const type = { revenus: 'revenu', charges: 'charge', depenses: 'depense' }[kind];
+    // Sans date (ou date illisible) : en fin de liste, dans leur ordre d'origine
+    // (Infinity - Infinity = NaN rendrait le tri imprévisible).
+    const addedAt = (x) => Date.parse(x.ajout) || Infinity;
     const lines = state[kind].filter((x) => match(x) && amountOf(x) > 0)
-      .sort((a, b) => (a.ajout ? Date.parse(a.ajout) : Infinity) - (b.ajout ? Date.parse(b.ajout) : Infinity));
+      .sort((a, b) => (addedAt(a) === addedAt(b) ? 0 : addedAt(a) - addedAt(b)));
     const when = (iso) => {
       if (!iso) return 'Date non connue';
       const d = new Date(iso);

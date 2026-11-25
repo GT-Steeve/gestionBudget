@@ -170,20 +170,22 @@
     window.print();
   }
 
-  /** Sauvegarde le rapport au format choisi (pdf, print, word, gdocs) ;
-      renvoie le message à afficher. data : données du profil embarquées
+  /** Sauvegarde le rapport au format choisi (pdf, print, word, gdocs) et
+      écrit le message dans status. data : données du profil embarquées
       (lien de la page de garde du PDF, partie invisible du .docx). */
-  function saveReport(report, format, baseName, { data } = {}) {
+  function saveReport(report, format, baseName, status, { data } = {}) {
     if (format === 'print' || format === 'pdf') {
       // PDF : pas de bibliothèque ni de serveur, la fenêtre d'impression du
       // navigateur propose « Enregistrer au format PDF » comme destination.
+      // Message écrit avant : la fenêtre d'impression bloque la page.
+      status.textContent = format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
       printReport(report, { dataUrl: data && PdfLink.url(data) });
-      return format === 'pdf' ? 'Dans la fenêtre d\'impression, choisissez « Enregistrer au format PDF » comme destination.' : '';
+      return;
     }
     downloadFile(Docx.build(report, { data }), Docx.MIME, `${baseName}.docx`);
     // Google Docs : aucune connexion n'est possible depuis l'application,
     // le même fichier .docx s'importe dans Google Drive.
-    return format === 'gdocs'
+    status.textContent = format === 'gdocs'
       ? 'Fichier .docx téléchargé. Pour l\'ouvrir dans Google Docs : sur Google Drive, Nouveau → Importer un fichier, puis « Ouvrir avec Google Docs ».'
       : 'Fichier Word (.docx) téléchargé.';
   }
@@ -222,7 +224,7 @@
       saveDialog = { overlay, form, status, build: null, name: null };
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        status.textContent = saveReport(saveDialog.build(), form.elements.format.value, saveDialog.name());
+        saveReport(saveDialog.build(), form.elements.format.value, saveDialog.name(), status);
       });
     }
     Object.assign(saveDialog, { build, name });
@@ -612,7 +614,7 @@
         // Les documents ne contiennent que le rapport (champ caché « non ») : les
         // données du profil se sauvegardent à part, en fichier .gbudget.
         const data = form.elements.donnees?.value === 'oui' ? Profiles.exportData(state) : null;
-        status.textContent = saveReport(report, format, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}`, { data });
+        saveReport(report, format, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}`, status, { data });
       });
     }
 
