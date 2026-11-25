@@ -12,7 +12,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { root, listHtmlFiles, computeAssetsHash, readManifest, versionPattern } from './asset-version.mjs';
 
-const htmlFiles = listHtmlFiles();
+// + la démo de l'animation (non publiée) : mêmes contrôles de liens et de CSP.
+const htmlFiles = [...listHtmlFiles(), join('animation-pieces', 'index.html')];
 
 if (htmlFiles.length === 0) {
   console.error('Aucune page HTML trouvée.');

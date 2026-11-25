@@ -1,0 +1,31 @@
+/* Démo CoinStory : mise en page seule. Couleurs, thème clair / sombre et
+   styles de l'animation viennent de ../assets/css/style.css.
+   style.css agrandit toute la page (zoom: var(--zoom) sur :root, 1.15 par
+   défaut) et les unités vh / vw sont agrandies elles aussi : on les divise
+   par --zoom pour rester à la taille de la fenêtre. Sur tablette / bureau,
+   style.css fait aussi de body une grille à deux colonnes (menu latéral +
+   contenu) : la démo n'a pas de menu, une seule cellule pleine page. */
+body {
+  display: grid; place-items: center;
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: auto;
+  min-height: calc(100vh / var(--zoom));
+  padding: 16px;
+}
+.demo-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 28px 28px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+}
+/* Largeur de la fenêtre moins les marges du body (2 × 16px) et de la carte (2 × 28px). */
+#coins { --cs-size: min(340px, calc(100vw / var(--zoom) - 88px)); }
+.demo-label { margin: 0; font-weight: 600; min-height: 1.5em; }
+.demo-dots { display: flex; gap: 6px; }
+.demo-dots button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%; background: var(--border); cursor: pointer; }
+.demo-dots button.on { background: var(--coin); }
+/* Six boutons : sur un téléphone, ils passent sur deux lignes au lieu de déborder. */
+.demo-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.demo-controls button {
+  min-width: 44px; height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--page); color: var(--ink); font: inherit; cursor: pointer;
+}
+.demo-controls button:hover { border-color: var(--coin-deep); }
+.demo-controls button:focus-visible, .demo-dots button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -7,7 +7,7 @@ module.exports = [
     ignores: ['node_modules/**', 'coverage/**'],
   },
   {
-    files: ['assets/js/*.js'],
+    files: ['assets/js/*.js', 'animation-pieces/*.js'],
     ignores: ['assets/js/*.test.js'],
     languageOptions: {
       sourceType: 'script',
@@ -24,6 +24,7 @@ module.exports = [
         Docx: 'readonly',
         PdfLink: 'readonly',
         Report: 'readonly',
+        CoinStory: 'readonly',
         Flash: 'readonly',
       },
     },

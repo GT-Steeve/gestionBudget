@@ -1,16 +1,24 @@
 /* ==========================================================================
-   Coin Story — animation « pièces » en 4 scènes, aux couleurs du projet.
-   0 pluie de pièces → 1 le tas → 2 trois piles → 3 objectif atteint (étoile).
+   Gestion budget — animation CoinStory (pièces), source unique : chargée
+   dans le <head> de chaque page juste avant loader.js (écran de chargement)
+   et par la démo animation-pieces/index.html.
 
-   const story = new CoinStory(document.querySelector('#coins'), { loop: true });
+   Deux versions :
+   - version 2 (par défaut) : joli tas → trois piles → pyramide ;
+   - version 1 ({ version: 1 }) : précédée de l'étape « Les pièces tombent »
+     (pluie de pièces).
+   La pyramide de piles de 3 se monte pièce par pièce, puis l'étoile sort de
+   derrière et brille. Monnaies (€ $ £ ¥ ₱ ₩) tirées au hasard à chaque boucle.
+   Couleurs : variables --coin-* de style.css.
+
+   const story = new CoinStory(el, { loop: true, version: 2 });
    story.play() / pause() / next() / prev() / goTo(n) / restart() / destroy()
-   Événement : 'coinstory:scene' (detail.index, detail.label) sur l'élément.
+   Événements sur el : 'coinstory:scene' (detail.index, detail.label),
+   'coinstory:end' (sans boucle).
    ========================================================================== */
 'use strict';
 
 class CoinStory {
-  static LABELS = ['Les pièces tombent', 'Un joli tas', 'On organise', 'Objectif atteint'];
-
   constructor(el, opts = {}) {
     this.el = el;
     this.opts = {
@@ -67,7 +75,7 @@ class CoinStory {
     this.floor = document.createElement('div');
     this.floor.className = 'cs-floor';
     this.world.appendChild(this.floor);
-    this.coins = Array.from({ length: this.N }, (_, i) => {
+    this.coins = Array.from({ length: this.N }, () => {
       const c = document.createElement('span');
       c.className = 'cs-coin';
       this.world.appendChild(c);
@@ -88,9 +96,9 @@ class CoinStory {
     this.world.appendChild(this.star);
     this.el.appendChild(this.world);
 
-    this._ro = new ResizeObserver(() => {
-      this.world.style.transform = `scale(${this.el.clientWidth / 320})`;
-    });
+    const fit = () => { this.world.style.transform = `scale(${this.el.clientWidth / 320})`; };
+    fit();
+    this._ro = new ResizeObserver(fit);
     this._ro.observe(this.el);
   }
 
@@ -122,7 +130,7 @@ class CoinStory {
 
   _stacks(defs) {
     const out = [];
-    defs.forEach((s, k) => {
+    defs.forEach((s) => {
       for (let l = 0; l < s.h; l++) {
         out.push({ x: s.x, y: s.base - l * this.STEP, sy: 0.3, r: 0, o: 1, z: (s.row || 0) * 100 + l });
       }
@@ -167,7 +175,7 @@ class CoinStory {
 
     return [
       { dur: 2400, blend: 'fade', state: rainState, floor: 0 },
-      { dur: 2400, blend: 'move', arc: 0, floor: 1, state: (i, t) => {
+      { dur: 2400, blend: 'move', arc: 0, floor: 1, state: (i) => {
         return heapFull[i];
       } },
       { dur: 2000, blend: 'move', floor: 1, state: (i) => piles3[i] },
@@ -280,4 +288,5 @@ class CoinStory {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = CoinStory;
+CoinStory.LABELS = ['Les pièces tombent', 'Un joli tas', 'On organise', 'Objectif atteint'];
+window.CoinStory = CoinStory;

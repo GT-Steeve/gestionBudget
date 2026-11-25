@@ -4,7 +4,7 @@
   "description": "Petite application web pour suivre son budget : revenus, charges, économies potentielles, simulation de rendement d'épargne et synthèse visuelle.",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint assets/js",
+    "lint": "eslint assets/js animation-pieces",
     "test": "vitest run",
     "build": "node scripts/check-build.mjs",
     "bump-assets": "node scripts/bump-assets.mjs",
