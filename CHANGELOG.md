@@ -1,3 +1,10 @@
+# [1.55.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.54.0...v1.55.0) (2026-11-25)
+
+
+### Features
+
+* **details:** activité du jour à sauvegarder / imprimer, détail des répartitions ([086b7c8](https://github.com/GT-Steeve/gestionBudget/commit/086b7c85af98400471b9a51dc5db3a318438b3a3))
+
 # [1.54.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.53.0...v1.54.0) (2026-11-24)
 
 
