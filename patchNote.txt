@@ -72,12 +72,10 @@ v1.24.0 = polish animation chargement
 v1.24.1 = ajout visuel démo v1 et v2
 v1.24.2 = animation v2 plus courte
 v1.24.3 = voir les détails sur la page roundUp et cashback
+v1.25.0 = sauvegarder / imprimer suivi activité + afficher les répartition en détail
 
 ** Next idea **
-inversé les onglet cashback et roundup + réfléchir liste suivi comme cashback
-exporter / imprimer l'historique des dépenses via un calendrier + liste
-exporter / imprimer le suivi des charges via un calendrier + liste
-revoir l'impression -> l'user doit indiquer la période et élements désiré
+revoir l'impression -> l'user peut indiquer la période et élements désiré
 réfléchir un don soutien où placement pub
 slogan : Tract tes finances / dépenses pour mieux gerer ton budget
 

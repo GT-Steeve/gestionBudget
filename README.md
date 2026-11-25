@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.24.3 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.25.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -20,7 +20,9 @@ placement, exemples de produits financiers et synthèse visuelle,
 - **Revenus, charges & dépenses** — saisie par catégorie via une pop-up
   guidée (un champ par étape), totaux mensuels et annuels (× 12) calculés
   automatiquement, édition et suppression en ligne. Les dépenses se suivent
-  au mois, avec un historique des mois précédents.
+  au mois, avec un historique des mois précédents : un mois à la fois, choisi
+  avec des flèches comme dans Suivi (une flèche disparaît quand il n'y a plus
+  de mois archivé de ce côté).
 - **Pop-up Détail** (bouton œil sur chaque revenu, charge et dépense) —
   libellé, catégorie, montant, annuel, cashback et RoundUp, avec la date et
   l'heure d'ajout. Le bouton **Modifier** rend ces valeurs éditables
@@ -36,8 +38,16 @@ placement, exemples de produits financiers et synthèse visuelle,
   solde et cumul comptent toujours tous les évènements. Toucher un jour avec
   activité agrandit sa case en pop-up (effet de zoom) : évènements du jour,
   total (dès deux évènements) et solde en fin de journée.
-- **Répartition par catégorie** — vue synthétique des revenus et des charges
-  avec barres de proportion.
+- **Activité du jour à sauvegarder ou imprimer** — dans le pop-up du jour de
+  Suivi et du calendrier CashBack / Round Up, une icône **Sauvegarder** (PDF,
+  Word ou Google Docs, comme la page Sauvegarder) et, sur bureau seulement,
+  une icône **Imprimer** : un rapport court reprend l'activité affichée
+  (tableau des lignes et total ; taux du cashback dans l'en-tête de colonne).
+- **Répartition par catégorie** — vue synthétique des revenus, des charges et
+  des dépenses avec barres de proportion. Un appui sur une catégorie (ou sur
+  la barre d'un produit ou d'une habitude, dont le nom sert à le renommer)
+  ouvre un pop-up simplifié : libellé, date, heure et montant de chaque
+  ligne, puis le total.
 - **CashBack & RoundUp** — estimation du cashback reversé par la banque et de
   l'arrondi automatique (différence mise de côté, comme sur Trade Republic),
   activables ligne par ligne dès l'ajout d'une charge ou d'une dépense. Un
