@@ -1,3 +1,10 @@
+## [1.55.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.0...v1.55.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **report:** message PDF avant l'impression, tri stable des répartitions ([231d65a](https://github.com/GT-Steeve/gestionBudget/commit/231d65a0b6f5d0ae978883ce47534b647a8f9101))
+
 # [1.55.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.54.0...v1.55.0) (2026-11-25)
 
 
