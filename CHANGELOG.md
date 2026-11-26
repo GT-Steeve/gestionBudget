@@ -1,3 +1,10 @@
+## [1.55.2](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.1...v1.55.2) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** l'animation de chargement finit son étape avant de disparaître ([ce4b774](https://github.com/GT-Steeve/gestionBudget/commit/ce4b7742c9c143f263d14a578febf6161d384d68))
+
 ## [1.55.1](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.0...v1.55.1) (2026-11-25)
 
 
