@@ -13,6 +13,7 @@
 
    const story = new CoinStory(el, { loop: true, version: 2 });
    story.play() / pause() / next() / prev() / goTo(n) / restart() / destroy()
+   story.settle() : fin naturelle (écran de chargement), voir plus bas.
    Événements sur el : 'coinstory:scene' (detail.index, detail.label),
    'coinstory:end' (sans boucle).
    ========================================================================== */
@@ -225,6 +226,12 @@ class CoinStory {
     this._last = now;
     this.t += dt;
     const sc = this.scenes[this.index];
+    // Fin demandée par settle() : l'étape visée est allée au bout de son message.
+    if (this._settle && this.index === this._settle.target && this.t >= this._holdOf(sc)) {
+      for (let i = 0; i < this.N; i++) this._apply(i, this._stateAt(i, this.t));
+      this._endSettle();
+      return;
+    }
     if (this.t >= sc.dur) {
       if (this.index === this.scenes.length - 1 && !this.opts.loop) {
         this.pause();
@@ -264,6 +271,52 @@ class CoinStory {
     if (!this.playing) this._renderStatic();
   }
 
+  /** Moment (ms dans l'étape) où son message est complet : pour l'étape
+      finale, l'étoile sortie et qui commence à briller ; sinon, la fin de
+      l'étape (les trois piles restent visibles un instant). */
+  _holdOf(sc) {
+    return sc.star ? (sc.starDelay ?? 900) + CoinStory.STAR_SHOW : sc.dur;
+  }
+
+  _endSettle() {
+    const { resolve, target, restore } = this._settle;
+    this._settle = null;
+    if (restore) this.scenes[target] = restore;
+    this.pause();
+    resolve();
+  }
+
+  /** Fin naturelle, pour ne pas couper le message (trier → bâtir → faire
+      fructifier) au milieu : l'animation continue jusqu'au bout de l'étape
+      suivante, puis se fige. Déjà à la dernière étape (« Objectif atteint »),
+      elle va au bout de celle-ci (pyramide montée, étoile sortie), à son
+      rythme normal. À l'arrêt (animations réduites), ou étape finale déjà
+      au bout, elle se fige tout de suite. Renvoie une promesse résolue une
+      fois l'animation figée. */
+  settle() {
+    if (this._settle) return this._settle.promise;
+    const last = this.scenes.length - 1;
+    if (!this.playing || (this.index === last && this.t >= this._holdOf(this.scenes[last]))) {
+      this.pause();
+      return Promise.resolve();
+    }
+    let resolve;
+    const promise = new Promise((r) => { resolve = r; });
+    // Étape finale en cours : on la termine telle quelle (l'accélérer en route
+    // ferait sauter les pièces) ; sinon, l'étape suivante.
+    const target = this.index === last ? last : this.index + 1;
+    this._settle = { target, resolve, promise };
+    // Vers l'étape finale : la page attend déjà, la pyramide se monte plus
+    // vite (≈ 1,3 s au lieu de ≈ 3,5 s) et l'étoile sort plus tôt. L'étape
+    // d'origine revient une fois l'animation figée.
+    const sc = this.scenes[target];
+    if (sc.star && target !== this.index) {
+      this._settle.restore = sc;
+      this.scenes[target] = { ...sc, ...CoinStory.FAST_FINAL };
+    }
+    return promise;
+  }
+
   next() { this.goTo(this.index + 1); }
   prev() { this.goTo(this.index - 1); }
 
@@ -282,6 +335,7 @@ class CoinStory {
   restart() { this.goTo(0); this.play(); }
 
   destroy() {
+    if (this._settle) this._endSettle();
     this.pause();
     this._ro.disconnect();
     this.el.innerHTML = '';
@@ -289,4 +343,10 @@ class CoinStory {
 }
 
 CoinStory.LABELS = ['Les pièces tombent', 'Un joli tas', 'On organise', 'Objectif atteint'];
+// Étape finale arrêtée par settle() : temps laissé à l'étoile après son
+// délai (1 s de montée, cs-star-rise dans style.css, puis un début d'éclat).
+CoinStory.STAR_SHOW = 1400;
+// Étape finale accélérée par settle() : 30 pièces × 35 ms + 300 ms de trajet
+// ≈ 1,35 s pour monter la pyramide, puis l'étoile.
+CoinStory.FAST_FINAL = { stagger: 35, moveDur: 300, starDelay: 1400 };
 window.CoinStory = CoinStory;

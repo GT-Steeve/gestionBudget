@@ -6,6 +6,12 @@
    l'animation que si la page met plus de SHOW_DELAY à être prête (pas de
    flash sur un chargement rapide), puis révèle le contenu en cascade
    (is-revealing). Sans JavaScript, rien n'est masqué.
+
+   Une animation affichée ne s'arrête pas net à la fin du chargement : elle
+   va au bout de l'étape suivante (le tas devient les trois piles, les piles
+   deviennent la pyramide, montée plus vite, et son étoile), pour que le message — trier son
+   argent, bâtir, faire fructifier — passe ; déjà sur « Objectif atteint »,
+   elle s'arrête à la fin de cette étape, étoile comprise (CoinStory.settle).
    ========================================================================== */
 'use strict';
 
@@ -15,6 +21,7 @@
   const STEP = 320;         // ms entre deux textes de chargement
   const REVEAL = 700;       // ms de la cascade d'arrivée du contenu
   const MAX_WAIT = 8000;    // filet de sécurité : le contenu s'affiche quoi qu'il arrive
+  const MAX_SETTLE = 6000;  // fin de l'étape en cours : jamais plus longue que ça
   const STEPS = ['Chargement des revenus', 'Chargement des charges', 'Chargement des dépenses', 'Calcul des économies', 'Préparation de la synthèse'];
 
   const timers = [];
@@ -44,16 +51,26 @@
     if (loader) { loader.remove(); loader = null; }
   };
 
-  const done = () => {
-    if (finished) return;
-    finished = true;
-    timers.forEach(clearTimeout);
+  const reveal = () => {
     root.classList.remove('is-pending', 'is-loading');
     root.classList.add('is-revealing');
     setTimeout(() => {
       root.classList.remove('is-revealing');
       remove();
     }, REVEAL);
+  };
+
+  const done = () => {
+    if (finished) return;
+    finished = true;
+    timers.forEach(clearTimeout);
+    // Animation à l'écran : elle finit son étape suivante avant de laisser
+    // place au contenu (filet : MAX_SETTLE). Sinon, le contenu arrive aussitôt.
+    if (!story) { reveal(); return; }
+    let revealed = false;
+    const once = () => { if (!revealed) { revealed = true; reveal(); } };
+    story.settle().then(once);
+    setTimeout(once, MAX_SETTLE);
   };
 
   timers.push(setTimeout(show, SHOW_DELAY));
