@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.25.1 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.25.2 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -120,9 +120,14 @@ placement, exemples de produits financiers et synthèse visuelle,
   s'afficher, une animation de pièces se joue avec l'étape en cours
   (revenus, charges, dépenses, économies, synthèse) : un joli tas, trois
   piles, puis une pyramide d'où sort une étoile, avec des monnaies tirées au
-  hasard (€ $ £ ¥ ₱ ₩). Le contenu arrive ensuite bloc par bloc. Rien ne
-  s'affiche sur un chargement rapide, et l'animation reste figée sur sa
-  dernière étape si l'appareil demande des animations réduites.
+  hasard (€ $ £ ¥ ₱ ₩) : trier son argent, bâtir, puis faire fructifier son
+  capital. Une fois la page prête, l'animation n'est pas coupée net : elle va
+  au bout de l'étape suivante (le tas devient trois piles ; les piles
+  deviennent la pyramide, montée plus vite, et son étoile), ou au bout de
+  « Objectif atteint » si elle y est déjà, puis disparaît en fondu (6 s au
+  plus). Le contenu arrive ensuite bloc par bloc. Rien ne s'affiche sur un
+  chargement rapide, et l'animation reste figée sur sa dernière étape si
+  l'appareil demande des animations réduites.
   L'animation existe en **deux versions** :
   - **version 2** (par défaut) — utilisée par l'écran de chargement de
     toutes les pages ;
