@@ -1,3 +1,10 @@
+## [1.55.3](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.2...v1.55.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **export:** tuiles de modèle en liste sur les pages Imprimer et Sauvegarder ([e922a6a](https://github.com/GT-Steeve/gestionBudget/commit/e922a6ac3c6a5a26ef79a6513a244d06905ad663))
+
 ## [1.55.2](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.1...v1.55.2) (2026-11-26)
 
 
