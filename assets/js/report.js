@@ -257,10 +257,10 @@
     const annual = Calc.annual;
     const EXPORT_MODELS = {
       simple: { label: 'Simple', sections: ['synthese', 'depenses'] },
-      standard: { label: 'Standard', sections: ['synthese', 'revenus', 'depenses', 'charges', 'placement'] },
+      standard: { label: 'Standard', sections: ['synthese', 'depenses', 'revenus', 'charges', 'placement'] },
       complet: {
         label: 'Complet',
-        sections: ['synthese', 'revenus', 'depenses', 'charges', 'historique', 'economie', 'placement', 'cashback', 'roundup']
+        sections: ['synthese', 'depenses', 'revenus', 'charges', 'placement', 'historique', 'economie', 'cashback', 'roundup']
       }
     };
 
@@ -335,6 +335,13 @@
       ];
     };
 
+    /** Mois archivés du rapport : tous, sauf pour Personnalisé quand des
+        mois précis ont été choisis dans la pop-up de l'historique. */
+    let customHistMonths = null;
+    const histMonthsFor = (modelKey) => (modelKey === 'personnalise' && customHistMonths
+      ? state.depensesHistorique.filter((m) => customHistMonths.includes(m.mois))
+      : state.depensesHistorique);
+
     const REPORT_SECTIONS = {
       synthese() {
         const rev = totalRevenus();
@@ -391,10 +398,12 @@
           ]
         };
       },
-      historique: () => ({
+      // Modèle Personnalisé : seulement les mois choisis
+      // dans la pop-up de l'historique (customHistMonths, null = tous).
+      historique: (modelKey) => ({
         title: 'Historique des dépenses',
-        blocks: state.depensesHistorique.length
-          ? state.depensesHistorique.flatMap((m) => [
+        blocks: histMonthsFor(modelKey).length
+          ? histMonthsFor(modelKey).flatMap((m) => [
             { type: 'h3', text: `${capitalize(monthLabel(m.mois))} · ${eur2.format(m.total)}` },
             depenseTable(m.items)
           ])
@@ -467,43 +476,155 @@
     };
 
     /* ---------- Modèle Personnalisé ----------
-       Éléments choisis dans la pop-up « Éléments à inclure », dans l'ordre du
-       modèle Complet ; tous cochés au départ. */
+       Éléments choisis par les interrupteurs de la tuile (pages Sauvegarder
+       et Imprimer), dans l'ordre du modèle Complet ; au départ, seuls la synthèse et
+       l'historique des dépenses sont inclus. */
     const ALL_SECTIONS = EXPORT_MODELS.complet.sections;
     const SECTION_NAMES = {
-      synthese: 'synthèse', revenus: 'revenus', depenses: 'dépenses', charges: 'charges',
+      synthese: 'synthèse', revenus: 'revenus', depenses: 'dépenses du mois', charges: 'charges',
       historique: 'historique des dépenses', economie: 'économie', placement: 'placement',
       cashback: 'cashback', roundup: 'RoundUp'
     };
-    EXPORT_MODELS.personnalise = { label: 'Personnalisé', sections: [...ALL_SECTIONS] };
-    function bindPersoModel() {
-      const radio = $('#modelePerso');
-      const overlay = $('#persoOverlay');
-      if (!radio || !overlay) return;
-      const list = $('#persoList');
-      const error = $('#persoError');
-      const open = () => {
-        error.textContent = '';
-        list.replaceChildren(...ALL_SECTIONS.map((key) => {
-          const input = h('input', { type: 'checkbox', value: key, checked: EXPORT_MODELS.personnalise.sections.includes(key),
-            'aria-label': capitalize(SECTION_NAMES[key]), onchange: () => { error.textContent = ''; } });
-          return h('div', { class: 'cb-row' },
-            h('div', { class: 'cb-row__text' },
-              h('span', { class: 'cb-row__name' }, capitalize(SECTION_NAMES[key])),
-              h('span', { class: 'cb-row__amount' }, SECTION_SUMMARIES[key])),
-            h('label', { class: 'switch' }, input, h('span', { class: 'switch__track' }, h('span', { class: 'switch__thumb' }))));
-        }));
-        openModal(overlay, { focus: '#persoOk' });
-      };
-      // Un clic sur la tuile (même déjà choisie) ouvre la pop-up, pour revoir le choix.
-      radio.addEventListener('click', open);
-      $('#persoCancel').addEventListener('click', () => closeModal(overlay));
-      $('#persoOk').addEventListener('click', () => {
-        const chosen = ALL_SECTIONS.filter((key) => $(`input[value="${key}"]`, list).checked);
-        if (!chosen.length) { error.textContent = 'Choisissez au moins un élément.'; return; }
-        EXPORT_MODELS.personnalise.sections = chosen;
-        closeModal(overlay);
+    EXPORT_MODELS.personnalise = { label: 'Personnalisé', sections: ['synthese', 'historique'] };
+    /** Pages Sauvegarder et Imprimer (data-model-checks) : sous chaque tuile de modèle, les
+        éléments du rapport, dans son ordre. Modèles fixes : liste à puces de
+        ce qu'ils incluent (des span, et non ul/li : seul du contenu en ligne
+        est permis dans un label ; les rôles list / listitem gardent la
+        lecture en liste). Personnalisé : une vraie case à cocher par élément
+        (voir bindCustomChecks). */
+    function renderModelChecks() {
+      const group = $('[data-model-checks]');
+      if (!group) return;
+      for (const input of group.querySelectorAll('input[name="modele"]')) {
+        const model = EXPORT_MODELS[input.value];
+        if (!model || input.value === 'personnalise') continue;
+        const tile = input.closest('.choice');
+        const list = $('.choice__checks', tile) || tile.appendChild(
+          h('span', { class: 'choice__checks', role: 'list', 'aria-label': `Éléments du modèle ${model.label}` }));
+        list.replaceChildren(...model.sections.map((key) => h('span', { class: 'choice__check', role: 'listitem' },
+          h('span', { class: 'choice__dot', 'aria-hidden': 'true' }), capitalize(SECTION_NAMES[key]))));
+      }
+      bindCustomChecks(group);
+    }
+
+    /** Tuile Personnalisé (pages Sauvegarder et Imprimer), sans pop-up : les neuf
+        éléments, chacun avec un interrupteur (activé si inclus).
+        Cocher ou décocher choisit aussi ce modèle ; au moins un élément reste
+        coché (la dernière case ne se décoche pas, un message le dit). */
+    function bindCustomChecks(group) {
+      const tile = $('.choice--custom', group);
+      if (!tile || $('.choice__checks', tile)) return;
+      const radio = $('input[type="radio"]', tile);
+      const model = EXPORT_MODELS.personnalise;
+      const error = h('span', { class: 'choice__error', role: 'alert' });
+      const boxes = ALL_SECTIONS.map((key) => h('input', {
+        type: 'checkbox', value: key, checked: model.sections.includes(key),
+        onchange: (e) => {
+          const chosen = ALL_SECTIONS.filter((k, i) => boxes[i].checked);
+          if (!chosen.length) {
+            e.target.checked = true;
+            error.textContent = 'Gardez au moins un élément.';
+            return;
+          }
+          error.textContent = '';
+          model.sections = chosen;
+          radio.checked = true;
+        }
+      }));
+      const sync = () => { model.sections = ALL_SECTIONS.filter((k, i) => boxes[i].checked); };
+      // « Historique des dépenses », quand il y a des mois à choisir : l'activer
+      // (souris, Espace) ouvre la pop-up des mois au lieu de basculer
+      // l'interrupteur ; le désactiver se fait directement, sans pop-up.
+      const histIndex = ALL_SECTIONS.indexOf('historique');
+      const histBox = boxes[histIndex];
+      const histCount = h('span', { class: 'choice__check-count' });
+      const histUi = bindHistMonths({
+        othersOn: () => boxes.some((b, i) => i !== histIndex && b.checked),
+        apply: (on) => {
+          histBox.checked = on;
+          sync();
+          radio.checked = true;
+          error.textContent = '';
+          histCount.textContent = on && customHistMonths ? ` · ${customHistMonths.length} mois` : '';
+        }
       });
+      if (histUi) {
+        histBox.addEventListener('click', (e) => {
+          // Pendant le clic, la case est déjà basculée : cochée ici = elle était
+          // désactivée. On annule la bascule et la pop-up décide.
+          if (histBox.checked) {
+            e.preventDefault();
+            setTimeout(histUi.open);
+            return;
+          }
+          // Désactivation : bascule normale (onchange), plus de nombre de mois.
+          setTimeout(() => { if (!histBox.checked) histCount.textContent = ''; });
+        });
+      }
+      tile.append(
+        h('div', { class: 'choice__checks', role: 'group', 'aria-label': 'Éléments du modèle Personnalisé' },
+          // Interrupteur à gauche, à la place des puces des autres modèles, puis le nom
+          // (même .switch que « Configurer » du CashBack, en plus petit).
+          ALL_SECTIONS.map((key, i) => h('label', { class: 'choice__check choice__check--box' },
+            h('span', { class: 'switch' }, boxes[i],
+              h('span', { class: 'switch__track', 'aria-hidden': 'true' }, h('span', { class: 'switch__thumb' }))),
+            h('span', { class: 'choice__check-name' }, capitalize(SECTION_NAMES[key]), key === 'historique' ? histCount : null)))),
+        error);
+      // Clic ailleurs dans la tuile (marges) : choisit aussi Personnalisé.
+      tile.addEventListener('click', (e) => { if (e.target === tile) radio.checked = true; });
+    }
+
+    /** Pop-up des mois de l'historique (#histOverlay, pages Sauvegarder et Imprimer) : une
+        carte par mois archivé qui a des dépenses (du plus récent au plus
+        ancien), précédée d'une carte Toutes ; ouverte quand on active
+        l'historique. Valider : historique inclus avec les mois choisis
+        (customHistMonths, null si tous), ou laissé désactivé si aucun
+        (refusé s'il ne resterait alors aucun élément). Renvoie { open }, ou
+        null sans pop-up dans la page ou sans mois à choisir. */
+    function bindHistMonths({ othersOn, apply }) {
+      const overlay = $('#histOverlay');
+      const months = state.depensesHistorique.filter((m) => m.items.length);
+      if (!overlay || !months.length) return null;
+      const cards = $('#histCards');
+      const error = $('#histError');
+      let picked = new Set();
+      const card = (label, sub, extra) => h('button', { type: 'button', class: 'choice hist-card', 'aria-pressed': 'false', ...extra },
+        h('span', { class: 'choice__label' }, label), h('span', { class: 'choice__sub' }, sub));
+      const all = card('Toutes', `${months.length} mois`, {
+        onclick: () => {
+          picked = picked.size === months.length ? new Set() : new Set(months.map((m) => m.mois));
+          render();
+        }
+      });
+      const monthCards = months.map((m) => card(capitalize(monthLabel(m.mois)),
+        `${m.items.length} dépense${m.items.length > 1 ? 's' : ''} · ${eur2.format(m.total)}`, {
+          onclick: () => {
+            if (picked.has(m.mois)) picked.delete(m.mois); else picked.add(m.mois);
+            render();
+          }
+        }));
+      const render = () => {
+        error.textContent = '';
+        all.setAttribute('aria-pressed', String(picked.size === months.length));
+        monthCards.forEach((c, i) => c.setAttribute('aria-pressed', String(picked.has(months[i].mois))));
+      };
+      cards.replaceChildren(all, ...monthCards);
+      let close = null;
+      $('#histCancel').addEventListener('click', () => close?.());
+      $('#histOk').addEventListener('click', () => {
+        if (!picked.size && !othersOn()) { error.textContent = 'Choisissez au moins un mois, ou gardez un autre élément.'; return; }
+        customHistMonths = picked.size && picked.size < months.length ? months.map((m) => m.mois).filter((mois) => picked.has(mois)) : null;
+        apply(picked.size > 0);
+        close?.();
+      });
+      return {
+        open() {
+          // Ouverte à l'activation : le dernier choix de mois, sinon Toutes.
+          picked = new Set(customHistMonths || months.map((m) => m.mois));
+          render();
+          close = openModal(overlay, { focus: all, onClose: () => { close = null; } });
+        }
+      };
     }
 
     function buildReport(modelKey) {
@@ -515,7 +636,7 @@
         subtitle: `Profil « ${profile} » · exporté le ${date}`,
         // Page de garde (PDF / impression uniquement, ignorée par docx.js).
         cover: { model: model.label, profile },
-        sections: model.sections.map((key) => ({ ...REPORT_SECTIONS[key](), summary: SECTION_SUMMARIES[key] }))
+        sections: model.sections.map((key) => ({ ...REPORT_SECTIONS[key](modelKey), summary: SECTION_SUMMARIES[key] }))
       };
     }
 
@@ -619,7 +740,7 @@
     }
 
     bindExportForm();
-    bindPersoModel();
+    renderModelChecks();
     bindSaveChoice();
   }
 

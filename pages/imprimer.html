@@ -27,9 +27,9 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.229">
-  <script src="../assets/js/coin-story.js?v=1.01.229"></script>
-  <script src="../assets/js/loader.js?v=1.01.229"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.254">
+  <script src="../assets/js/coin-story.js?v=1.01.254"></script>
+  <script src="../assets/js/loader.js?v=1.01.254"></script>
 </head>
 <body data-app="true">
 
@@ -98,29 +98,31 @@
     <!-- Toujours « Rapport seul » à l'impression : aucune donnée du profil jointe. -->
     <input type="hidden" name="donnees" value="non">
 
-    <h3 class="h3 h3--gap">Modèle</h3>
-    <div class="choices choices--list" role="radiogroup" aria-label="Modèle">
+    <!-- data-model-checks : chaque tuile liste en checklist les éléments
+         qu'elle inclut (report.js, d'après les modèles ; Personnalisé suit le
+         choix fait dans sa pop-up). -->
+    <div class="choices choices--list" role="radiogroup" aria-label="Modèle" data-model-checks>
       <label class="choice">
         <input type="radio" name="modele" value="simple" checked>
         <span class="choice__label">Simple</span>
-        <span class="choice__sub">Synthèse et dépenses du mois en cours</span>
       </label>
       <label class="choice">
         <input type="radio" name="modele" value="standard">
         <span class="choice__label">Standard</span>
-        <span class="choice__sub">Synthèse, revenus, dépenses, charges et placement</span>
       </label>
       <label class="choice">
         <input type="radio" name="modele" value="complet">
         <span class="choice__label">Complet</span>
-        <span class="choice__sub">Synthèse, revenus, dépenses, charges, historique des dépenses, économie, placement, cashback et RoundUp</span>
       </label>
-      <!-- Personnalisé : pop-up « Éléments à inclure » à chaque clic (report.js). -->
-      <label class="choice">
-        <input type="radio" name="modele" value="personnalise" id="modelePerso">
-        <span class="choice__label">Personnalisé</span>
-        <span class="choice__sub">Choisissez vous-même les éléments du rapport</span>
-      </label>
+      <!-- Personnalisé : une case à cocher par élément du rapport, ajoutée par
+           report.js ; cocher ou décocher choisit aussi ce modèle. Un bloc et
+           non un label : les cases ne peuvent pas être dans le libellé du radio. -->
+      <div class="choice choice--custom">
+        <label class="choice__title">
+          <input type="radio" name="modele" value="personnalise" id="modelePerso">
+          <span class="choice__label">Personnalisé</span>
+        </label>
+      </div>
     </div>
 
     <div class="btn-group export-actions">
@@ -138,15 +140,18 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
 
-<!-- Modèle Personnalisé : éléments du rapport à inclure ou non (report.js). -->
-<div id="persoOverlay" class="modal-overlay" hidden>
-  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="persoTitle">
-    <p id="persoTitle" class="modal__title modal__title--center">Éléments à inclure</p>
-    <div id="persoList" class="modal-list"></div>
-    <p id="persoError" class="note import-status is-error" role="alert"></p>
+<!-- Tuile Personnalisé : appui sur « Historique des dépenses » → mois archivés
+     (ceux qui ont des dépenses) en cartes à choisir, plus une carte Toutes
+     (report.js). Aucun mois choisi : l'historique n'est pas inclus. -->
+<div id="histOverlay" class="modal-overlay" hidden>
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <p id="histTitle" class="modal__title modal__title--center">Historique des dépenses</p>
+    <p class="note hist-intro">Choisissez les mois à inclure dans le rapport.</p>
+    <div id="histCards" class="hist-cards" role="group" aria-label="Mois archivés"></div>
+    <p id="histError" class="note import-status is-error" role="alert"></p>
     <div class="modal__actions modal__actions--center">
-      <button type="button" id="persoCancel" class="btn btn--ghost">Retour</button>
-      <button type="button" id="persoOk" class="btn">Valider</button>
+      <button type="button" id="histCancel" class="btn btn--ghost">Annuler</button>
+      <button type="button" id="histOk" class="btn">Valider</button>
     </div>
   </div>
 </div>
@@ -162,15 +167,15 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.229"></script>
-<script src="../assets/js/ui.js?v=1.01.229"></script>
-<script src="../assets/js/nav.js?v=1.01.229"></script>
-<script src="../assets/js/calc.js?v=1.01.229"></script>
-<script src="../assets/js/state.js?v=1.01.229"></script>
-<script src="../assets/js/guide.js?v=1.01.229"></script>
-<script src="../assets/js/docx.js?v=1.01.229"></script>
-<script src="../assets/js/pdflink.js?v=1.01.229"></script>
-<script src="../assets/js/report.js?v=1.01.229"></script>
-<script src="../assets/js/script.js?v=1.01.229"></script>
+<script src="../assets/js/profiles.js?v=1.01.254"></script>
+<script src="../assets/js/ui.js?v=1.01.254"></script>
+<script src="../assets/js/nav.js?v=1.01.254"></script>
+<script src="../assets/js/calc.js?v=1.01.254"></script>
+<script src="../assets/js/state.js?v=1.01.254"></script>
+<script src="../assets/js/guide.js?v=1.01.254"></script>
+<script src="../assets/js/docx.js?v=1.01.254"></script>
+<script src="../assets/js/pdflink.js?v=1.01.254"></script>
+<script src="../assets/js/report.js?v=1.01.254"></script>
+<script src="../assets/js/script.js?v=1.01.254"></script>
 </body>
 </html>

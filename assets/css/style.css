@@ -888,6 +888,46 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 /* Étape 1 : « Dans un document » / « Votre profil », tuiles-boutons (report.js). */
 .choices.save-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 20px; }
 button.choice { display: flex; flex-direction: column; align-items: flex-start; width: 100%; font: inherit; text-align: left; }
+/* Page Imprimer : éléments de chaque modèle sous son titre. Modèles fixes :
+   puces rondes ; Personnalisé : checklist, case bleue pleine (inclus) ou
+   vide (non inclus), en lecture seule. */
+/* Page Imprimer : sans titre « Modèle », un peu d'air sous l'introduction. */
+#exportForm > [data-model-checks] { margin-top: 20px; }
+.choice__checks { display: grid; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.choice__check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.choice__dot { flex: none; width: 6px; height: 6px; margin: 0 4px; border-radius: 50%; background: var(--ink-2); }
+.choice__box { flex: none; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--accent); background: var(--accent); }
+/* Personnalisé : un interrupteur par élément (case à cocher dans .switch),
+   à gauche à la place de la puce, puis le nom, plus pâle si désactivé. */
+.choice--custom { display: flex; flex-direction: column; gap: 2px; cursor: pointer; } /* comme les tuiles label */
+.choice__title { flex-direction: row; cursor: pointer; }
+.choice__check--box { flex-direction: row; gap: 8px; cursor: pointer; color: var(--muted); }
+.choice__check--box:has(input:checked) { color: var(--ink-2); }
+.choice__check-name { min-width: 0; }
+/* .choice input masque déjà la case ; .switch la garde utilisable au clavier. */
+.choice__check--box .switch input { width: 1px; height: 1px; }
+/* Interrupteur réduit (24 × 14 px au lieu de 36 × 20) : pas plus haut que
+   la ligne de texte, chaque élément a la même hauteur que les lignes à
+   puces des autres modèles. */
+.choice__check--box .switch__track { width: 24px; height: 14px; }
+.choice__check--box .switch__thumb { top: 2px; left: 2px; width: 10px; height: 10px; }
+.choice__check--box .switch input:checked + .switch__track .switch__thumb { transform: translateX(10px); }
+/* Nombre de mois choisis à côté de « Historique des dépenses ». */
+.choice__check-count { color: var(--muted); white-space: nowrap; }
+/* Pop-up des mois de l'historique : cartes à choisir (plusieurs à la fois). */
+.hist-intro { margin: -6px 0 14px; text-align: center; }
+/* Cartes compactes : plusieurs par ligne, petit texte. */
+.hist-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 50vh; overflow-y: auto; padding: 2px; }
+/* .hist-cards devant : passe avant le padding de .choice, défini plus bas. */
+.hist-cards .hist-card { align-items: flex-start; gap: 0; padding: 6px 10px; border-radius: 9px; min-width: 0; }
+.hist-cards .hist-card > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-cards .choice__label { font-size: 13px; }
+.hist-cards .choice__sub { font-size: 11px; }
+.hist-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.hist-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#histError:empty { display: none; }
+#histOverlay .modal__actions { margin-top: 18px; }
+.choice__error:not(:empty) { display: block; margin-top: 6px; font-size: 12px; color: var(--bad); }
 .save-choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 /* « Votre profil » : tuile unique, toujours choisie (rien d'autre à cliquer). */
 #saveProfilPanel .choice { cursor: default; }
@@ -896,6 +936,11 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 #exportWizardSlot .export-step { margin-top: 20px; }
 #exportWizardSlot .export-step .h3 { margin-top: 0; }
 #exportWizardSlot .export-actions { display: none; }
+/* Étape « Modèle » plus haute que l'écran (listes des tuiles) : la pop-up
+   garde la hauteur de l'écran et seul son contenu défile ; titre, étape et
+   boutons Retour / Sauvegarder restent visibles. */
+#exportWizardOverlay .modal--wizard { display: flex; flex-direction: column; max-height: calc(100dvh / var(--zoom, 1) - 40px); }
+#exportWizardSlot { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-right: -12px; padding-right: 12px; }
 
 /* Rapport généré par la page Sauvegarder : invisible à l'écran, seul contenu
    imprimé (voir @media print). Couleurs fixes, lisibles sur papier quel que
@@ -999,8 +1044,8 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
 }
 .choice:hover { border-color: var(--axis); }
-.choice:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choice:has(input[type="radio"]:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.choice:has(input[type="radio"]:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .choice input { position: absolute; opacity: 0; pointer-events: none; }
 .choice__label { font-size: 15px; font-weight: 650; color: var(--ink); }
 .choice__sub { font-size: 13px; color: var(--muted); }
