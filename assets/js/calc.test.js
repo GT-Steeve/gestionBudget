@@ -29,6 +29,41 @@ describe('project', () => {
   });
 });
 
+describe('project with an annual bonus', () => {
+  it('adds the bonus at the end of each year, in the balance and the deposits', () => {
+    const pts = Calc.project(0, 1000, 10, 2, 100);
+    expect(pts[2].deposited).toBe(1000 + 2 * (120 + 100));
+    expect(pts[2].balance).toBeCloseTo(pts[2].deposited, 6);
+  });
+});
+
+describe('simulatePlan', () => {
+  const plan = { capital: 1000, monthly: 35, bonus: 100, years: 18, rate: 10, ext: false, extYears: 65, extMonthly: 100 };
+
+  it('matches the reference plan (1 000 € + 35 €/month + 100 €/year, 18 years at 10 %)', () => {
+    const sim = Calc.simulatePlan(plan);
+    const end = sim.at(18);
+    expect(sim.total).toBe(18);
+    expect(end.paid).toBe(10360);
+    expect(Math.round(end.v / 100) * 100).toBe(30100);
+  });
+
+  it('extends the plan to 65 years with 100 €/month after the first period', () => {
+    const sim = Calc.simulatePlan({ ...plan, ext: true });
+    const fin = sim.pts[sim.pts.length - 1];
+    expect(sim.total).toBe(65);
+    expect(fin.paid).toBe(66760);
+    expect(fin.v / 1e6).toBeCloseTo(3.75, 1);
+  });
+
+  it('agrees with project() at the end of each year', () => {
+    const sim = Calc.simulatePlan(plan);
+    const pts = Calc.project(10, 1000, 35, 18, 100);
+    expect(sim.at(18).v).toBeCloseTo(pts[18].balance, 6);
+    expect(sim.at(18).paid).toBeCloseTo(pts[18].deposited, 6);
+  });
+});
+
 describe('computeSavings', () => {
   const charges = [
     { id: 'c1', mensuel: 100 },

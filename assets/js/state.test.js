@@ -5,6 +5,30 @@ const NOW = new Date(2026, 9, 15, 12); // 15 octobre 2026
 /** Données enregistrées minimales acceptées par load (sinon : exemple). */
 const saved = (extra = {}) => ({ charges: [], scenarios: [], yield: {}, ...extra });
 
+describe('BudgetState.load · placement', () => {
+  it('starts from an empty simulator when the data has none (older saves)', () => {
+    expect(BudgetState.load(saved(), NOW).placement).toEqual(BudgetState.emptyState(NOW).placement);
+  });
+
+  it('cleans the simulator fields', () => {
+    const { placement } = BudgetState.load(saved({
+      placement: {
+        bonus: '50', ext: 'oui', extYears: 200, extMonthly: -3,
+        items: [{ id: 'world', init: '1000', monthly: 20 }, { id: 'world', init: 5 }, null, { init: 3 }],
+        edits: { sp500: { name: '', perf: '-3,5', type: 'X', top10: [['Apple', '7,5', 'États-Unis'], [''], 'x'] }, bad: 'x' },
+        custom: [{ id: 'pas un id', name: 'Mon ETF', type: 'Action', perf: 'abc' }],
+        validated: 'hier'
+      }
+    }), NOW);
+    expect(placement).toMatchObject({ bonus: 50, ext: false, extYears: 80, extMonthly: 0, validated: null });
+    expect(placement.items).toEqual([{ id: 'world', init: 1000, monthly: 20 }]);
+    expect(placement.edits).toEqual({ sp500: { name: 'Sans nom', perf: -3.5, type: 'ETF', top10: [['Apple', 7.5, 'États-Unis', null]] } });
+    expect(placement.custom).toHaveLength(1);
+    expect(placement.custom[0]).toMatchObject({ name: 'Mon ETF', type: 'Action', perf: null, top10: [] });
+    expect(placement.custom[0].id).toMatch(/^cu-\w+$/);
+  });
+});
+
 describe('BudgetState.load', () => {
   it('starts from an empty budget when nothing usable is saved', () => {
     for (const bad of [null, {}, { charges: [], scenarios: [] }, saved({ yield: null }), saved({ yield: 'x' }), saved({ charges: 'x' })]) {

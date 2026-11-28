@@ -1,11 +1,11 @@
-# Gestion budget
+﻿# Gestion budget
 
 Petite application web pour suivre son budget : revenus, charges, dépenses,
 cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.26.3 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.27.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -60,16 +60,20 @@ placement, exemples de produits financiers et synthèse visuelle,
   Avant de l'appliquer, chaque comparaison se modifie en ligne (poste de
   charge, option, montant actuel et nouveau) ou via le bouton œil
   (**Modifier**) ; les économies déjà appliquées ne se modifient pas.
-- **Simulation de placement** — intérêts composés sur deux rendements annuels
-  modifiables (2 % et 10 % par défaut), via une pop-up guidée (épargne
-  mensuelle, capital, durée, rendements) ou directement dans le formulaire.
-  Exemples prêts à l'emploi, bouton « Simuler avec mes économies mensuelles »,
-  tableau comparatif (capital, épargné, intérêts, gain d'une année au choix),
-  graphique d'évolution et détail année par année.
+- **Simulateur de placement** — construire un placement long terme en 3 étapes
+  puis un aperçu : **Objectif** (épargne de départ, versement mensuel avec
+  exemples prêts à l'emploi et bouton « Simuler avec mes économies
+  mensuelles », durée, rendement hypothétique, courbe du compte), **Produits** (catalogue d'ETF, d'actions
+  et d'obligations, repris aussi de la page Produits financiers, avec fiche,
+  top 10 et rendement moyen, produits à créer ou à modifier),
+  **Répartition** (montant au départ et par mois sur chaque produit, sans
+  dépasser le budget) et **Aperçu** (liste d'achats et exposition par
+  sociétés, secteurs et pays). Les données sont gardées dans le budget actif.
 - **Produits financiers** — exemples concrets d'actions, d'obligations et
-  d'ETF (dont des ETN crypto) classés par onglets, avec ISIN et lien vers leur
-  fiche [justETF](https://www.justetf.com/fr/). Accessible depuis la page
-  Placement et l'Annexe.
+  d'ETF (dont des ETN crypto) classés par onglets, avec ISIN et un bouton
+  « Voir la fiche » qui ouvre la même fiche que le simulateur de placement
+  (rendement, frais, top 10, source [justETF](https://www.justetf.com/fr/)
+  datée). Accessible depuis l'Annexe.
 - **Annexe** — lexique des termes financiers courants (action, obligation,
   ETF, cashback, arrondi automatique).
 - **Synthèse graphique** — camembert de répartition des dépenses et graphique
@@ -184,7 +188,11 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `assets/js/guide.js` — guide de démarrage : page Guide, premier usage, étape en cours sur les pages
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
 - `assets/js/pdflink.js` — données du budget dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
-- `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
+- `assets/js/calc.js` — calculs financiers purs (intérêts composés, plan d'épargne, économies), partagés avec les tests
+- `assets/js/placement.js` — simulateur de placement de la page Placement (étapes Objectif, Produits, Répartition, Aperçu)
+- `assets/js/placement-data.js` — catalogue du simulateur : ETF, actions et obligations (rendement, top 10, pays et secteurs), relevés le 28 nov. 2026
+- `assets/js/fiche.js` — fiche produit (rendement, top 10, source datée), partagée par le simulateur et la page Produits financiers
+- `assets/js/produits.js` — page Produits financiers : « Voir la fiche » ouvre la fiche du produit en pop-up
 - `assets/js/budgets.js` — budgets : liste, budget actif, données de chaque budget sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
 - `assets/js/coin-story.js` — animation CoinStory (source unique, deux versions : v2 par défaut, v1 avec pluie de pièces réservée à la page Placement), utilisée par l'écran de chargement et par la démo
 - `assets/js/loader.js` — écran de chargement « pièces » (CoinStory version 2), inclus dans le `<head>` de chaque page juste après `coin-story.js`

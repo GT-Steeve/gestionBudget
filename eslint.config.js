@@ -26,6 +26,8 @@ module.exports = [
         Report: 'readonly',
         CoinStory: 'readonly',
         Flash: 'readonly',
+        PlacementData: 'readonly',
+        Fiche: 'readonly',
       },
     },
     rules: {

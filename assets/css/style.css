@@ -421,17 +421,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px 6px 0 0; }
 .tabpanel { margin-top: 16px; }
 .tabpanel:focus-visible:not(:target) { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
-/* Page Produits financiers : fiche produit (catégorie, ISIN, lien justETF). */
-.product dd { text-align: left; }
-.product dd p + p { margin-top: 6px; }
-.product__meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-.product__cat {
-  font-size: 12px; font-weight: 600; color: var(--accent);
-  padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-.product__isin { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.product__link, .glossary__more a, .about-head .lead a { color: var(--accent); }
-.product__link { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 13.5px; font-weight: 600; }
+.glossary__more a, .about-head .lead a { color: var(--accent); }
 /* .card__head ne fait pas grandir ses enfants (flex sans grow) : sans width:100%,
    ce bloc reste large comme son contenu et le centrage du titre paraît décalé
    à gauche sur les écrans larges, où la carte est bien plus large que le texte. */
@@ -715,49 +705,293 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 
 /* ---------- Rendement ---------- */
 
-/* Tableau comparatif des deux rendements : libellés à gauche, une colonne
-   par taux (couleur de sa courbe en haut et teinte légère dessous). */
-.cmp-wrap { margin: 16px 0 24px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.cmp { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
-.cmp__labels { width: 26%; }
-.cmp--r2 { --key: var(--series-1); }
-.cmp--r10 { --key: var(--series-2); }
-.cmp col.cmp--r2, .cmp col.cmp--r10 { background: color-mix(in srgb, var(--key) 6%, transparent); }
-.cmp th, .cmp td { padding: 10px 14px; }
-.cmp thead th {
-  border-top: 3px solid var(--key, transparent); padding-top: 14px;
-  text-align: center; font-size: 13px; font-weight: 650; color: var(--ink-2);
+/* Simulateur de placement (placement.js) : barre d'étapes (Objectif,
+   Produits, Répartition | Aperçu), une étape dessinée à la fois dans
+   #pfView, barre Retour / Suivant collée en bas de l'écran. */
+.pf-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.pf-step {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 6px;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--ink-2);
+  background: none; border: 1px solid transparent; border-radius: 999px; cursor: pointer;
 }
-.cmp thead th[scope="row"] { text-align: left; font-size: 14px; font-weight: 400; }
-.cmp tbody tr { border-top: 1px solid var(--border); }
-.cmp tbody th { text-align: left; font-weight: 400; color: var(--ink-2); }
-.cmp tbody td { text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
-.cmp td.good { color: var(--good); }
-.cmp__capital td { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink); }
-/* En-tête « [champ] % » : le taux annuel se modifie directement ici. */
-.cmp__rate-field { display: inline-flex; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 6px; font-size: inherit; color: inherit; }
-/* Largeur juste suffisante pour 4 caractères (de « 0,01 » à « 1000 ») ; les
-   flèches natives du champ nombre sont masquées pour ne pas manger cette place. */
-.cmp__rate {
-  width: calc(4ch + 14px); height: 30px; padding: 0 6px; text-align: center;
-  font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; border-radius: 8px;
-  -moz-appearance: textfield; appearance: textfield;
+.pf-step b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--axis); font-size: 12px; }
+.pf-step:hover { background: var(--wash); color: var(--ink); }
+.pf-step.is-on { color: var(--ink); background: var(--wash); border-color: var(--border); }
+.pf-step.is-on b { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.pf-step--eye b { border-style: dashed; color: var(--accent); }
+.pf-step--eye.is-on b { color: var(--accent-ink); }
+.pf-step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pf-steps__sep { width: 1px; height: 22px; margin: 0 4px; background: var(--border); }
+
+.pf-head { margin: 20px 0 16px; }
+.pf-kick { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.pf-kick::before { content: ""; width: 16px; height: 2px; background: var(--accent); }
+.pf-title { margin-top: 6px; font-size: clamp(22px, 3vw, 28px); font-weight: 650; letter-spacing: -0.01em; text-wrap: balance; }
+.pf-title:focus { outline: none; }
+.pf-title em { font-style: normal; color: var(--accent); }
+.pf-accent { color: var(--accent); }
+.pf-small { margin-top: 2px; font-size: 12px; color: var(--muted); }
+.pf-sp { flex: 1; }
+.pf-panel { background: var(--wash); border-radius: 14px; padding: 18px; }
+.pf-empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 40px 10px; }
+
+/* Étape 1 · Objectif : champs à gauche, résultats et courbe à droite. */
+.pf-plan { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+.pf-plan__form { display: grid; gap: 12px; padding: 18px; background: var(--wash); border-radius: 14px; }
+.pf-plan__form input:not([type="checkbox"]) { width: 100%; }
+.pf-pair { display: grid; gap: 12px; }
+.pf-plan__eco { width: 100%; height: auto; min-height: 40px; padding: 6px 12px; white-space: normal; }
+.pf-res { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pf-res .tile { padding: 14px 16px; }
+.pf-res .tile__value { font-size: 22px; }
+.pf-fig { margin-top: 16px; }
+.pf-fig svg { display: block; width: 100%; height: auto; overflow: visible; }
+.s-pf { stroke: var(--accent); stroke-width: 3; }
+.dot.s-pf { fill: var(--accent); }
+.pf-chart__big { fill: var(--accent); font-size: 20px; font-weight: 700; }
+.pf-chart__mid { fill: var(--ink-2); font-size: 15px; font-weight: 600; }
+.pf-legend { margin-top: 8px; }
+.pf-key { border-top-width: 3px; border-color: var(--accent); }
+
+/* Étape 2 · Produits : filtres, recherche et tuiles (pastille bleue ETF,
+   verte Action, orange Obligation ; bordure d'accent si le produit est dans le portefeuille). */
+.pf-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+.pf-tools a.btn { text-decoration: none; }
+.pf-seg { display: inline-flex; padding: 3px; background: var(--wash); border: 1px solid var(--border); border-radius: 10px; }
+.pf-seg button {
+  height: 32px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink-2);
+  background: none; border: 0; border-radius: 7px; cursor: pointer;
 }
-.cmp__rate::-webkit-inner-spin-button, .cmp__rate::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-/* Année du gain : boutons haut/bas à côté du libellé (plus de champ dédié). */
-.year-step { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.year-step__btns { display: inline-flex; flex-direction: column; gap: 2px; }
-.year-step__btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 14px; padding: 0; cursor: pointer;
-  color: var(--ink-2); background: var(--surface);
-  border: 1px solid var(--border); border-radius: 4px;
+.pf-seg button[aria-pressed="true"] { color: var(--ink); background: var(--surface); box-shadow: 0 0 0 1px var(--border); }
+.pf-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pf-search { flex: 0 1 260px; }
+.pf-search input { width: 100%; }
+.pf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pf-card {
+  display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
 }
-.year-step__btn:hover:not(:disabled) { background: var(--wash); color: var(--ink); }
-.year-step__btn:disabled { opacity: 0.35; cursor: not-allowed; }
-/* Le bloc titre + texte de la carte Placement prend la largeur restante,
-   pour que le bouton Simuler un placement se cale à droite (desktop). */
-#rendement .card__head > div { flex: 1 1 auto; min-width: 0; }
+.pf-card:hover { background: var(--wash); }
+.pf-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pf-card.is-sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.pf-card__top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.pf-card h3 { font-size: 16px; font-weight: 650; }
+.pf-card p { flex: 1; font-size: 13px; color: var(--ink-2); }
+.pf-card__ft { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.pf-badge { flex: none; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.pf-badge--etf { color: var(--series-1); background: color-mix(in srgb, var(--series-1) 14%, transparent); }
+.pf-badge--act { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.pf-badge--obl { color: var(--series-2); background: color-mix(in srgb, var(--series-2) 14%, transparent); }
+.pf-inpf { padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 650; color: var(--accent-ink); background: var(--accent); white-space: nowrap; }
+
+/* Fiche produit et formulaire « Modifier la fiche ». */
+/* La croix est posée à cheval sur le coin haut droit de la bordure ; le
+   contenu défile dans .pf-modal__body, sous elle, sans lui réserver de place. */
+.modal.modal--pf {
+  position: relative; display: flex; flex-direction: column; max-width: 920px; padding: 0; overflow: visible;
+  max-height: calc(100dvh / var(--zoom, 1) - 48px);
+}
+.pf-modal__body { min-height: 0; overflow: auto; padding: 24px; border-radius: inherit; overscroll-behavior: contain; }
+.modal--pf .pf-modal__x {
+  position: absolute; top: -14px; right: -14px; z-index: 2; width: 34px; height: 34px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.modal--pf .pf-modal__x:hover { background: var(--wash); }
+.pf-modal__title { font-size: 22px; font-weight: 650; }
+.pf-modal__desc { margin: 10px 0 16px; font-size: 15px; color: var(--ink-2); }
+.pf-mcols { display: grid; grid-template-columns: 2fr 3fr; gap: 28px; }
+.pf-big { margin: 4px 0; font-size: clamp(30px, 4vw, 44px); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--accent); }
+.pf-big.is-neg { color: var(--bad); }
+.pf-big small { margin-left: 6px; font-size: 14px; font-weight: 500; letter-spacing: normal; color: var(--muted); }
+.pf-big__none { font-size: 22px; color: var(--muted); }
+.pf-method { margin: 8px 0; }
+.pf-facts { display: grid; gap: 6px; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; }
+.pf-facts div { display: flex; justify-content: space-between; gap: 12px; }
+.pf-facts dt { color: var(--ink-2); }
+.pf-facts dd { margin: 0; font-weight: 600; text-align: right; }
+.pf-facts .pf-facts__wide { flex-direction: column; gap: 2px; }
+.pf-facts .pf-facts__wide dd { text-align: left; }
+.pf-top10__h { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 8px; font-size: 14px; font-weight: 650; }
+.pf-top10__h span { font-size: 12px; font-weight: 400; color: var(--muted); }
+.pf-row10 { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 5px 0; font-size: 13px; }
+.pf-row10 i { font-style: normal; font-size: 11px; color: var(--muted); }
+.pf-row10 b { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.pf-row10 span { font-variant-numeric: tabular-nums; }
+.pf-row10.is-neg span { color: var(--bad); }
+.pf-bar { grid-column: 2 / 4; height: 3px; border-radius: 2px; background: var(--accent); }
+.pf-row10.is-neg .pf-bar { background: var(--bad); }
+.pf-mfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
+.pf-src { max-width: 520px; margin: 0; }
+.pf-src a { color: var(--accent); }
+.pf-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.pf-form__full { grid-column: 1 / -1; }
+.pf-form input, .pf-form select { width: 100%; }
+.pf-form textarea {
+  min-height: 160px; padding: 10px 12px; resize: vertical;
+  font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+}
+.pf-form textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.pf-form .pf-mfoot { margin-top: 4px; }
+
+/* Étape 3 · Répartition : compteurs « à affecter » et montants par produit. */
+.pf-cnt { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+.pf-cnt .tile__body { width: 100%; }
+.pf-cnt .tile__value { font-size: 26px; }
+.pf-prog { height: 4px; margin-top: 12px; overflow: hidden; border-radius: 4px; background: var(--grid); }
+.pf-prog div { height: 100%; background: var(--accent); transition: width 0.3s; }
+.pf-cnt--neg .tile__value { color: var(--bad); }
+.pf-cnt--neg .pf-prog div { background: var(--bad); }
+.pf-err { margin-top: 6px; font-size: 12px; color: var(--bad); }
+/* « Répartir équitablement », sous les deux compteurs. */
+.pf-split { display: flex; justify-content: center; margin: 4px 0 8px; }
+.pf-tbl, .pf-recap { min-width: 0; }
+.pf-nm { display: flex; align-items: center; gap: 10px; }
+.pf-nm b { display: block; font-size: 15px; }
+.pf-nm small { display: block; font-size: 12px; color: var(--muted); }
+.pf-logo { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+.pf-amt { position: relative; display: inline-block; width: 140px; }
+.pf-amt input { width: 100%; padding-right: 28px; text-align: right; -moz-appearance: textfield; appearance: textfield; }
+.pf-amt input::-webkit-inner-spin-button, .pf-amt input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.pf-amt span { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.pf-amt input.is-bad { border-color: var(--bad); }
+.pf-below { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-top: 12px; }
+
+/* Aperçu : liste d'achats et trois anneaux (Sociétés, Secteurs, Pays). */
+/* Aperçu validé avec des sommes non réparties. */
+.pf-notice {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  margin: 0 0 16px; padding: 12px 16px; font-size: 14px; color: var(--ink);
+  background: color-mix(in srgb, var(--series-2) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--series-2) 35%, transparent); border-radius: 12px;
+}
+.pf-notice p { flex: 1 1 260px; }
+/* Page Produits financiers : tuiles de l'étape Produits du simulateur,
+   « Voir la fiche › » à droite (ouvre la fiche en pop-up). */
+.pf-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pf-card__more { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.pf-card:hover .pf-card__more { text-decoration: underline; }
+.pf-card__ft > span:first-child { font-variant-numeric: tabular-nums; }
+.pf-exp-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin: 24px 0 12px; }
+.pf-pans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pf-pan__h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pf-pan__h h4 { margin: 0; font-size: 15px; font-weight: 650; }
+.pf-pie { display: block; width: 160px; height: 160px; margin: 8px auto 16px; }
+.pf-pie__v { fill: var(--ink); font-weight: 700; }
+.pf-pie__k { fill: var(--muted); }
+.pf-leg { list-style: none; margin: 0; padding: 0; }
+.pf-leg li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--grid); }
+.pf-leg li:last-child { border-bottom: 0; }
+.pf-leg li span { width: 10px; height: 10px; border-radius: 3px; }
+.pf-leg li b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pf-leg li.is-grey { color: var(--muted); }
+
+.pf-navbar {
+  position: sticky; bottom: 12px; z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 24px; padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.pf-navbar > div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pf-navbar__r { margin-left: auto; }
+.pf-navbar__count { font-size: 13px; color: var(--muted); }
+.pf-disc { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+.pf-toast {
+  position: fixed; left: 50%; bottom: 24px; z-index: 300; transform: translateX(-50%);
+  max-width: calc(100vw - 32px); padding: 10px 18px; text-align: center;
+  font-size: 13px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 999px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.pf-toast[hidden] { display: none; }
+
+@media (max-width: 1000px) {
+  .pf-grid, .pf-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pf-pans { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) { .pf-plan { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .pf-mcols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .pf-grid, .pf-grid--3, .pf-form { grid-template-columns: minmax(0, 1fr); }
+  .pf-cnt { gap: 8px; }
+  .pf-cnt .tile { padding: 12px; }
+  .pf-cnt .tile__label { font-size: 12px; }
+  .pf-cnt .tile__value { font-size: 18px; white-space: normal; }
+  .pf-cnt .tile__unit { display: block; font-size: 11px; }
+  /* Fiche produit en pop-up : presque plein écran, croix toujours visible. */
+  /* Marge autour de la fenêtre pour que la croix sur le coin reste visible. */
+  #pfModal { padding: 22px 18px 14px; align-items: flex-start; }
+  .modal.modal--pf { max-height: calc(100dvh / var(--zoom, 1) - 36px); }
+  .modal--pf .pf-modal__x { top: -12px; right: -12px; width: 32px; height: 32px; }
+  .modal--pf .pf-modal__title { font-size: 20px; }
+  .modal--pf .pf-modal__desc { font-size: 14px; line-height: 1.45; margin: 8px 0 12px; }
+  .modal--pf .pf-small { line-height: 1.45; }
+  .modal--pf .pf-big { margin: 6px 0 4px; }
+  /* Bloc rendement (libellé, chiffre, période, ticker · ISIN) centré. */
+  .modal--pf .pf-perf { text-align: center; padding: 4px 0 2px; }
+  .modal--pf .pf-facts { font-size: 13.5px; }
+  .modal--pf .pf-row10 { font-size: 13.5px; }
+  .pf-mcols { gap: 18px; }
+  /* Barre d'étapes sur une seule ligne : numéro au-dessus du libellé. */
+  .pf-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding-bottom: 12px; }
+  .pf-steps__sep { display: none; }
+  .pf-step { flex-direction: column; justify-content: center; gap: 4px; height: auto; padding: 6px 2px; border-radius: 12px; font-size: 12px; }
+  .pf-head { margin: 16px 0 12px; }
+  /* Étape 1 : champs courts par deux, résultats en 2 colonnes. */
+  .pf-plan { gap: 16px; }
+  .pf-plan__form { padding: 14px; }
+  .pf-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; }
+  .pf-res { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pf-res .tile { padding: 10px 12px; }
+  .pf-res .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .pf-res .tile__label, .pf-res .tile__sub { font-size: 12px; }
+  .pf-res .tile__value { font-size: 15px; white-space: nowrap; }
+  /* Étape 2 : filtres sur toute la largeur, boutons côte à côte, tuiles compactes. */
+  .pf-tools { gap: 8px; }
+  .pf-seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .pf-seg button { padding: 0 4px; font-size: 13px; }
+  .pf-search { flex: 1 1 100%; }
+  .pf-tools .btn { flex: 1 1 0; min-width: 0; height: auto; min-height: 36px; padding: 6px 8px; line-height: 1.2; white-space: normal; text-align: center; }
+  .pf-grid { gap: 8px; }
+  .pf-card { padding: 12px 14px; gap: 4px; }
+  .pf-card h3 { font-size: 15px; line-height: 1.3; }
+  .pf-card__top { flex-direction: column-reverse; align-items: flex-start; gap: 6px; }
+  .pf-card p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pf-grid--3 .pf-card p { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  /* Barre du bas : Retour réduit à sa flèche pour tout garder sur une ligne. */
+  .pf-navbar { gap: 8px; padding: 10px; bottom: 8px; }
+  .pf-navbar > .pf-navbar__r { flex-wrap: nowrap; gap: 8px; min-width: 0; }
+  .pf-navbar__back { width: 40px; padding: 0; font-size: 18px; }
+  .pf-navbar__txt { display: none; }
+  .pf-navbar__count { font-size: 12px; white-space: nowrap; }
+  /* Fiche produit : boutons du pied sur toute la largeur. */
+  .pf-mfoot { gap: 8px; }
+  .pf-mfoot .pf-sp { display: none; }
+  .pf-mfoot .btn { flex: 1 1 100%; }
+  .pf-form .pf-mfoot .btn { flex: 1 1 0; }
+  .pf-top10__h { flex-direction: column; gap: 2px; }
+  .pf-big { font-size: 32px; }
+  /* Aperçu : liste d'achats sans débordement. */
+  .pf-panel { padding: 14px; }
+  .pf-recap { font-size: 13px; }
+  .pf-recap th, .pf-recap td { padding: 6px 4px; }
+  .pf-recap thead th { white-space: normal; font-size: 11px; letter-spacing: 0.02em; }
+  .pf-pie { width: 140px; height: 140px; }
+  .pf-recap th:nth-child(2), .pf-recap td:nth-child(2) { display: none; }
+  .pf-tbl thead { display: none; }
+  .pf-tbl tbody tr { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; padding: 10px 0; }
+  .pf-tbl td { padding: 0; }
+  .pf-tbl td:first-child { grid-column: 1 / -1; }
+  .pf-tbl .num { text-align: left; }
+  .pf-amt { width: 100%; }
+  /* En-tête masqué : chaque montant garde son intitulé au-dessus du champ. */
+  .pf-tbl td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 12px; color: var(--ink-2); }
+  .pf-navbar { flex-wrap: nowrap; }
+  .pf-navbar__r { justify-content: flex-end; }
+  .pf-modal__body { padding: 18px; }
+}
+@media print { .pf-steps, .pf-navbar, .pf-toast { display: none; } }
 
 .chart-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--ink-2); }
@@ -768,9 +1002,6 @@ input.cell.num { text-align: right; max-width: 130px; margin-left: auto; display
 .key--dep { border-top-style: dashed; border-color: var(--muted); }
 
 .chart-wrap { position: relative; margin-top: 8px; }
-#chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-#chart svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
-
 .g-line { stroke: var(--grid); stroke-width: 1; }
 .g-axis { stroke: var(--axis); stroke-width: 1; }
 .g-text { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -1178,7 +1409,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
    hidden natif (même piège que .modal-overlay[hidden] ci-dessus) : utile
    ici pour Retour/Terminer, masqués ou montrés selon l'étape du wizard. */
 .modal__actions [hidden] { display: none; }
-#infoOverlay .modal__actions { justify-content: center; }
 .modal--wide { max-width: 460px; }
 
 /* Pop-up d'ajout guidé (étapes) : remplace une ligne de formulaire à
@@ -1208,18 +1438,12 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .wizard__step { margin-top: 20px; }
 .wizard__progress { font-size: 12px; color: var(--muted); text-align: center; margin: 18px 0 0; }
 .modal--wizard .modal__actions { margin-top: 16px; }
-/* Wizard Placement : bouton « Simuler avec mes économies mensuelles » sous le
-   champ Épargne, et les deux rendements à comparer sur la même étape. */
-.wizard__extra { width: 100%; margin-top: 12px; }
-.wizard__step--pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.wizard__step--pair[hidden] { display: none; }
 /* Étapes à petits champs (Durée, Rendements) : contenu centré dans la pop-up. */
 .wizard__step--center { text-align: center; }
 .wizard__step--center label { align-items: center; }
 /* Épargne (avec le bouton Exemple incrusté) et Capital : taille utile pour
    un montant à 7 chiffres plutôt que la pleine largeur. */
 .wizard__step--center .input-with-btn { width: calc(9ch + 118px); }
-.wizard__step--center .wizard__extra { width: auto; }
 
 /* Wizard Dépense : produit à suivre (avec la liste des produits déjà suivis
    à sélectionner), question posée par des cartes à choisir (produit acheté
@@ -1353,7 +1577,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .btn--danger { background: var(--bad); color: #fff; }
 .btn--danger:hover { filter: brightness(1.08); }
 
-.btn-with-info { display: inline-flex; align-items: center; gap: 8px; }
 /* Champs nombre à leur taille utile plutôt qu'en pleine largeur : Durée
    (jusqu'à 50) et rendements (de « 0,01 » à « 1000 », « % » juste après). */
 .input--fit { width: calc(3ch + 40px); text-align: center; }
@@ -1361,19 +1584,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .input-unit { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 15px; }
 .input--rate { width: calc(4ch + 28px); text-align: center; -moz-appearance: textfield; appearance: textfield; }
 .input--rate::-webkit-inner-spin-button, .input--rate::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-/* Formulaire Placement : Épargne mensuelle, bouton Simuler mes économies
-   juste dessous, puis Capital de départ et Durée côte à côte (50/50). */
-#yieldForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; max-width: 720px; }
-#yieldForm label { flex: unset; min-width: 0; }
-/* Libellé et champ sur la même ligne, pour gagner de la hauteur. */
-#yieldForm label { flex-direction: row; align-items: center; gap: 10px; white-space: nowrap; }
-#yieldForm label > input, #yieldForm label > .input-with-btn { flex: 1 1 auto; min-width: 0; }
-/* Ligne Épargne mensuelle + bouton économies (et sa bulle) à droite. Le
-   champ est à la taille d'un montant de « 0,001 » à « 1000000000000 »,
-   bouton Exemple incrusté compris. */
-#yieldForm .yield-line { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
-#yieldForm .yield-line > label { flex: none; }
-#yieldForm .yield-line .input-with-btn { flex: none; width: calc(13ch + 138px); }
 .info-btn {
   flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border); border-radius: 50%; background: transparent; color: var(--ink-2);
@@ -1708,6 +1918,7 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   #importModalSlot .import-form.is-ready > .btn { display: inline-flex; }
   .wrap { padding: 0 12px; }
   .about-head .lead--center { text-align: justify; }
+  .about-head .lead--center.lead--center-m { text-align: center; }
   /* Paramètres : les choix (taille, thème) restent côte à côte, en cartes plus compactes. */
   .choices { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
   .choice { padding: 10px; }
@@ -1813,17 +2024,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   #addDepenseMobileSlot { text-align: center; }
   /* Bouton Ajouter une comparaison centré en mobile, comme Ajouter une charge. */
   #addScenarioMobileSlot { text-align: center; }
-  /* Bouton Simuler un placement centré en mobile, comme Ajouter une charge. */
-  #addYieldMobileSlot { text-align: center; }
-  /* Les deux boutons Placement restent côte à côte en mobile. */
-  /* (passent l'un sous l'autre seulement sur les très petits écrans). */
-  #yieldActions .btn { padding-left: 10px; padding-right: 10px; font-size: 13px; }
-  /* Tableau des rendements en mobile : cellules plus serrées pour tenir les
-     trois colonnes. */
-  .cmp { font-size: 13px; }
-  .cmp__labels { width: 30%; }
-  .cmp th, .cmp td { padding: 9px 8px; }
-  .cmp__capital td { font-size: 17px; }
   /* Retour à la ligne réservé au desktop : en mobile, le texte coule normalement. */
   .br-desktop { display: none; }
   /* Le bouton Modifier se cale sur le bas de la tuile (grille : hauteur égale à la
@@ -1841,12 +2041,6 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
   .form-row label, .form-row label.grow { flex: 1 1 100%; }
   .form-row .btn { width: 100%; }
   .form-row .input-with-btn__btn { width: auto; }
-  /* Formulaire Rendement : la grille 2 colonnes (voir #yieldForm plus haut)
-     s'applique déjà ; le bouton économies prend juste toute la largeur. */
-  #yieldForm .btn-with-info .btn { flex: 1 1 auto; }
-  /* Mobile : Épargne sur toute la ligne, bouton économies dessous. */
-  #yieldForm .yield-line > label, #yieldForm .yield-line > .btn-with-info { flex: 1 1 100%; }
-  #yieldForm .yield-line .input-with-btn { flex: 1 1 auto; width: auto; }
   /* Mobile : le pourcentage s'affiche au centre de la barre (épaissie pour
      le contenir) au lieu d'une ligne à part. Chaque ligne devient une
      sous-grille pour superposer les deux dans la même cellule, tout en

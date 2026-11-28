@@ -5,8 +5,8 @@
    pour l'export, report.js.
    1. Charges mensuelles / annuelles (annuel = mensuel × 12)
    2. Économie potentielle en remplaçant une ligne par une autre option
-   3. Simuler un placement (deux taux annuels modifiables, 2 % et 10 % par défaut,
-      intérêts composés ; gain affiché pour l'année de votre choix)
+   3. Rendement du placement (Synthèse, rapport) ; le simulateur de la page
+      Placement est dans placement.js
    ========================================================================== */
 'use strict';
 
@@ -76,7 +76,7 @@
     Autre: 'Ex. Option moins chère'
   };
   const MONTHS = Calc.MONTHS;
-  const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, MAX_RATE, ROUND_UP_OPTIONS,
+  const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, ROUND_UP_OPTIONS,
     uid, num, clamp, readRate } = BudgetState;
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, rateNf, fmtRate, capitalize, monthLabel,
     currentMonthName, openModal, confirmDialog: confirmDelete, bindInfoModal,
@@ -2216,21 +2216,13 @@
   }
 
   /* ==========================================================================
-     3. Rendement
+     3. Rendement (page Placement : simulateur dans placement.js)
      ========================================================================== */
-
-  function syncYieldInputs() {
-    if (!$('#yCapital')) return;
-    $('#yCapital').value = state.yield.capital;
-    $('#yVersement').value = state.yield.versement;
-    $('#yAnnees').value = state.yield.annees;
-  }
-
-  let chartData = null; // { series, years }
 
   /**
    * Deux scénarios de rendement : le taux le plus bas est toujours « low », le plus haut « high »,
-   * quel que soit l'ordre de saisie. `gainYear` = année dont on affiche le gain (entre 1 et la durée).
+   * quel que soit l'ordre de saisie (taux2 = rendement du simulateur de la
+   * page Placement). `gainYear` = année dont on affiche le gain (entre 1 et la durée).
    */
   function computeYield() {
     const { capital, versement, annees, taux1, taux2, anneeGain } = state.yield;
@@ -2239,375 +2231,6 @@
     const results = rates.map((r) => ({ rate: r, pts: project(r, capital, versement, years) }));
     const gainYear = clamp(Math.round(anneeGain) || 1, 1, years);
     return { years, results, gainYear };
-  }
-
-  /** Intérêts gagnés pendant l'année n uniquement (pas cumulés). */
-  const gainOfYear = (pts, n) => (pts[n].balance - pts[n].deposited) - (pts[n - 1].balance - pts[n - 1].deposited);
-  const gainYearLabel = (n) => `Année ${n}`;
-
-  /** Tableau comparatif des deux rendements, construit une seule fois :
-      libellés à gauche (Capital, Épargné, Intérêts, Année X avec boutons
-      haut/bas), une colonne par taux avec son champ « … % » en en-tête
-      (« Rendement (annuel) » à gauche indique que c'est un taux par an). Mis à jour sur place pour ne pas recréer le champ en cours de
-      saisie. */
-  let yieldCards = null;
-  const chevron = (d) => s('svg', { width: 10, height: 10, viewBox: '0 0 16 16', 'aria-hidden': 'true' },
-    s('path', { d, fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
-
-  function yieldCardEls() {
-    if (yieldCards) return yieldCards;
-    const cols = ['taux1', 'taux2'].map((key, i) => {
-      const rate = h('input', {
-        class: 'cmp__rate', type: 'number', min: 0, max: MAX_RATE, step: 0.01, inputmode: 'decimal',
-        'aria-label': `Rendement ${i + 1}, en % par an`
-      });
-      rate.addEventListener('input', () => {
-        state.yield[key] = clamp(num(rate.value), 0, MAX_RATE);
-        onYieldChange();
-      });
-      return {
-        rate,
-        col: h('col', {}),
-        head: h('th', { scope: 'col', class: 'cmp__head' },
-          h('label', { class: 'cmp__rate-field' }, rate, ' %')),
-        big: h('td', {}),
-        dep: h('td', {}),
-        gain: h('td', { class: 'good' }),
-        yearGain: h('td', { class: 'good' })
-      };
-    });
-
-    const yearLbl = h('span', {});
-    const up = h('button', { type: 'button', class: 'year-step__btn', 'aria-label': 'Année suivante' }, chevron('M4 10l4-4 4 4'));
-    const down = h('button', { type: 'button', class: 'year-step__btn', 'aria-label': 'Année précédente' }, chevron('M4 6l4 4 4-4'));
-    const stepYear = (delta) => {
-      state.yield.anneeGain = clamp(state.yield.anneeGain + delta, 1, state.yield.annees);
-      onYieldChange();
-    };
-    up.addEventListener('click', () => stepYear(1));
-    down.addEventListener('click', () => stepYear(-1));
-
-    const row = (label, cls, cell, attrs = {}) =>
-      h('tr', { class: cls }, h('th', { scope: 'row', ...attrs }, label), ...cols.map((c) => c[cell]));
-    const table = h('table', { class: 'cmp' },
-      h('caption', { class: 'sr-only' }, 'Comparaison des deux rendements'),
-      h('colgroup', {}, h('col', { class: 'cmp__labels' }), cols.map((c) => c.col)),
-      // « Rendement » écrit une fois, au-dessus de Capital, pour les deux colonnes.
-      h('thead', {}, h('tr', {}, h('th', { scope: 'row' }, 'Rendement (annuel)'), cols.map((c) => c.head))),
-      h('tbody', {},
-        row('Capital', 'cmp__capital', 'big'),
-        row('Épargné', null, 'dep'),
-        row('Intérêts', null, 'gain'),
-        row(h('span', { class: 'year-step' }, yearLbl, h('span', { class: 'year-step__btns' }, up, down)), null, 'yearGain')
-      ));
-
-    yieldCards = { cols, yearLbl, up, down };
-    $('#yieldCards').replaceChildren(table);
-    return yieldCards;
-  }
-
-  function onYieldChange() {
-    renderYield();
-    renderSummary();
-    renderSynthese();
-    save();
-  }
-
-  function renderYield() {
-    if (!$('#h-rend')) return;
-    const { years, results, gainYear } = computeYield();
-    const [low, high] = results;
-    const deposited = low.pts[years].deposited;
-    const rLow = fmtRate(low.rate);
-    const rHigh = fmtRate(high.rate);
-
-    // En-têtes du tableau année par année qui suivent les taux choisis
-    $('#thCapLow').textContent = `Capital à ${rLow}`;
-    $('#thGainLow').textContent = `Gain à ${rLow}`;
-    $('#thCapHigh').textContent = `Capital à ${rHigh}`;
-    $('#thGainHigh').textContent = `Gain à ${rHigh}`;
-
-    // Cartes de résultat : une par taux saisi (taux1 puis taux2), mises à
-    // jour sur place pour ne pas recréer le champ Rendement en cours de saisie.
-    // La couleur suit le rang du taux (le plus bas = r2), comme le graphique.
-    const { taux1, taux2 } = state.yield;
-    const ui = yieldCardEls();
-    ui.cols.forEach((c, i) => {
-      const rate = i === 0 ? taux1 : taux2;
-      const isLow = i === 0 ? taux1 <= taux2 : taux2 < taux1;
-      const { pts } = isLow ? low : high;
-      const last = pts[years];
-      // Couleur de la colonne = celle de sa courbe (taux le plus bas = r2).
-      for (const el of [c.col, c.head]) {
-        el.classList.toggle('cmp--r2', isLow);
-        el.classList.toggle('cmp--r10', !isLow);
-      }
-      if (document.activeElement !== c.rate) c.rate.value = rate;
-      c.big.textContent = eur0.format(last.balance);
-      c.dep.textContent = eur0.format(last.deposited);
-      c.gain.textContent = `+${eur0.format(last.balance - last.deposited)}`;
-      c.yearGain.textContent = `+${eur0.format(gainOfYear(pts, gainYear))}`;
-    });
-    ui.yearLbl.textContent = gainYearLabel(gainYear);
-    ui.down.disabled = gainYear <= 1;
-    ui.up.disabled = gainYear >= years;
-
-    // Légende
-    $('#legend').replaceChildren(
-      h('li', {}, h('span', { class: 'key key--r10' }), `Rendement ${rHigh}`),
-      h('li', {}, h('span', { class: 'key key--r2' }), `Rendement ${rLow}`),
-      h('li', {}, h('span', { class: 'key key--dep' }), 'Total versé')
-    );
-
-    // Tableau année par année (l'année choisie pour le gain est surlignée)
-    $('#yearBody').replaceChildren(...low.pts.map((p, i) => h('tr', { class: i === gainYear ? 'is-sel' : null },
-      h('th', { scope: 'row' }, String(p.year)),
-      h('td', { class: 'num' }, eur0.format(p.deposited)),
-      h('td', { class: 'num' }, eur0.format(p.balance)),
-      h('td', { class: 'num' }, eur0.format(p.balance - p.deposited)),
-      h('td', { class: 'num' }, eur0.format(high.pts[i].balance)),
-      h('td', { class: 'num' }, eur0.format(high.pts[i].balance - high.pts[i].deposited))
-    )));
-
-    // Graphique
-    chartData = {
-      years,
-      series: [
-        { key: 'r10', label: rHigh, name: `Rendement ${rHigh}`, pts: high.pts.map((p) => p.balance) },
-        { key: 'r2', label: rLow, name: `Rendement ${rLow}`, pts: low.pts.map((p) => p.balance) },
-        { key: 'dep', label: 'Versé', name: 'Total versé', pts: low.pts.map((p) => p.deposited) }
-      ],
-      rLow,
-      rHigh
-    };
-    renderChart();
-
-    // Bouton « utiliser mon économie »
-    const eco = computeSavings().monthly;
-    $('#btnUseEco').disabled = eco <= 0;
-    $('#btnUseEco').title = eco > 0 ? `Mettre ${eur2.format(eco)} par mois en épargne` : 'Ajoutez d\'abord une économie dans la partie 3';
-
-    return { years, deposited, high, low };
-  }
-
-  /* ---------- Graphique SVG ---------- */
-
-  function renderChart() {
-    if (!chartData) return;
-    const box = $('#chart');
-    const tip = $('#chartTip');
-    const { series, years, rLow, rHigh } = chartData;
-
-    const W = Math.max(280, Math.floor(box.clientWidth || 640));
-    const small = W < 520;
-    const H = small ? 260 : 320;
-    const m = { t: 14, r: small ? 54 : 78, b: 32, l: small ? 56 : 66 };
-    const iw = W - m.l - m.r;
-    const ih = H - m.t - m.b;
-
-    const maxV = Math.max(...series.flatMap((sr) => sr.pts));
-    const { max: yMax, step } = niceScale(maxV, 4);
-    const X = (i) => m.l + (i / years) * iw;
-    const Y = (v) => m.t + ih - (v / yMax) * ih;
-
-    const svg = s('svg', {
-      viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'group', tabindex: '0',
-      'aria-label': `Évolution du capital sur ${years} ans : ${eur0.format(series[1].pts[years])} à ${rLow}, ${eur0.format(series[0].pts[years])} à ${rHigh}, pour ${eur0.format(series[2].pts[years])} versés. Utilisez les flèches gauche et droite pour parcourir les années.`
-    });
-
-    // Grille + axe Y
-    for (let v = 0; v <= yMax + 1e-9; v += step) {
-      svg.append(
-        s('line', { class: v === 0 ? 'g-axis' : 'g-line', x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v) }),
-        s('text', { class: 'g-text', x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end' }, eurCompact.format(v))
-      );
-    }
-
-    // Axe X
-    const xStep = years <= 12 ? 1 : years <= 24 ? 2 : 5;
-    for (let i = 0; i <= years; i += xStep) {
-      svg.append(s('text', { class: 'g-text', x: X(i), y: H - 10, 'text-anchor': 'middle' }, String(i)));
-    }
-    svg.append(s('text', { class: 'g-text', x: m.l + iw + 10, y: H - 10 }, 'ans'));
-
-    // Courbes
-    const drawOrder = [...series].reverse(); // versé en dessous, taux le plus haut au-dessus
-    for (const sr of drawOrder) {
-      const d = sr.pts.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
-      svg.append(s('path', { class: `s-line s-${sr.key}`, d }));
-    }
-
-    // Étiquettes directes en fin de courbe (anticollision)
-    const labels = series
-      .map((sr) => ({ sr, y: Y(sr.pts[years]) }))
-      .sort((a, b) => a.y - b.y);
-    for (let k = 1; k < labels.length; k++) {
-      if (labels[k].y - labels[k - 1].y < 15) labels[k].y = labels[k - 1].y + 15;
-    }
-    for (const { sr, y } of labels) {
-      svg.append(
-        s('circle', { class: `dot s-${sr.key}`, cx: X(years), cy: Y(sr.pts[years]), r: 4 }),
-        s('text', { class: 'g-label', x: X(years) + 10, y: y + 4 }, sr.label)
-      );
-    }
-
-    // Survol : repère vertical + points
-    const cross = s('line', { class: 'cross', y1: m.t, y2: m.t + ih, visibility: 'hidden' });
-    const dots = series.map((sr) => s('circle', { class: `dot s-${sr.key}`, r: 4.5, visibility: 'hidden' }));
-    svg.append(cross, ...dots);
-
-    const hit = s('rect', { x: m.l - 8, y: m.t, width: iw + 16, height: ih + m.b - 8, fill: 'transparent', style: 'touch-action:pan-y' });
-    svg.append(hit);
-
-    const hide = () => {
-      cross.setAttribute('visibility', 'hidden');
-      dots.forEach((d) => d.setAttribute('visibility', 'hidden'));
-      tip.hidden = true;
-    };
-
-    const showAt = (i) => {
-      i = clamp(i, 0, years);
-      const x = X(i);
-      cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible');
-      dots.forEach((d, k) => {
-        d.setAttribute('cx', x); d.setAttribute('cy', Y(series[k].pts[i])); d.setAttribute('visibility', 'visible');
-      });
-
-      tip.replaceChildren(
-        h('div', { class: 'tip__head' }, i === 0 ? 'Départ' : `Année ${i}`),
-        ...series.map((sr) => h('div', { class: 'tip__row' },
-          h('span', { class: `key key--${sr.key}` }),
-          h('span', { class: 'lbl' }, sr.name),
-          h('strong', {}, eur0.format(sr.pts[i]))
-        ))
-      );
-      tip.hidden = false;
-      const right = x < W * 0.55;
-      tip.style.left = `${right ? x + 14 : x - 14}px`;
-      tip.style.transform = right ? 'none' : 'translateX(-100%)';
-    };
-
-    const idxFromEvent = (e) => {
-      const r = svg.getBoundingClientRect();
-      const px = ((e.clientX - r.left) / r.width) * W;
-      return Math.round(((px - m.l) / iw) * years);
-    };
-
-    hit.addEventListener('pointermove', (e) => showAt(idxFromEvent(e)));
-    hit.addEventListener('pointerdown', (e) => showAt(idxFromEvent(e)));
-    hit.addEventListener('pointerleave', hide);
-
-    let kbIdx = years;
-    svg.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') { kbIdx = clamp(kbIdx - 1, 0, years); showAt(kbIdx); e.preventDefault(); }
-      else if (e.key === 'ArrowRight') { kbIdx = clamp(kbIdx + 1, 0, years); showAt(kbIdx); e.preventDefault(); }
-      else if (e.key === 'Home') { kbIdx = 0; showAt(kbIdx); e.preventDefault(); }
-      else if (e.key === 'End') { kbIdx = years; showAt(kbIdx); e.preventDefault(); }
-      else if (e.key === 'Escape') hide();
-    });
-    svg.addEventListener('focus', () => showAt(kbIdx));
-    svg.addEventListener('blur', hide);
-
-    box.replaceChildren(svg);
-    tip.hidden = true;
-  }
-
-  function bindYield() {
-    if (!$('#yCapital')) return;
-    const read = () => {
-      state.yield.capital = num($('#yCapital').value);
-      state.yield.versement = num($('#yVersement').value);
-      state.yield.annees = clamp(Math.round(num($('#yAnnees').value)) || 1, 1, 50);
-      // L'année du gain (boutons haut/bas des tuiles) reste dans la durée.
-      state.yield.anneeGain = clamp(state.yield.anneeGain, 1, state.yield.annees);
-      onYieldChange();
-    };
-    ['#yCapital', '#yVersement', '#yAnnees']
-      .forEach((sel) => $(sel).addEventListener('input', read));
-
-    const ecoMonthly = () => Math.round(computeSavings().monthly * 100) / 100;
-    $('#btnUseEco').addEventListener('click', () => {
-      const eco = ecoMonthly();
-      if (eco <= 0) return;
-      state.yield.versement = eco;
-      syncYieldInputs();
-      onYieldChange();
-    });
-
-    // Pop-up « Simuler un placement » : préremplie avec la simulation en
-    // cours, appliquée d'un coup sur Terminer.
-    const wizardOverlay = $('#yieldWizardOverlay');
-    $('#btnOpenYieldWizard').addEventListener('click', () => {
-      const y = state.yield;
-      $('#wCapital').value = y.capital;
-      $('#wVersement').value = y.versement;
-      $('#wAnnees').value = y.annees;
-      $('#wTaux1').value = y.taux1;
-      $('#wTaux2').value = y.taux2;
-      $('#wBtnUseEco').disabled = ecoMonthly() <= 0;
-      $('#wBtnUseEco').title = $('#btnUseEco').title;
-    });
-    $('#wBtnUseEco').addEventListener('click', () => {
-      const eco = ecoMonthly();
-      if (eco > 0) $('#wVersement').value = eco;
-    });
-    // Listener ajouté avant celui de bindAddWizard, qui ferme ensuite la pop-up.
-    $('#yieldWizardForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const y = state.yield;
-      y.capital = num($('#wCapital').value);
-      y.versement = num($('#wVersement').value);
-      y.annees = clamp(Math.round(num($('#wAnnees').value)) || 1, 1, 50);
-      y.taux1 = clamp(num($('#wTaux1').value), 0, MAX_RATE);
-      y.taux2 = clamp(num($('#wTaux2').value), 0, MAX_RATE);
-      y.anneeGain = clamp(y.anneeGain, 1, y.annees);
-      syncYieldInputs();
-      onYieldChange();
-    });
-    bindAddWizard({
-      openBtn: '#btnOpenYieldWizard', overlay: '#yieldWizardOverlay', form: '#yieldWizardForm',
-      closeBtn: '#yieldWizardClose', backBtn: '#yieldWizardBack',
-      nextBtn: '#yieldWizardNext', finishBtn: '#yieldWizardFinish', stepLabel: '#yieldWizardStepLabel',
-      steps: ['[data-step="1"]', '[data-step="2"]', '[data-step="3"]', '[data-step="4"]'],
-      fields: ['#wVersement', '#wCapital', '#wAnnees', '#wTaux1']
-    });
-    bindResponsiveTrigger('#yieldActions', '#addYieldMobileSlot', '#rendement .card__head');
-
-    // Pop-up d'exemples : chaque bouton préremplit épargne/durée/taux depuis ses data-attributes.
-    document.querySelectorAll('.example-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        // Depuis la pop-up « Simuler un placement » : l'exemple préremplit
-        // seulement ses champs, l'utilisateur poursuit avec Suivant puis
-        // valide avec Terminer (rien n'est appliqué à la simulation avant).
-        if (wizardOverlay && !wizardOverlay.hidden) {
-          $('#wVersement').value = num(btn.dataset.mensuel);
-          $('#wAnnees').value = clamp(Math.round(num(btn.dataset.annees)) || 1, 1, 50);
-          $('#wTaux1').value = clamp(num(btn.dataset.taux1), 0, MAX_RATE);
-          $('#wTaux2').value = clamp(num(btn.dataset.taux2), 0, MAX_RATE);
-          $('#exampleClose').click();
-          $('#wVersement').focus();
-          return;
-        }
-        state.yield.versement = num(btn.dataset.mensuel);
-        state.yield.annees = clamp(Math.round(num(btn.dataset.annees)) || 1, 1, 50);
-        state.yield.taux1 = clamp(num(btn.dataset.taux1), 0, MAX_RATE);
-        state.yield.taux2 = clamp(num(btn.dataset.taux2), 0, MAX_RATE);
-        state.yield.anneeGain = clamp(state.yield.anneeGain, 1, state.yield.annees);
-        syncYieldInputs();
-        onYieldChange();
-        $('#exampleClose').click();
-      });
-    });
-
-    if ('ResizeObserver' in window) {
-      let lastW = 0;
-      new ResizeObserver(() => {
-        const w = Math.floor($('#chart').clientWidth);
-        if (w && w !== lastW) { lastW = w; renderChart(); }
-      }).observe($('.chart-wrap'));
-    } else {
-      window.addEventListener('resize', renderChart);
-    }
   }
 
   /* ==========================================================================
@@ -3040,7 +2663,6 @@
     renderDepenseTotals();
     renderScenarioForm();
     renderScenarios();
-    renderYield();
     renderSummary();
     renderSynthese();
     renderCashback();
@@ -3059,15 +2681,12 @@
     bindRoundUp();
     bindAvantages();
     bindScenarios();
-    bindYield();
-    bindInfoModal('#rendementInfoBtn', '#infoOverlay', '#infoClose');
-    bindInfoModal('#btnExemple', '#exampleOverlay', '#exampleClose');
-    bindInfoModal('#wBtnExemple', '#exampleOverlay', '#exampleClose');
     bindInfoModal('#soldeMoisInfoBtn', '#soldeInfoOverlay', '#soldeInfoClose');
     bindSynthese();
     // Pages Sauvegarder et Imprimer uniquement (report.js n'est chargé que là).
     window.Report?.bindExport({ state, totalRevenus, totalMonthly, computeSavings, computeYield, cashbackFraction, roundUpAmount, CAT_KEY });
-    syncYieldInputs();
+    // Page Placement uniquement (placement.js n'est chargé que là).
+    window.Placement?.init({ state, save, computeSavings });
     renderLines('revenus');
     renderLines('charges');
     renderDepenses();

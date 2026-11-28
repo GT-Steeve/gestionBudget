@@ -22,7 +22,7 @@
       text: 'Au fil du mois, notez vos dépenses du quotidien : courses, sorties, imprévus… Chaque mois est ensuite archivé dans l\'historique.' },
     { key: 'economie', page: 'economie.html', title: 'Vos économies', btn: 'btnOpenScenarioWizard', action: 'Ajouter une comparaison',
       text: 'Comparez une charge à une offre concurrente pour calculer l\'économie possible : du cashflow en plus, à garder ou à investir.' },
-    { key: 'placement', page: 'placement.html', title: 'Votre plan d\'épargne', btn: 'btnOpenYieldWizard', action: 'Simuler un placement',
+    { key: 'placement', page: 'placement.html', title: 'Votre plan d\'épargne', btn: 'pfStep-plan', action: 'Définir mon objectif',
       text: 'Prévoyez un plan d\'épargne avec l\'argent mis de côté et voyez votre capital grandir année après année.' }
   ];
 

@@ -106,9 +106,20 @@
       ],
       appliquees: [],
       yield: { capital: 3000, versement: 150, annees: 15, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 5 },
+      placement: {
+        ...emptyPlacement(),
+        items: [{ id: 'world', init: 2000, monthly: 100 }, { id: 'sp500', init: 1000, monthly: 50 }]
+      },
       view: 'mois'
     };
   }
+
+  /** Simulateur de placement (page Placement) : options du plan en plus de
+      state.yield (capital, versement, durée, taux2 = rendement), produits
+      choisis (items), fiches modifiées (edits) et produits créés (custom). */
+  const emptyPlacement = () => ({
+    bonus: 0, ext: false, extYears: 65, extMonthly: 100, items: [], edits: {}, custom: [], validated: null
+  });
 
   /** Date d'ajout enregistrée (ISO) si valide, sinon null (anciennes lignes). */
   const validDate = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
@@ -194,8 +205,67 @@
     revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], habitudes: [],
     suggestionsMasquees: { lieux: [], motifs: [] }, depensesMoisCourant: monthKey(now),
     cashbackRate: 1, roundUpTo: 1, scenarios: [], appliquees: [], view: 'mois',
-    yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 }
+    yield: { capital: 0, versement: 0, annees: 10, taux1: DEFAULT_RATES[0], taux2: DEFAULT_RATES[1], anneeGain: 1 },
+    placement: emptyPlacement()
   });
+
+  /** Texte enregistré coupé à max caractères ('' si ce n'est pas un texte). */
+  const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+  /** Rendement d'un produit : peut être négatif ; null = non renseigné. */
+  const perf = (v) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = parseFloat(String(v).replace(',', '.'));
+    return Number.isFinite(n) ? clamp(n, -100, 1000) : null;
+  };
+  /** 10 premières sociétés : [nom, poids %, pays ?, secteur ?]. */
+  const top10 = (list) => (Array.isArray(list) ? list : []).filter(Array.isArray)
+    .map(([n, w, c, sec]) => {
+      const row = [str(n, 60), clamp(num(w), 0, 100)];
+      if (str(c, 40) || str(sec, 40)) row.push(str(c, 40) || null, str(sec, 40) || null);
+      return row;
+    })
+    .filter((row) => row[0]).slice(0, 10);
+  /** Champs d'une fiche produit modifiable (fiche modifiée ou produit créé). */
+  const productFields = (x) => {
+    const o = {};
+    if ('name' in x) o.name = str(x.name, 80) || 'Sans nom';
+    for (const [k, max] of [['ticker', 20], ['isin', 20], ['desc', 200], ['period', 120], ['compDate', 40]]) {
+      if (k in x) o[k] = str(x[k], max);
+    }
+    if ('type' in x) o.type = ['Action', 'Obligation'].includes(x.type) ? x.type : 'ETF';
+    if ('perf' in x) o.perf = perf(x.perf);
+    if ('rest' in x) o.rest = str(x.rest, 40) || null;
+    if ('top10' in x) o.top10 = top10(x.top10);
+    return o;
+  };
+  const isRecord = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+  /** Simulateur de placement nettoyé (absent des anciennes données : vide). */
+  function placement(v) {
+    const p = isRecord(v) ? v : {};
+    const out = emptyPlacement();
+    out.bonus = num(p.bonus);
+    out.ext = p.ext === true;
+    out.extYears = clamp(Math.round(num(p.extYears)) || out.extYears, 1, 80);
+    out.extMonthly = p.extMonthly === undefined ? out.extMonthly : num(p.extMonthly);
+    const seen = new Set();
+    out.items = records(p.items).map((i) => ({ id: str(i.id, 40), init: num(i.init), monthly: num(i.monthly) }))
+      .filter((i) => i.id && !seen.has(i.id) && seen.add(i.id)).slice(0, 100);
+    if (isRecord(p.edits)) {
+      for (const [id, e] of Object.entries(p.edits).slice(0, 200)) {
+        if (isRecord(e) && id.length <= 40) out.edits[id] = productFields(e);
+      }
+    }
+    out.custom = records(p.custom).slice(0, 100).map((c) => ({
+      type: 'ETF', name: 'Sans nom', ticker: '', isin: '', desc: '', perf: null, period: '', compDate: '', rest: null, top10: [],
+      ...productFields(c),
+      id: /^cu-[\w-]{1,36}$/.test(c.id) ? c.id : `cu-${uid()}`,
+      approx: true,
+      color: '#3A56D4'
+    }));
+    out.validated = validDate(p.validated);
+    return out;
+  }
 
   /** État de l'application à partir des données enregistrées ou importées
       (saved), nettoyées champ par champ ; un budget vide si elles sont
@@ -258,7 +328,8 @@
           taux2: readRate(saved.yield.taux2, DEFAULT_RATES[1]),
           anneeGain: clamp(Math.round(num(saved.yield.anneeGain)) || 1, 1, annees)
         };
-      })()
+      })(),
+      placement: placement(saved.placement)
     };
     const chargeExists = (x) => state.charges.some((c) => c.id === x.chargeId);
     state.scenarios = state.scenarios.filter(chargeExists);
@@ -303,6 +374,6 @@
 
   return {
     CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES, DEFAULT_RATES, MAX_RATE, ROUND_UP_OPTIONS,
-    uid, num, clamp, monthKey, readRate, emptyState, exampleState, load, archiveMonth, removeItem
+    uid, num, clamp, monthKey, readRate, emptyState, exampleState, load, productFields, archiveMonth, removeItem
   };
 });
