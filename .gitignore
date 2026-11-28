@@ -1,5 +1,6 @@
 .claude
 node_modules/
+idea/
 
 # Dossier créé si on reproduit le déploiement en local
 _site/
