@@ -1,3 +1,10 @@
+# [1.58.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.57.0...v1.58.0) (2026-11-28)
+
+
+### Features
+
+* **placement:** simulateur de placement en 3 étapes et fiches produit ([35d2afc](https://github.com/GT-Steeve/gestionBudget/commit/35d2afc87aba96ec1bf5c026eaeb099cb6231233))
+
 # [1.57.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.56.0...v1.57.0) (2026-11-28)
 
 
