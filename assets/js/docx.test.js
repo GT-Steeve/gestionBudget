@@ -3,7 +3,7 @@ const Docx = require('./docx.js');
 
 const report = {
   title: 'Gestion budget',
-  subtitle: 'Profil « Moi »',
+  subtitle: 'Budget « Moi »',
   sections: [{
     title: 'Dépenses',
     blocks: [

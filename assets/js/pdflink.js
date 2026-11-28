@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Gestion budget — données du profil dans un PDF (partagé navigateur +
+   Gestion budget — données du budget dans un PDF (partagé navigateur +
    Node/tests). Le PDF est produit par la fenêtre d'impression du navigateur :
    on ne peut rien y écrire directement, mais les liens du rapport y sont
    conservés tels quels. Le lien « Gestion budget » de la page de garde porte
@@ -12,7 +12,7 @@
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./docx.js'));
   else if (root) root.PdfLink = factory(root.Docx);
 })(typeof window !== 'undefined' ? window : globalThis, function (Docx) {
-  const SITE = 'https://gt-steeve.github.io/gestionBudget/pages/profil.html';
+  const SITE = 'https://gt-steeve.github.io/gestionBudget/pages/budget.html';
   const PATTERN = /#gb1\.([A-Za-z0-9_-]+)\.([0-9a-f]{8})/g;
 
   const toBase64Url = (bytes) => {

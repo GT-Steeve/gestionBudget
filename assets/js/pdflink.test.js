@@ -29,7 +29,7 @@ const pdfPadded = (uri, fillers) => concat('%PDF-1.5\n',
 describe('PdfLink', () => {
   it('reads back the data carried by the report link', async () => {
     const url = PdfLink.url(data);
-    expect(url).toMatch(/^https:\/\/gt-steeve\.github\.io\/gestionBudget\/pages\/profil\.html#gb1\.[\w-]+\.[0-9a-f]{8}$/);
+    expect(url).toMatch(/^https:\/\/gt-steeve\.github\.io\/gestionBudget\/pages\/budget\.html#gb1\.[\w-]+\.[0-9a-f]{8}$/);
     expect(await PdfLink.readData(pdf(`(${url})`))).toEqual(data);
     expect(await PdfLink.readData(pdf(hex(url)))).toEqual(data);
   });

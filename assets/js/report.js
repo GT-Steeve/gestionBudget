@@ -3,7 +3,7 @@
    rendu en HTML pour le PDF et l'impression (fenêtre d'impression du
    navigateur), ou en fichier .docx pour Word et Google Docs (docx.js).
    Format du rapport : voir docx.js. Chargé par ces deux pages, avant
-   script.js, qui appelle Report.bindExport avec l'état du profil, et par les
+   script.js, qui appelle Report.bindExport avec l'état du budget, et par les
    pages Suivi et CashBack pour sauvegarder / imprimer l'activité d'un jour
    (Report.bindPopupExport, rapport court sans page de garde ni sommaire).
    ========================================================================== */
@@ -85,7 +85,7 @@
 
   /** Rapport → HTML (zone #printReport, seule visible à l'impression sur la page Sauvegarder).
       dataUrl : lien « Gestion budget » de la page de garde, qui porte les
-      données du profil pour l'import du PDF (pdflink.js). */
+      données du budget pour l'import du PDF (pdflink.js). */
   function renderReportHtml(report, box, { dataUrl } = {}) {
     const cells = (tag, values, align = []) => values.map((v, i) => h(tag, { class: align[i] === 'right' ? 'num' : null }, v));
     const block = (b) => {
@@ -128,7 +128,7 @@
         h('div', { class: 'report__cover-main' },
           h('p', { class: 'report__kicker' }, `Modèle ${cover.model}`),
           h('h1', {}, 'Rapport de compte'),
-          h('p', { class: 'report__sub' }, `Profil « ${cover.profile} »`))),
+          h('p', { class: 'report__sub' }, `Budget « ${cover.budget} »`))),
       // Sommaire
       h('nav', { class: 'report__toc', 'aria-label': 'Sommaire' },
         h('h2', {}, 'Sommaire'),
@@ -171,7 +171,7 @@
   }
 
   /** Sauvegarde le rapport au format choisi (pdf, print, word, gdocs) et
-      écrit le message dans status. data : données du profil embarquées
+      écrit le message dans status. data : données du budget embarquées
       (lien de la page de garde du PDF, partie invisible du .docx). */
   function saveReport(report, format, baseName, status, { data } = {}) {
     if (format === 'print' || format === 'pdf') {
@@ -251,7 +251,7 @@
       close));
   }
 
-  /** Relie le formulaire d'export. ctx : état du profil actif et calculs de
+  /** Relie le formulaire d'export. ctx : état du budget actif et calculs de
       script.js (totaux, économies, placement, CashBack, RoundUp, couleurs). */
   function bindExport({ state, totalRevenus, totalMonthly, computeSavings, computeYield, cashbackFraction, roundUpAmount, CAT_KEY }) {
     const annual = Calc.annual;
@@ -704,12 +704,12 @@
     function buildReport(modelKey) {
       const model = EXPORT_MODELS[modelKey] || EXPORT_MODELS.simple;
       const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date());
-      const profile = Profiles.active().nom;
+      const budget = Budgets.active().nom;
       return {
         title: `Gestion budget · modèle ${model.label}`,
-        subtitle: `Profil « ${profile} » · exporté le ${date}`,
+        subtitle: `Budget « ${budget} » · exporté le ${date}`,
         // Page de garde (PDF / impression uniquement, ignorée par docx.js).
-        cover: { model: model.label, profile },
+        cover: { model: model.label, budget },
         sections: model.sections.map((key) => ({ ...REPORT_SECTIONS[key](modelKey), summary: SECTION_SUMMARIES[key] }))
       };
     }
@@ -723,7 +723,7 @@
       const slot = $('#exportWizardSlot');
       if (!overlay || !slot) return;
       const STEPS = { '#exportStepFormat': 'format', '#exportStepModele': 'modele', '#exportStepDonnees': 'donnees' };
-      // Étapes présentes dans la page (la page Sauvegarder n'a plus « Données du profil »).
+      // Étapes présentes dans la page (la page Sauvegarder n'a plus « Données du budget »).
       const steps = Object.keys(STEPS).filter((sel) => $(sel, form));
       const home = $('#saveDocPanel') || form.parentNode;
       bindAddWizard({
@@ -766,22 +766,22 @@
 
     /** Page Sauvegarder, étape 1 : chaque choix affiche sa suite et masque
         l'autre. « Dans un document » : formulaire du rapport (pop-up guidée sur
-        mobile). « Votre profil » : la tuile Rapport + données, seule et déjà
+        mobile). « Votre budget » : la tuile Rapport + données, seule et déjà
         choisie, et le bouton qui télécharge le fichier .gbudget, qui ne sert
-        qu'à recharger le profil sur un autre appareil (page Profil → Importer). */
+        qu'à recharger le budget sur un autre appareil (page Paramètres → Importer). */
     function bindSaveChoice() {
       const docBtn = $('#saveDoc');
-      const profilBtn = $('#saveProfil');
-      if (!docBtn || !profilBtn) return;
+      const budgetBtn = $('#saveBudget');
+      if (!docBtn || !budgetBtn) return;
       const docPanel = $('#saveDocPanel');
-      const profilPanel = $('#saveProfilPanel');
+      const budgetPanel = $('#saveBudgetPanel');
       const status = $('#exportStatus');
       const show = (doc) => {
         status.textContent = '';
         docBtn.setAttribute('aria-pressed', String(doc));
-        profilBtn.setAttribute('aria-pressed', String(!doc));
+        budgetBtn.setAttribute('aria-pressed', String(!doc));
         docPanel.hidden = !doc;
-        profilPanel.hidden = doc;
+        budgetPanel.hidden = doc;
       };
 
       docBtn.addEventListener('click', () => {
@@ -790,15 +790,15 @@
         else $('input[name="format"]:checked', docPanel)?.focus();
       });
 
-      profilBtn.addEventListener('click', () => {
+      budgetBtn.addEventListener('click', () => {
         show(false);
-        $('#saveProfilName').textContent = `« ${Profiles.active().nom} »`;
-        $('#saveProfilOk').focus();
+        $('#saveBudgetName').textContent = `« ${Budgets.active().nom} »`;
+        $('#saveBudgetOk').focus();
       });
-      $('#saveProfilOk').addEventListener('click', () => {
-        const file = Profiles.profileFile(state);
+      $('#saveBudgetOk').addEventListener('click', () => {
+        const file = Budgets.budgetFile(state);
         downloadFile(file.text, file.mime, file.name);
-        status.textContent = `Fichier « ${file.name} » téléchargé. Sur l'autre appareil, ouvrez la page Profil puis « Importer un profil ».`;
+        status.textContent = `Fichier « ${file.name} » téléchargé. Sur l'autre appareil, ouvrez la page Paramètres puis « Importer un budget ».`;
       });
     }
 
@@ -816,8 +816,8 @@
         const modelKey = form.elements.modele.value;
         const report = buildReport(modelKey);
         // Les documents ne contiennent que le rapport (champ caché « non ») : les
-        // données du profil se sauvegardent à part, en fichier .gbudget.
-        const data = form.elements.donnees?.value === 'oui' ? Profiles.exportData(state) : null;
+        // données du budget se sauvegardent à part, en fichier .gbudget.
+        const data = form.elements.donnees?.value === 'oui' ? Budgets.exportData(state) : null;
         saveReport(report, format, `gestion-budget-${modelKey}-${new Date().toISOString().slice(0, 10)}`, status, { data });
       });
     }

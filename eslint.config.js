@@ -17,7 +17,7 @@ module.exports = [
         module: 'writable',
         require: 'readonly',
         Calc: 'readonly',
-        Profiles: 'readonly',
+        Budgets: 'readonly',
         UI: 'readonly',
         BudgetState: 'readonly',
         Prefs: 'readonly',

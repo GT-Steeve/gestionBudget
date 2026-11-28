@@ -1,12 +1,12 @@
 /* ==========================================================================
    Gestion budget — guide de démarrage
    - Page Guide : bienvenue, puis « Simuler un budget » (budget fictif chargé
-     dans le profil, à modifier pour apprendre) ou « Suivre le guide ».
-   - Premier usage : un profil sans aucune donnée (premier lancement, profil
+     dans le budget, à modifier pour apprendre) ou « Suivre le guide ».
+   - Premier usage : un budget sans aucune donnée (premier lancement, budget
      créé vide) est envoyé sur la page Guide, une seule fois.
    - Guide en cours : un encart en haut de chaque page indique l'étape
      (Revenus → Charges → Dépenses → Économie → Placement) et ouvre l'ajout.
-   L'avancement est gardé par profil (Profiles.setGuide). Inclus par la page
+   L'avancement est gardé par budget (Budgets.setGuide). Inclus par la page
    Guide et les pages du tableau de bord, avant script.js.
    ========================================================================== */
 'use strict';
@@ -29,11 +29,11 @@
   const inPages = location.pathname.includes('/pages/');
   /** Lien vers une page du site, depuis l'accueil ou depuis /pages/. */
   const url = (page) => (page === 'index.html' ? (inPages ? '../index.html' : 'index.html') : (inPages ? page : `pages/${page}`));
-  const profil = Profiles.active();
+  const budget = Budgets.active();
 
   /** Fin du guide (terminé ou budget simulé) : retour à la Synthèse, avec un message. */
   const finish = (message) => {
-    Profiles.setGuide(profil.id, 'fini');
+    Budgets.setGuide(budget.id, 'fini');
     Flash.set(message);
     location.href = url('index.html');
   };
@@ -43,55 +43,55 @@
   const simulate = document.getElementById('btnGuideSimulate');
   if (simulate) {
     const start = () => {
-      Profiles.setGuide(profil.id, STEPS[0].key);
+      Budgets.setGuide(budget.id, STEPS[0].key);
       location.href = url(STEPS[0].page);
     };
-    // Profil encore vide : le budget fictif y est enregistré, à modifier pour apprendre.
+    // Budget encore vide : le budget fictif y est enregistré, à modifier pour apprendre.
     const fill = () => {
-      try { localStorage.setItem(Profiles.dataKey(profil.id), JSON.stringify(BudgetState.exampleState())); } catch { /* stockage indisponible */ }
+      try { localStorage.setItem(Budgets.dataKey(budget.id), JSON.stringify(BudgetState.exampleState())); } catch { /* stockage indisponible */ }
       finish({
         title: 'Budget simulé',
-        text: 'Ce profil contient maintenant un budget fictif complet : modifiez ses valeurs pour apprendre, puis remplacez-les par les vôtres.',
+        text: 'Ce budget contient maintenant un budget fictif complet : modifiez ses valeurs pour apprendre, puis remplacez-les par les vôtres.',
         action: 'Découvrir la synthèse'
       });
     };
-    // Profil déjà rempli : rien n'est remplacé, on ouvre le profil d'exemple à
-    // part, comme « Visualiser » sur la page Profil (profil.js).
+    // Budget déjà rempli : rien n'est remplacé, on ouvre le budget d'exemple à
+    // part, comme « Visualiser » sur la page Paramètres (budget.js).
     const openExample = () => {
-      Profiles.openExample();
+      Budgets.openExample();
       location.href = url('index.html');
     };
-    simulate.addEventListener('click', () => (Profiles.hasData(profil.id) ? openExample() : fill()));
+    simulate.addEventListener('click', () => (Budgets.hasData(budget.id) ? openExample() : fill()));
     document.getElementById('btnGuideStart').addEventListener('click', start);
     return;
   }
 
   /* ---------- Premier usage : direction la page Guide ---------- */
 
-  // Un profil « pré-rempli » n'échappe au guide que tant qu'il n'a jamais été
+  // Un budget « pré-rempli » n'échappe au guide que tant qu'il n'a jamais été
   // ouvert (script.js y charge alors l'exemple) ; une fois vidé, il y a droit.
   const neverOpened = (() => {
-    try { return localStorage.getItem(Profiles.dataKey(profil.id)) === null; } catch { return false; }
+    try { return localStorage.getItem(Budgets.dataKey(budget.id)) === null; } catch { return false; }
   })();
-  if (!profil.exemple && !(profil.preRempli && neverOpened) && !profil.guide && !Profiles.hasData(profil.id)) {
+  if (!budget.exemple && !(budget.preRempli && neverOpened) && !budget.guide && !Budgets.hasData(budget.id)) {
     location.replace(url('guide.html'));
     return;
   }
 
   /* ---------- Guide en cours : encart de l'étape ---------- */
 
-  const index = STEPS.findIndex((s) => s.key === profil.guide);
+  const index = STEPS.findIndex((s) => s.key === budget.guide);
   const main = document.querySelector('main');
   if (index < 0 || !main) return;
   const step = STEPS[index];
   const last = index === STEPS.length - 1;
   const onPage = location.pathname.endsWith(`/${step.page}`);
   const goTo = (i) => {
-    Profiles.setGuide(profil.id, STEPS[i].key);
+    Budgets.setGuide(budget.id, STEPS[i].key);
     location.href = url(STEPS[i].page);
   };
   const quit = () => {
-    Profiles.setGuide(profil.id, 'fini');
+    Budgets.setGuide(budget.id, 'fini');
     box.remove();
   };
 

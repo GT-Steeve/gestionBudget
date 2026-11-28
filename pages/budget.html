@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <!-- Aucune fuite de données : le navigateur refuse toute connexion sortante
+       (connect-src 'none') et tout fichier externe ; seuls les fichiers du site
+       sont chargés. Vérifié par npm run build (scripts/check-build.mjs). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; manifest-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- La gestion des budgets est dans la page Paramètres : cette adresse
+       (liens des rapports PDF, anciens favoris) y renvoie. -->
+  <meta http-equiv="refresh" content="0; url=parametres.html#budget">
+  <meta name="robots" content="noindex">
+  <title>Budget · Gestion budget</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+</head>
+<body>
+  <p><a href="parametres.html#budget">Gérer vos budgets dans les Paramètres</a></p>
+</body>
+</html>

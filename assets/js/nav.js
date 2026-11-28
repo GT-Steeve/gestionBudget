@@ -1,6 +1,6 @@
 /* ==========================================================================
    Gestion budget — chrome partagé entre les pages (thème, taille, menu mobile)
-   Inclus par toutes les pages, après profiles.js et ui.js, avant script.js s'il est présent.
+   Inclus par toutes les pages, après budgets.js et ui.js, avant script.js s'il est présent.
    ========================================================================== */
 'use strict';
 
@@ -105,7 +105,7 @@
     const btn = $('#btnClearFooter');
     if (!btn || document.body.dataset.app === 'true') return;
     btn.addEventListener('click', () => {
-      const STORAGE_KEY = Profiles.dataKey();
+      const STORAGE_KEY = Budgets.dataKey();
       const saved = store.get(STORAGE_KEY) || {};
       const revenus = Array.isArray(saved.revenus) ? saved.revenus : [];
       const charges = Array.isArray(saved.charges) ? saved.charges : [];
@@ -131,9 +131,9 @@
         store.set(STORAGE_KEY, saved);
         // Budget entièrement vidé : le guide de démarrage repart de zéro (comme script.js).
         // Ces pages sont toutes dans /pages/ : la Synthèse est un niveau au-dessus.
-        const profil = Profiles.active();
-        if (profil.exemple) { location.href = '../index.html'; return; }
-        Profiles.setGuide(profil.id, null);
+        const budget = Budgets.active();
+        if (budget.exemple) { location.href = '../index.html'; return; }
+        Budgets.setGuide(budget.id, null);
         location.href = 'guide.html';
       });
     });
@@ -175,15 +175,15 @@
   }
 
   /* ---------- Bouton « Fermer l'exemple » ----------
-     Tant que le profil d'exemple est ouvert, un bouton fixé en bas de l'écran
-     permet d'en sortir : retour au profil d'avant, puis à la page Profil.
-     Revenir sur la page Profil ferme aussi l'exemple, sans bouton : fait ici,
-     avant profil.js, pour que la liste affichée ne contienne plus l'exemple. */
+     Tant que le budget d'exemple est ouvert, un bouton fixé en bas de l'écran
+     permet d'en sortir : retour au budget d'avant, puis à la page Paramètres.
+     Revenir sur la page Paramètres ferme aussi l'exemple, sans bouton : fait ici,
+     avant budget.js, pour que la liste affichée ne contienne plus l'exemple. */
 
   function initExampleClose() {
-    if (!Profiles.active().exemple) return;
-    if ($('#profilList')) {
-      Profiles.closeExample();
+    if (!Budgets.active().exemple) return;
+    if ($('#budgetList')) {
+      Budgets.closeExample();
       return;
     }
     const btn = document.createElement('button');
@@ -191,15 +191,73 @@
     btn.className = 'btn example-close';
     btn.textContent = 'Fermer l\'exemple';
     btn.addEventListener('click', () => {
-      Profiles.closeExample();
-      location.href = location.pathname.includes('/pages/') ? 'profil.html' : 'pages/profil.html';
+      Budgets.closeExample();
+      location.href = location.pathname.includes('/pages/') ? 'parametres.html#budget' : 'pages/parametres.html#budget';
     });
     document.body.append(btn);
     document.body.classList.add('has-example-close');
   }
 
+  /* ---------- Sélecteur de budget (budget actif) ----------
+     Remplace le titre « Gestion budget » : au centre de la barre du haut en
+     mobile, en haut de la barre latérale dépliée sur tablette et bureau (le
+     CSS gère la place), à gauche de la barre du haut en mobile. Le titre
+     reste dans le HTML pour les lecteurs d'écran. Changer de budget recharge
+     la page sur ses données ; « + Nouveau » ouvre la création d'un budget
+     sur la page Paramètres. */
+
+  function initWallet() {
+    const brand = $('.topbar .brand');
+    if (!brand) return;
+    const inPages = location.pathname.includes('/pages/');
+    const budgetUrl = `${inPages ? '' : 'pages/'}parametres.html#nouveau`;
+
+    const wallet = document.createElement('div');
+    wallet.className = 'wallet';
+    const label = document.createElement('label');
+    label.className = 'wallet__label';
+    label.htmlFor = 'walletSelect';
+    label.textContent = 'Budget';
+    const select = document.createElement('select');
+    select.id = 'walletSelect';
+    select.className = 'wallet__select';
+    const add = document.createElement('a');
+    add.className = 'btn btn--ghost btn--sm wallet__new';
+    add.href = budgetUrl;
+    // « Nouveau » est masqué sur les écrans étroits (CSS) : « + » seul.
+    const addText = document.createElement('span');
+    addText.className = 'wallet__new-text';
+    addText.textContent = 'Nouveau';
+    add.append('+', addText);
+    add.setAttribute('aria-label', 'Nouveau budget');
+    const row = document.createElement('div');
+    row.className = 'wallet__row';
+    row.append(select, add);
+    wallet.append(label, row);
+    brand.after(wallet);
+    document.body.classList.add('has-wallet');
+
+    const refresh = () => {
+      const activeId = Budgets.activeId();
+      select.replaceChildren(...Budgets.list().map((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nom;
+        opt.selected = p.id === activeId;
+        return opt;
+      }));
+      select.title = Budgets.active().nom;
+    };
+    select.addEventListener('change', () => {
+      if (!Budgets.setActive(select.value)) { refresh(); return; }
+      location.reload();
+    });
+    refresh();
+    window.Wallet = { refresh };
+  }
+
   /* ---------- Message après redirection ----------
-     Une page qui redirige (ex. Profil après une création ou un import)
+     Une page qui redirige (ex. Budget après une création ou un import)
      enregistre un message avec Flash.set ; la page d'arrivée l'affiche une
      seule fois dans une pop-up : { title, text?, action? (libellé du bouton) }. */
 
@@ -264,6 +322,7 @@
   initMenu();
   initClearFooter();
   initExampleClose();
+  initWallet();
   initNavScrollArrows();
   initFlash();
 })();

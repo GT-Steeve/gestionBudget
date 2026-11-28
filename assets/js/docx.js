@@ -5,8 +5,8 @@
    Rapport attendu : { title, subtitle, sections: [{ title, blocks }] }, où un
    bloc vaut { type: 'p' | 'h3', text }, { type: 'kv', rows: [[libellé, valeur]] }
    ou { type: 'table', head: [], rows: [[]], foot?: [], align?: ['left'|'right'] }.
-   Le fichier peut aussi embarquer les données du profil (partie JSON
-   invisible dans Word), relues par readData pour l'import (page Profil).
+   Le fichier peut aussi embarquer les données du budget (partie JSON
+   invisible dans Word), relues par readData pour l'import (page Paramètres).
    ========================================================================== */
 'use strict';
 
@@ -17,7 +17,7 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   const MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   const PAGE_WIDTH = 9638; // largeur utile d'une page A4 (marges de 2 cm), en twips
-  // Données du profil dans l'archive, reliées au paquet par une relation
+  // Données du budget dans l'archive, reliées au paquet par une relation
   // propre à l'application (Word ignore les relations qu'il ne connaît pas).
   const DATA_PART = 'gestion-budget/profil.json';
   const DATA_REL = 'https://gt-steeve.github.io/gestionBudget/relationships/profil';

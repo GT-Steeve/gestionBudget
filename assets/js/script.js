@@ -13,7 +13,7 @@
 (() => {
   /* ---------- Constantes ---------- */
 
-  const STORAGE_KEY = Profiles.dataKey(); // données du profil actif (voir profiles.js)
+  const STORAGE_KEY = Budgets.dataKey(); // données du budget actif (voir budgets.js)
   /** Exemples de libellés par catégorie : affichés comme placeholder du champ
       "Libellé" selon la catégorie choisie, pour guider la saisie. */
   const NOM_PLACEHOLDERS = {
@@ -130,19 +130,19 @@
   /* ---------- État ---------- */
 
   const saved = store.get(STORAGE_KEY);
-  const profil = Profiles.active();
-  // Profil d'exemple, ou profil créé « pré-rempli » jamais ouvert : budget fictif.
+  const budget = Budgets.active();
+  // Budget d'exemple, ou budget créé « pré-rempli » jamais ouvert : budget fictif.
   // Sinon un budget vide (premier usage : la page Guide propose de le remplir).
-  const state = !saved && (profil.exemple || profil.preRempli) ? BudgetState.exampleState() : BudgetState.load(saved);
+  const state = !saved && (budget.exemple || budget.preRempli) ? BudgetState.exampleState() : BudgetState.load(saved);
   const save = () => store.set(STORAGE_KEY, state);
   // Nouveau mois : les dépenses du mois précédent passent dans l'historique.
   if (BudgetState.archiveMonth(state)) save();
-  // Autre onglet qui modifie ce profil ou change de profil actif : on recharge,
+  // Autre onglet qui modifie ce budget ou change de budget actif : on recharge,
   // sinon la prochaine saisie ici écraserait ses changements. Une écriture
   // identique à l'état affiché est ignorée (pas de rechargements en boucle).
   window.addEventListener('storage', (e) => {
     if (e.key === null || (e.key === STORAGE_KEY && e.newValue !== JSON.stringify(state))
-      || STORAGE_KEY !== Profiles.dataKey()) location.reload();
+      || STORAGE_KEY !== Budgets.dataKey()) location.reload();
   });
 
   /* ---------- Calculs (les fonctions pures vivent dans calc.js, testées à part) ---------- */
@@ -603,8 +603,8 @@
         refresh();
         // Budget entièrement vidé : on repart de zéro, guide de démarrage compris
         // (sinon un guide déjà « fini » ne se redéclenche jamais).
-        if (!profil.exemple) {
-          Profiles.setGuide(profil.id, null);
+        if (!budget.exemple) {
+          Budgets.setGuide(budget.id, null);
           location.href = location.pathname.includes('/pages/') ? 'guide.html' : 'pages/guide.html';
         }
       });
@@ -1690,7 +1690,7 @@
     const { date, list, nom, total } = avDayView;
     return {
       title: `${nom} du jour`,
-      subtitle: `${capitalize(AV_DAY_FMT.format(date))} · Profil « ${Profiles.active().nom} »`,
+      subtitle: `${capitalize(AV_DAY_FMT.format(date))} · Budget « ${Budgets.active().nom} »`,
       sections: [{
         title: '',
         // Taux entre parenthèses dans l'en-tête de la colonne CashBack : « CashBack (1 %) ».

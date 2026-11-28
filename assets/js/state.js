@@ -29,7 +29,7 @@
   /** Taux saisi : valeur absente → défaut ; sinon entre 0 et MAX_RATE. */
   const readRate = (v, fallback) => (v === undefined || v === null || v === '' ? fallback : clamp(num(v), 0, MAX_RATE));
 
-  /** Budget fictif complet (profil d'exemple ou profil pré-rempli), daté par rapport à now. */
+  /** Budget fictif complet (budget d'exemple ou budget pré-rempli), daté par rapport à now. */
   function exampleState(now = new Date()) {
     const loyer = { id: uid(), categorie: 'Loyer', nom: 'Loyer', mensuel: 1200 };
     const elec = { id: uid(), categorie: 'Factures', nom: 'Électricité', mensuel: 120 };
@@ -187,7 +187,7 @@
     return { lieux: masques(o.lieux, 60), motifs: masques(o.motifs, 80) };
   };
 
-  /** Budget vide (nouveau profil, première utilisation). */
+  /** Budget vide (nouveau budget, première utilisation). */
   const emptyState = (now = new Date()) => ({
     revenus: [], charges: [], depenses: [], depensesHistorique: [], produits: [], habitudes: [],
     suggestionsMasquees: { lieux: [], motifs: [] }, depensesMoisCourant: monthKey(now),

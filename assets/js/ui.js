@@ -2,7 +2,7 @@
    Gestion budget — outils d'interface partagés : formats d'affichage,
    création d'éléments DOM, pop-ups (confirmation, information, choix en
    boutons, ajout guidé) et tracés SVG des graphiques. Exposés via window.UI.
-   Inclus par toutes les pages, après profiles.js et avant nav.js.
+   Inclus par toutes les pages, après budgets.js et avant nav.js.
    ========================================================================== */
 'use strict';
 

@@ -24,7 +24,7 @@
 
 (() => {
   const { $, h, eur2, capitalize, openModal, confirmDialog, itemDetails } = UI;
-  const STORAGE_KEY = Profiles.dataKey();
+  const STORAGE_KEY = Budgets.dataKey();
   // Types décochés (et non cochés) : un type ajouté plus tard au filtre s'affiche par défaut.
   const FILTER_KEY = 'gestion-budget-suivi-masques';
 
@@ -47,13 +47,13 @@
   /* ---------- Données ---------- */
 
   const saved = store.get(STORAGE_KEY);
-  const profil = Profiles.active();
-  // Même règle que script.js : profil d'exemple ou pré-rempli jamais ouvert → budget fictif.
-  const state = !saved && (profil.exemple || profil.preRempli) ? BudgetState.exampleState() : BudgetState.load(saved);
+  const budget = Budgets.active();
+  // Même règle que script.js : budget d'exemple ou pré-rempli jamais ouvert → budget fictif.
+  const state = !saved && (budget.exemple || budget.preRempli) ? BudgetState.exampleState() : BudgetState.load(saved);
 
-  // Un autre onglet modifie ce profil ou change de profil : on recharge.
+  // Un autre onglet modifie ce budget ou change de budget : on recharge.
   window.addEventListener('storage', (e) => {
-    if (e.key === null || e.key === STORAGE_KEY || STORAGE_KEY !== Profiles.dataKey()) location.reload();
+    if (e.key === null || e.key === STORAGE_KEY || STORAGE_KEY !== Budgets.dataKey()) location.reload();
   });
 
   const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -354,7 +354,7 @@
     const sign = (v) => (v > 0.004 ? '+' : v < -0.004 ? '−' : '');
     return {
       title: 'Activité du jour',
-      subtitle: `${capitalize(fmtDay.format(date))} · Profil « ${profil.nom} »`,
+      subtitle: `${capitalize(fmtDay.format(date))} · Budget « ${budget.nom} »`,
       sections: [{
         title: '',
         blocks: [
