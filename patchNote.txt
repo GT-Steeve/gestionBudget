@@ -76,9 +76,9 @@ v1.25.0 = sauvegarder / imprimer suivi activité + afficher les répartition en 
 v1.25.1 = review code
 v1.25.2 = voir l'animation au complet durant l'attente
 v1.25.3 = polish UI imprimer.html et exporter.html
+v1.25.4 = adapter la page sauverger au format mobile 
 
 ** Next idea **
-revoir l'impression -> l'user peut indiquer la période et élements désiré
 réfléchir un don soutien où placement pub
 slogan : Tract tes finances / dépenses pour mieux gerer ton budget
 

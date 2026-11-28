@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.25.3 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.25.4 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -84,9 +84,11 @@ placement, exemples de produits financiers et synthèse visuelle,
     **Standard** (+ revenus, charges, placement), **Complet** (+ historique
     des dépenses, économie, cashback, RoundUp) et **Personnalisé**, où un
     interrupteur par élément choisit le contenu (synthèse et historique des
-    dépenses par défaut) ; activer l'historique ouvre le choix des mois
-    archivés, en cartes, avec une carte « Toutes ». Le document ne contient
-    que le rapport.
+    dépenses par défaut) ; activer l'historique ouvre le choix de la période
+    (« De [mois] À [mois] » parmi les mois archivés). Sur mobile, un
+    assistant en deux étapes (format, puis modèle) : son titre suit le format
+    (« Sauvegarder dans un PDF »…) et les modèles défilent en carrousel, avec
+    des flèches. Le document ne contient que le rapport.
   - **Votre profil** : après confirmation, toutes les données du profil sont
     enregistrées dans un fichier **`.gbudget`**, propre à l'application et
     réservé au transfert vers un autre appareil (import depuis la page Profil).
