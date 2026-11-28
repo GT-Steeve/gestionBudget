@@ -1,3 +1,10 @@
+# [1.57.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.56.0...v1.57.0) (2026-11-28)
+
+
+### Features
+
+* **ressources:** « revenu » devient « ressource », catégorie Budget et camembert trié ([55c877f](https://github.com/GT-Steeve/gestionBudget/commit/55c877fdf20ba2f792cb821e914c06c2763f642d))
+
 # [1.56.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.4...v1.56.0) (2026-11-28)
 
 
