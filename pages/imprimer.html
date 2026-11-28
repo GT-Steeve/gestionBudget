@@ -27,9 +27,9 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="icon" type="image/png" sizes="64x64" href="../assets/img/favicon.png">
   <link rel="apple-touch-icon" href="../assets/img/favicon.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.254">
-  <script src="../assets/js/coin-story.js?v=1.01.254"></script>
-  <script src="../assets/js/loader.js?v=1.01.254"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.01.268">
+  <script src="../assets/js/coin-story.js?v=1.01.268"></script>
+  <script src="../assets/js/loader.js?v=1.01.268"></script>
 </head>
 <body data-app="true">
 
@@ -140,19 +140,37 @@
   <p>Vos données sont enregistrées uniquement dans votre navigateur. <button type="button" id="btnClearFooter" class="link-btn">Pour tout effacer, cliquez ici.</button></p>
 </footer>
 
-<!-- Tuile Personnalisé : appui sur « Historique des dépenses » → mois archivés
-     (ceux qui ont des dépenses) en cartes à choisir, plus une carte Toutes
-     (report.js). Aucun mois choisi : l'historique n'est pas inclus. -->
+<!-- Tuile Personnalisé : activer « Historique des dépenses » ouvre le choix
+     de la période, de tel mois à tel mois, parmi les mois archivés qui ont
+     des dépenses (report.js). Toute la période par défaut. -->
 <div id="histOverlay" class="modal-overlay" hidden>
-  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
     <p id="histTitle" class="modal__title modal__title--center">Historique des dépenses</p>
-    <p class="note hist-intro">Choisissez les mois à inclure dans le rapport.</p>
-    <div id="histCards" class="hist-cards" role="group" aria-label="Mois archivés"></div>
-    <p id="histError" class="note import-status is-error" role="alert"></p>
+    <p class="note hist-intro">Choisissez la période à inclure dans le rapport.</p>
+    <div class="hist-range">
+      <span class="hist-range__label">De</span>
+      <button type="button" id="histFrom" class="select-btn hist-range__btn" aria-label="Premier mois"></button>
+      <span class="hist-range__label">À</span>
+      <button type="button" id="histTo" class="select-btn hist-range__btn" aria-label="Dernier mois"></button>
+    </div>
+    <p id="histSummary" class="note hist-summary" aria-live="polite"></p>
     <div class="modal__actions modal__actions--center">
       <button type="button" id="histCancel" class="btn btn--ghost">Annuler</button>
       <button type="button" id="histOk" class="btn">Valider</button>
     </div>
+  </div>
+</div>
+
+<!-- Sélecteur maison (ui.js, openPicker) : choix du premier / dernier mois de l'historique. -->
+<div id="catPickerOverlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="catPickerTitle">
+    <div class="wizard__head">
+      <p id="catPickerTitle" class="modal__title">Choisir la catégorie</p>
+      <button type="button" id="catPickerClose" class="icon-btn wizard__close" aria-label="Fermer la fenêtre">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="catPickerList" class="cat-picker"></div>
   </div>
 </div>
 
@@ -167,15 +185,15 @@
   </div>
 </div>
 
-<script src="../assets/js/profiles.js?v=1.01.254"></script>
-<script src="../assets/js/ui.js?v=1.01.254"></script>
-<script src="../assets/js/nav.js?v=1.01.254"></script>
-<script src="../assets/js/calc.js?v=1.01.254"></script>
-<script src="../assets/js/state.js?v=1.01.254"></script>
-<script src="../assets/js/guide.js?v=1.01.254"></script>
-<script src="../assets/js/docx.js?v=1.01.254"></script>
-<script src="../assets/js/pdflink.js?v=1.01.254"></script>
-<script src="../assets/js/report.js?v=1.01.254"></script>
-<script src="../assets/js/script.js?v=1.01.254"></script>
+<script src="../assets/js/profiles.js?v=1.01.268"></script>
+<script src="../assets/js/ui.js?v=1.01.268"></script>
+<script src="../assets/js/nav.js?v=1.01.268"></script>
+<script src="../assets/js/calc.js?v=1.01.268"></script>
+<script src="../assets/js/state.js?v=1.01.268"></script>
+<script src="../assets/js/guide.js?v=1.01.268"></script>
+<script src="../assets/js/docx.js?v=1.01.268"></script>
+<script src="../assets/js/pdflink.js?v=1.01.268"></script>
+<script src="../assets/js/report.js?v=1.01.268"></script>
+<script src="../assets/js/script.js?v=1.01.268"></script>
 </body>
 </html>

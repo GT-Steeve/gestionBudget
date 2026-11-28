@@ -914,18 +914,13 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 .choice__check--box .switch input:checked + .switch__track .switch__thumb { transform: translateX(10px); }
 /* Nombre de mois choisis à côté de « Historique des dépenses ». */
 .choice__check-count { color: var(--muted); white-space: nowrap; }
-/* Pop-up des mois de l'historique : cartes à choisir (plusieurs à la fois). */
+/* Pop-up de l'historique : « De [mois] à [mois] », puis le résumé de la période. */
 .hist-intro { margin: -6px 0 14px; text-align: center; }
-/* Cartes compactes : plusieurs par ligne, petit texte. */
-.hist-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 50vh; overflow-y: auto; padding: 2px; }
-/* .hist-cards devant : passe avant le padding de .choice, défini plus bas. */
-.hist-cards .hist-card { align-items: flex-start; gap: 0; padding: 6px 10px; border-radius: 9px; min-width: 0; }
-.hist-cards .hist-card > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hist-cards .choice__label { font-size: 13px; }
-.hist-cards .choice__sub { font-size: 11px; }
-.hist-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-.hist-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#histError:empty { display: none; }
+/* Deux lignes alignées : « De [mois] » puis « À [mois] », boutons de même largeur. */
+.hist-range { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 10px; max-width: 280px; margin: 0 auto; }
+.hist-range__label { font-size: 14px; color: var(--ink-2); text-align: right; }
+.hist-range__btn { width: 100%; }
+.hist-summary { margin: 12px 0 0; text-align: center; }
 #histOverlay .modal__actions { margin-top: 18px; }
 .choice__error:not(:empty) { display: block; margin-top: 6px; font-size: 12px; color: var(--bad); }
 .save-choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -934,13 +929,36 @@ button.choice { display: flex; flex-direction: column; align-items: flex-start; 
 /* Dans la pop-up : un choix par étape, sans le bouton Exporter de la page
    (remplacé par celui de la dernière étape). */
 #exportWizardSlot .export-step { margin-top: 20px; }
-#exportWizardSlot .export-step .h3 { margin-top: 0; }
+#exportWizardSlot .export-step .h3 { margin-top: 0; text-align: center; } /* titres d'étape centrés */
+#exportWizardOverlay .modal__actions { justify-content: center; }
 #exportWizardSlot .export-actions { display: none; }
 /* Étape « Modèle » plus haute que l'écran (listes des tuiles) : la pop-up
    garde la hauteur de l'écran et seul son contenu défile ; titre, étape et
    boutons Retour / Sauvegarder restent visibles. */
 #exportWizardOverlay .modal--wizard { display: flex; flex-direction: column; max-height: calc(100dvh / var(--zoom, 1) - 40px); }
-#exportWizardSlot { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin-right: -12px; padding-right: 12px; }
+#exportWizardSlot { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; margin-right: -12px; padding-right: 12px; }
+/* Assistant mobile, étape « Choisir le modèle » : tuiles en carrousel
+   horizontal, une à la fois, qui s'arrêtent au centre ; la tuile centrée
+   devient le modèle (report.js). Même hauteur pour toutes (la plus haute).
+   Les flèches occupent les marges de 26px de chaque côté, sans recouvrir
+   la tuile. Hors assistant, le cadre n'a aucun effet et elles sont masquées. */
+.carousel { position: relative; }
+#exportWizardSlot .carousel { padding: 0 26px; margin-top: 12px; }
+#exportWizardSlot [data-model-checks] {
+  display: flex; align-items: stretch; gap: 12px; margin-top: 0;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
+  padding: 2px;
+}
+#exportWizardSlot [data-model-checks]::-webkit-scrollbar { display: none; }
+#exportWizardSlot [data-model-checks] > .choice { flex: 0 0 100%; scroll-snap-align: center; }
+.carousel-arrow { display: none; }
+#exportWizardSlot .carousel-arrow {
+  display: grid; position: absolute; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 40px; border-radius: 6px;
+  background: none; border: 0; /* chevron seul, sans cercle : zone d'appui étroite et haute */
+}
+#exportWizardSlot .carousel-arrow--prev { left: 0; }
+#exportWizardSlot .carousel-arrow--next { right: 0; }
 
 /* Rapport généré par la page Sauvegarder : invisible à l'écran, seul contenu
    imprimé (voir @media print). Couleurs fixes, lisibles sur papier quel que

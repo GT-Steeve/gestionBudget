@@ -11,7 +11,7 @@
 
 (() => {
   const { $, h, s, MOBILE_QUERY, eur2, eur0, eurCompact, pct1, fmtRate, capitalize, monthLabel,
-    currentMonthWithPreposition, openModal, closeModal, bindAddWizard, niceScale, arcPath, ringPath } = UI;
+    currentMonthWithPreposition, openModal, closeModal, bindAddWizard, niceScale, arcPath, ringPath, openPicker, pickerOpt } = UI;
   const { CATEGORIES, REV_CATEGORIES, DEP_CATEGORIES } = BudgetState;
 
   /** Tableau du rapport, ou une phrase si la liste est vide (extra.empty : autre phrase). */
@@ -336,7 +336,7 @@
     };
 
     /** Mois archivés du rapport : tous, sauf pour Personnalisé quand des
-        mois précis ont été choisis dans la pop-up de l'historique. */
+        mois précis ont été choisis dans la pop-up de l'historique (période). */
     let customHistMonths = null;
     const histMonthsFor = (modelKey) => (modelKey === 'personnalise' && customHistMonths
       ? state.depensesHistorique.filter((m) => customHistMonths.includes(m.mois))
@@ -539,7 +539,6 @@
       const histBox = boxes[histIndex];
       const histCount = h('span', { class: 'choice__check-count' });
       const histUi = bindHistMonths({
-        othersOn: () => boxes.some((b, i) => i !== histIndex && b.checked),
         apply: (on) => {
           histBox.checked = on;
           sync();
@@ -574,57 +573,132 @@
       tile.addEventListener('click', (e) => { if (e.target === tile) radio.checked = true; });
     }
 
-    /** Pop-up des mois de l'historique (#histOverlay, pages Sauvegarder et Imprimer) : une
-        carte par mois archivé qui a des dépenses (du plus récent au plus
-        ancien), précédée d'une carte Toutes ; ouverte quand on active
-        l'historique. Valider : historique inclus avec les mois choisis
-        (customHistMonths, null si tous), ou laissé désactivé si aucun
-        (refusé s'il ne resterait alors aucun élément). Renvoie { open }, ou
-        null sans pop-up dans la page ou sans mois à choisir. */
-    function bindHistMonths({ othersOn, apply }) {
+    /** Pop-up de l'historique (#histOverlay, pages Sauvegarder et Imprimer) :
+        la période à inclure, « De [mois] à [mois] », parmi les mois archivés
+        qui ont des dépenses ; chaque bouton ouvre le sélecteur maison
+        (openPicker), et un mois de début après la fin (ou l'inverse) déplace
+        l'autre borne. Ouverte quand on active l'historique, sur la dernière
+        période choisie (toute la période par défaut). Valider : historique
+        inclus avec ces mois (customHistMonths, null si tous). Renvoie
+        { open }, ou null sans pop-up dans la page ou sans mois à choisir. */
+    function bindHistMonths({ apply }) {
       const overlay = $('#histOverlay');
-      const months = state.depensesHistorique.filter((m) => m.items.length);
+      // Du plus ancien au plus récent (« AAAA-MM » se trie comme du texte).
+      const months = state.depensesHistorique.filter((m) => m.items.length)
+        .sort((a, b) => a.mois.localeCompare(b.mois));
       if (!overlay || !months.length) return null;
-      const cards = $('#histCards');
-      const error = $('#histError');
-      let picked = new Set();
-      const card = (label, sub, extra) => h('button', { type: 'button', class: 'choice hist-card', 'aria-pressed': 'false', ...extra },
-        h('span', { class: 'choice__label' }, label), h('span', { class: 'choice__sub' }, sub));
-      const all = card('Toutes', `${months.length} mois`, {
-        onclick: () => {
-          picked = picked.size === months.length ? new Set() : new Set(months.map((m) => m.mois));
-          render();
-        }
-      });
-      const monthCards = months.map((m) => card(capitalize(monthLabel(m.mois)),
-        `${m.items.length} dépense${m.items.length > 1 ? 's' : ''} · ${eur2.format(m.total)}`, {
-          onclick: () => {
-            if (picked.has(m.mois)) picked.delete(m.mois); else picked.add(m.mois);
-            render();
-          }
-        }));
+      const fromBtn = $('#histFrom');
+      const toBtn = $('#histTo');
+      const summary = $('#histSummary');
+      const label = (i) => capitalize(monthLabel(months[i].mois));
+      let from = 0;
+      let to = months.length - 1;
       const render = () => {
-        error.textContent = '';
-        all.setAttribute('aria-pressed', String(picked.size === months.length));
-        monthCards.forEach((c, i) => c.setAttribute('aria-pressed', String(picked.has(months[i].mois))));
+        fromBtn.textContent = label(from);
+        toBtn.textContent = label(to);
+        const chosen = months.slice(from, to + 1);
+        const n = chosen.reduce((t, m) => t + m.items.length, 0);
+        summary.textContent = `${chosen.length} mois · ${n} dépense${n > 1 ? 's' : ''} · ${eur2.format(chosen.reduce((t, m) => t + m.total, 0))}`;
       };
-      cards.replaceChildren(all, ...monthCards);
+      const pick = (which) => {
+        const current = which === 'from' ? from : to;
+        openPicker(which === 'from' ? 'Choisir le premier mois' : 'Choisir le dernier mois', (list, close) => {
+          const buttons = months.map((m, i) => pickerOpt(label(i), i === current, () => {
+            close();
+            if (which === 'from') { from = i; to = Math.max(to, i); } else { to = i; from = Math.min(from, i); }
+            render();
+            (which === 'from' ? fromBtn : toBtn).focus();
+          }));
+          list.style.gridTemplateColumns = '';
+          list.replaceChildren(...buttons);
+          return buttons[current];
+        });
+      };
+      fromBtn.addEventListener('click', () => pick('from'));
+      toBtn.addEventListener('click', () => pick('to'));
       let close = null;
       $('#histCancel').addEventListener('click', () => close?.());
       $('#histOk').addEventListener('click', () => {
-        if (!picked.size && !othersOn()) { error.textContent = 'Choisissez au moins un mois, ou gardez un autre élément.'; return; }
-        customHistMonths = picked.size && picked.size < months.length ? months.map((m) => m.mois).filter((mois) => picked.has(mois)) : null;
-        apply(picked.size > 0);
+        const all = from === 0 && to === months.length - 1;
+        customHistMonths = all ? null : months.slice(from, to + 1).map((m) => m.mois);
+        apply(true);
         close?.();
       });
       return {
         open() {
-          // Ouverte à l'activation : le dernier choix de mois, sinon Toutes.
-          picked = new Set(customHistMonths || months.map((m) => m.mois));
+          // Dernière période choisie, sinon toute la période.
+          const idx = (customHistMonths || []).map((mois) => months.findIndex((m) => m.mois === mois)).filter((i) => i >= 0);
+          from = idx.length ? Math.min(...idx) : 0;
+          to = idx.length ? Math.max(...idx) : months.length - 1;
           render();
-          close = openModal(overlay, { focus: all, onClose: () => { close = null; } });
+          close = openModal(overlay, { focus: fromBtn, onClose: () => { close = null; } });
         }
       };
+    }
+
+    /** Page Sauvegarder sur mobile (assistant, #exportWizardSlot) : les
+        tuiles de modèle en carrousel horizontal (style.css), une à la fois,
+        entre deux flèches précédent / suivant placées dans les marges. La
+        tuile centrée après un glissement devient le modèle choisi ; un appui
+        sur une tuile la centre. Hors carrousel (bureau), rien ne change. */
+    function bindModelCarousel() {
+      const group = $('#exportStepModele [data-model-checks]');
+      if (!group) return;
+      const tiles = [...group.children].filter((t) => t.classList.contains('choice'));
+      const radios = tiles.map((t) => $('input[type="radio"]', t));
+      const isCarousel = () => getComputedStyle(group).overflowX === 'auto' && group.clientWidth > 0;
+      const left = (i) => tiles[i].offsetLeft - (group.clientWidth - tiles[i].offsetWidth) / 2;
+      const show = (i, smooth = true) => group.scrollTo({ left: left(i), behavior: smooth ? 'smooth' : 'instant' });
+      const checkedIndex = () => Math.max(0, radios.findIndex((r) => r.checked));
+      // Flèches précédent / suivant, masquées (visibility) au bout du carrousel.
+      const CHEVRON = { prev: 'M10 3 5 8l5 5', next: 'M6 3l5 5-5 5' };
+      const arrow = (dir, label) => {
+        const b = h('button', {
+          type: 'button', class: `icon-btn icon-btn--view carousel-arrow carousel-arrow--${dir}`, 'aria-label': label,
+          onclick: () => go(checkedIndex() + (dir === 'next' ? 1 : -1))
+        });
+        b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="${CHEVRON[dir]}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        return b;
+      };
+      const prev = arrow('prev', 'Modèle précédent');
+      const next = arrow('next', 'Modèle suivant');
+      const sync = () => {
+        const cur = checkedIndex();
+        prev.style.visibility = cur > 0 ? '' : 'hidden';
+        next.style.visibility = cur < tiles.length - 1 ? '' : 'hidden';
+      };
+      const go = (i) => {
+        if (i < 0 || i >= tiles.length) return;
+        radios[i].checked = true;
+        sync();
+        show(i);
+      };
+      // Cadre : flèches dans les marges, de part et d'autre du carrousel (style.css).
+      const frame = h('div', { class: 'carousel' });
+      group.before(frame);
+      frame.append(prev, group, next);
+      // Tuile la plus proche du centre une fois le glissement fini : elle devient le modèle.
+      let timer;
+      group.addEventListener('scroll', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (!isCarousel()) return;
+          const mid = group.scrollLeft + group.clientWidth / 2;
+          const i = tiles.reduce((best, t, k) => (Math.abs(t.offsetLeft + t.offsetWidth / 2 - mid)
+            < Math.abs(tiles[best].offsetLeft + tiles[best].offsetWidth / 2 - mid) ? k : best), 0);
+          if (!radios[i].checked) { radios[i].checked = true; radios[i].dispatchEvent(new Event('change', { bubbles: true })); }
+          sync();
+        }, 120);
+      }, { passive: true });
+      // Appui sur une tuile (ou un interrupteur de Personnalisé) : elle se centre.
+      group.addEventListener('change', (e) => {
+        sync();
+        const i = radios.indexOf(e.target);
+        if (i >= 0 && isCarousel()) show(i);
+      });
+      // Étape affichée (largeur qui passe de 0 à la taille de l'écran) : sur le modèle choisi.
+      new ResizeObserver(() => { if (isCarousel()) show(checkedIndex(), false); }).observe(group);
+      sync();
     }
 
     function buildReport(modelKey) {
@@ -665,6 +739,15 @@
         stepsRoot: form,
         fields: steps.map((sel) => `input[name="${STEPS[sel]}"]:checked`)
       });
+      // Titre selon le format choisi (« Sauvegarder dans un PDF »…), mis à
+      // jour dès qu'il change ; « … un document » sans format connu.
+      const title = $('#exportWizardTitle');
+      const FORMAT_TITLES = { pdf: 'un PDF', word: 'un Word', gdocs: 'un Google Docs' };
+      const syncTitle = () => {
+        title.textContent = `Sauvegarder dans ${FORMAT_TITLES[form.elements.format?.value] || 'un document'}`;
+      };
+      form.addEventListener('change', (e) => { if (e.target.name === 'format') syncTitle(); });
+      syncTitle();
       // Nouvelle pop-up : le message du dernier export est effacé.
       $('#btnOpenExportWizard').addEventListener('click', () => { status.textContent = ''; });
       const place = () => {
@@ -741,6 +824,7 @@
 
     bindExportForm();
     renderModelChecks();
+    bindModelCarousel();
     bindSaveChoice();
   }
 
