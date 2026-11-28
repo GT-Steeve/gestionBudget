@@ -1,3 +1,10 @@
+# [1.56.0](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.4...v1.56.0) (2026-11-28)
+
+
+### Features
+
+* **budget:** les profils deviennent des budgets, gérés dans Paramètres ([adc9da1](https://github.com/GT-Steeve/gestionBudget/commit/adc9da1bd92d9923df076915a36738aa68ab6d6f))
+
 ## [1.55.4](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.3...v1.55.4) (2026-11-28)
 
 
