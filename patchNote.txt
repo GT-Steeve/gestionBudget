@@ -78,10 +78,14 @@ v1.25.2 = voir l'animation au complet durant l'attente
 v1.25.3 = polish UI imprimer.html et exporter.html
 v1.25.4 = adapter la page sauverger au format mobile 
 v1.26.0 = rework profil devenu budget
+v1.26.1 = swap revenu par ressource
+v1.26.2 = polish UI mobile synthèse + accueil
+v1.26.3 = review code sur modification nommination de fichier
 
 ** Next idea **
 réfléchir un don soutien où placement pub
 slogan : Tract tes finances / dépenses pour mieux gerer ton budget
+revoir placement et annexe
  fais une revieuw du projet pour qu'aucun bug soit provoqué par le remplace profil par budget
 
 ** A VERIFIER **
