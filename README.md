@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.25.4 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.26.0 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -89,37 +89,41 @@ placement, exemples de produits financiers et synthèse visuelle,
     assistant en deux étapes (format, puis modèle) : son titre suit le format
     (« Sauvegarder dans un PDF »…) et les modèles défilent en carrousel, avec
     des flèches. Le document ne contient que le rapport.
-  - **Votre profil** : après confirmation, toutes les données du profil sont
+  - **Votre budget** : après confirmation, toutes les données du budget sont
     enregistrées dans un fichier **`.gbudget`**, propre à l'application et
-    réservé au transfert vers un autre appareil (import depuis la page Profil).
+    réservé au transfert vers un autre appareil (import depuis la page Paramètres).
 - **Imprimer** (bureau) — page dédiée avec les mêmes modèles, qui imprime
   directement le rapport. Les boutons « Exporter » (PDF) et « Imprimer » restent
   aussi disponibles sous la synthèse.
-- **Profils** — plusieurs budgets indépendants sur le même appareil (le vôtre,
+- **Budgets** — plusieurs budgets indépendants sur le même appareil (le vôtre,
   celui d'un proche…) : chacun garde ses propres revenus, charges, dépenses et
-  placements, sans rien mélanger. Chaque profil de la liste affiche ses
+  placements, sans rien mélanger. Chaque budget de la liste affiche ses
   revenus, charges, dépenses du mois et son solde, avec un bouton œil pour
-  masquer ses montants. Création d'un profil vide ou pré-rempli (point de
+  masquer ses montants. Création d'un budget vide ou pré-rempli (point de
   départ choisi dans une pop-up), changement, renommage et suppression depuis
-  la page Profil. **Import** d'un profil à partir du fichier `.gbudget` de la page
+  la page Paramètres. **Import** d'un budget à partir du fichier `.gbudget` de la page
   Sauvegarder (glisser-déposer sur bureau) ; les `.docx` / PDF « Rapport +
   données » des versions précédentes restent acceptés. Tout autre fichier est
   refusé (rapport sans données, autre application, sauvegarde modifiée), et un
   nom déjà pris doit être changé. Après une création ou un import, l'application ouvre
   la page où continuer et y confirme l'action dans une pop-up.
-- **Guide** — au premier lancement, ou à l'ouverture d'un profil créé vide,
+- **Guide** — au premier lancement, ou à l'ouverture d'un budget créé vide,
   l'application démarre vide et ouvre la page Guide : présentation des étapes
   (revenus, charges, dépenses, économies, placement), puis deux choix.
-  **Simuler un budget** charge un budget fictif dans le profil, à modifier pour
+  **Simuler un budget** y charge un budget fictif, à modifier pour
   apprendre sur le tas ; **Suivre le guide** accompagne pas à pas, avec en haut
   de chaque page l'étape en cours (Revenus → Charges → Dépenses → Économie →
-  Placement) et un bouton qui ouvre l'ajout. L'avancement est gardé par profil ;
+  Placement) et un bouton qui ouvre l'ajout. L'avancement est gardé par budget ;
   la page reste accessible depuis le menu.
-- **Profil d'exemple** — un budget fictif complet (dépenses du mois et des
+- **Budget d'exemple** — un budget fictif complet (dépenses du mois et des
   deux mois précédents, comparaisons, placement) pour découvrir chaque page.
   Il s'ouvre à part et le bouton « Fermer l'exemple » le supprime en ramenant
-  au profil d'avant : vos données ne sont jamais touchées.
-- **Paramètres** — taille d'affichage petite (100 %), normale (115 %, par
+  au budget d'avant : vos données ne sont jamais touchées.
+- **Sélecteur de budget** — en haut du menu (au centre de la barre sur
+  mobile, en haut du menu latéral déplié sur tablette et bureau) : liste des
+  budgets pour passer de l'un à l'autre, et bouton « + Nouveau » qui ouvre la
+  création d'un budget.
+- **Paramètres** — gestion des budgets (voir ci-dessus), taille d'affichage petite (100 %), normale (115 %, par
   défaut) ou agrandie (130 %), comme le zoom du navigateur, et thème clair ou sombre (automatique selon le système
   tant qu'aucun choix n'est fait).
 - **Écran de chargement** — si une page met plus d'un quart de seconde à
@@ -142,7 +146,8 @@ placement, exemples de produits financiers et synthèse visuelle,
     fonctionnalités et n'est utilisée nulle part pour l'instant.
 - **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
   qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
-  onglets sous le titre, avec Profil et Paramètres en icônes.
+  Accueil (maison) en icône à gauche, sélecteur de budget au centre,
+  Paramètres en icône à droite et onglets en dessous (Guide en premier).
 - Toutes les données restent **dans le navigateur** (`localStorage`) —
   aucun serveur, aucun compte.
 - **Aucune connexion sortante** — chaque page déclare une
@@ -169,21 +174,22 @@ les releases (lint, tests, CI/CD) — voir « Contribuer » ci-dessous.
 - `index.html` — tableau de bord (page d'accueil)
 - `pages/` — pages dédiées (Revenus, Dépenses, Charges, Suivi, CashBack/RoundUp,
   Économie, Placement, Produits financiers, Guide, Annexe, Sauvegarder (`exporter.html`), Imprimer,
-  Profil, Paramètres, À propos, Vos données)
+  Paramètres, À propos, Vos données ; `budget.html` ne fait que rediriger vers
+  la section Budget des Paramètres)
 - `assets/css/style.css` — thème (clair/sombre), taille agrandie, mise en page, responsive, impression
 - `assets/js/script.js` — logique des pages du tableau de bord (rendu, saisie, stockage local)
-- `assets/js/state.js` — état de l'application : catégories, profil d'exemple, lecture des données enregistrées ou importées et archivage mensuel, partagé avec les tests
+- `assets/js/state.js` — état de l'application : catégories, budget d'exemple, lecture des données enregistrées ou importées et archivage mensuel, partagé avec les tests
 - `assets/js/ui.js` — outils d'interface partagés : formats, éléments DOM, pop-ups (pile, Échap, focus), choix en boutons, ajout guidé, tracés SVG
-- `assets/js/report.js` — rapport d'export et d'impression, sauvegarde du profil (pages Sauvegarder et Imprimer)
+- `assets/js/report.js` — rapport d'export et d'impression, sauvegarde du budget (pages Sauvegarder et Imprimer)
 - `assets/js/guide.js` — guide de démarrage : page Guide, premier usage, étape en cours sur les pages
 - `assets/js/docx.js` — génération de fichiers Word (.docx) dans le navigateur (XML Word + archive ZIP), partagée avec les tests
-- `assets/js/pdflink.js` — données du profil dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
+- `assets/js/pdflink.js` — données du budget dans le lien de la page de garde du rapport PDF, et leur relecture à l'import
 - `assets/js/calc.js` — calculs financiers purs (intérêts composés, économies), partagés avec les tests
-- `assets/js/profiles.js` — profils : liste, profil actif, données de chaque profil sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
+- `assets/js/budgets.js` — budgets : liste, budget actif, données de chaque budget sous sa propre clé `localStorage`, fichier de sauvegarde `.gbudget`
 - `assets/js/coin-story.js` — animation CoinStory (source unique, deux versions : v2 par défaut, v1 avec pluie de pièces réservée à la page Placement), utilisée par l'écran de chargement et par la démo
 - `assets/js/loader.js` — écran de chargement « pièces » (CoinStory version 2), inclus dans le `<head>` de chaque page juste après `coin-story.js`
-- `assets/js/nav.js` — menu, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
-- `assets/js/profil.js` / `assets/js/parametres.js` — pages Profil et Paramètres
+- `assets/js/nav.js` — menu, sélecteur de budget, thème et taille d'affichage, bouton « Fermer l'exemple », effacement des données
+- `assets/js/budget.js` / `assets/js/parametres.js` — page Paramètres : gestion des budgets, puis affichage (taille, thème)
 - `assets/js/tabs.js` — onglets accessibles (page Produits financiers)
 - `assets/img/` — favicons et image de partage (Open Graph)
 - `animation-pieces/` — démo de l'animation CoinStory (ouvrir `animation-pieces/index.html`, qui charge `assets/js/coin-story.js` et `assets/css/style.css`) : lecture, pause, navigation entre les étapes, thème clair/sombre et bascule entre la version 1 et la version 2. Hors site publié.
@@ -196,7 +202,7 @@ et une release automatisée :
 ```bash
 npm install       # installe l'outillage (lint, tests, hooks Git)
 npm run lint      # ESLint sur assets/js
-npm test          # Vitest sur calc.js, profiles.js, docx.js et pdflink.js
+npm test          # Vitest sur calc.js, budgets.js, docx.js et pdflink.js
 npm run build     # vérifie les références des pages et la version de cache des CSS/JS
 npm run bump-assets  # augmente le ?v= des CSS/JS après les avoir modifiés
 ```
