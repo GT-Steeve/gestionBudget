@@ -277,7 +277,7 @@
     };
     const REPORT_PALETTE = ['#2a78d6', '#eb6834', '#eda100', '#1baf7a', '#e87ba4', '#4a3aa7', '#9a6a3a',
       '#7a9a0e', '#e34948', '#0f8b8d', '#b04fb5', '#5b6b7a', '#b0285f', '#00838f', '#8d6e63'];
-    const RESTE_LABEL = 'Reste à épargner';
+    const RESTE_LABEL = 'Restant ou solde';
     /** Une couleur par libellé : celle de la catégorie quand elle existe, sinon une couleur libre de la palette. */
     const reportColors = (labels) => {
       const fixed = labels.map((l) => (l === RESTE_LABEL ? '#d6ccb6' : REPORT_CAT_COLORS[CAT_KEY[l]] || null));
@@ -285,7 +285,7 @@
       let next = 0;
       return fixed.map((c) => c || free[next++ % free.length]);
     };
-    /** Répartition (montant et part du total), de la plus grosse à la plus petite, « Reste à épargner » en dernier. */
+    /** Répartition (montant et part du total), de la plus grosse à la plus petite, « Restant ou solde » en dernier. */
     const breakdownTable = (entries, centerLabel) => {
       const kept = entries.filter((e) => e.value > 0)
         .sort((a, b) => (a.label === RESTE_LABEL) - (b.label === RESTE_LABEL) || b.value - a.value);
@@ -358,23 +358,23 @@
           title: 'Synthèse',
           blocks: [
             tilesBlock([
-              ['Revenus par mois', eur2.format(rev), `${eur2.format(annual(rev))} par an`],
+              ['Ressources par mois', eur2.format(rev), `${eur2.format(annual(rev))} par an`],
               ['Charges par mois', eur2.format(ch), `${eur2.format(annual(ch))} par an`],
-              ['Solde par mois (revenus − charges)', eur2.format(solde), `${eur2.format(annual(solde))} par an`, toneOf(solde)],
-              ['Taux d\'épargne', rev > 0 ? pct1.format(solde / rev) : '–', 'solde ÷ revenus', toneOf(solde)],
+              ['Solde par mois (ressources − charges)', eur2.format(solde), `${eur2.format(annual(solde))} par an`, toneOf(solde)],
+              ['Taux d\'épargne', rev > 0 ? pct1.format(solde / rev) : '–', 'solde ÷ ressources', toneOf(solde)],
               ['Économie possible', `${eur2.format(eco)} par mois`, eco > 0 ? `solde après économies : ${eur2.format(solde + eco)}` : null],
               [`Capital dans ${years} an${years > 1 ? 's' : ''}`, `${eur0.format(high.pts[years].balance)} à ${fmtRate(high.rate)}`,
                 `${eur0.format(low.pts[years].balance)} à ${fmtRate(low.rate)}`]
             ]),
             { type: 'h3', text: 'Où va votre argent ?' },
-            breakdownTable(entries, rev >= ch && rev > 0 ? 'Revenus par mois' : 'Charges par mois')
+            breakdownTable(entries, rev >= ch && rev > 0 ? 'Ressources par mois' : 'Charges par mois')
           ]
         };
       },
       revenus: () => ({
-        title: 'Revenus',
+        title: 'Ressources',
         blocks: [lineTable(state.revenus), { type: 'h3', text: 'Répartition par catégorie' },
-          categoryTable(REV_CATEGORIES, state.revenus, 'mensuel', 'Revenus par mois')]
+          categoryTable(REV_CATEGORIES, state.revenus, 'mensuel', 'Ressources par mois')]
       }),
       charges: () => ({
         title: 'Charges',
@@ -464,8 +464,8 @@
 
     /** Contenu de chaque chapitre, affiché sous son titre dans le sommaire (PDF / impression). */
     const SECTION_SUMMARIES = {
-      synthese: 'Chiffres clés et répartition de vos revenus',
-      revenus: 'Détail des revenus et répartition par catégorie',
+      synthese: 'Chiffres clés et répartition de vos ressources',
+      revenus: 'Détail des ressources et répartition par catégorie',
       depenses: 'Dépenses du mois et répartition par catégorie',
       charges: 'Détail des charges fixes et répartition par catégorie',
       historique: 'Dépenses des mois précédents',
@@ -481,7 +481,7 @@
        l'historique des dépenses sont inclus. */
     const ALL_SECTIONS = EXPORT_MODELS.complet.sections;
     const SECTION_NAMES = {
-      synthese: 'synthèse', revenus: 'revenus', depenses: 'dépenses du mois', charges: 'charges',
+      synthese: 'synthèse', revenus: 'ressources', depenses: 'dépenses du mois', charges: 'charges',
       historique: 'historique des dépenses', economie: 'économie', placement: 'placement',
       cashback: 'cashback', roundup: 'RoundUp'
     };

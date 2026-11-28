@@ -99,7 +99,7 @@
       h('dt', {}, label), h('dd', {}, hideAmounts ? '•••• €' : value));
     const tone = hideAmounts ? '' : s.solde > 0.004 ? ' is-good' : s.solde < -0.004 ? ' is-bad' : '';
     return h('dl', { class: 'budget-stats' },
-      stat('revenus', 'Revenus', eur.format(s.revenus)),
+      stat('revenus', 'Ressources', eur.format(s.revenus)),
       stat('charges', 'Charges', eur.format(s.charges)),
       stat('depenses', 'Dépenses', eur.format(s.depenses)),
       stat('solde', 'Solde', eur.format(s.solde), tone));

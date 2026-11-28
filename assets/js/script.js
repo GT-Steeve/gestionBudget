@@ -20,6 +20,7 @@
     revenus: {
       'Salaire': 'Ex. Salaire net',
       'Aide': 'Ex. Aide au logement',
+      'Budget': 'Ex. Budget vacances',
       'Autre': 'Ex. Pension alimentaire'
     },
     charges: {
@@ -166,7 +167,7 @@
   const LINE_TYPES = {
     revenus: {
       body: '#revenusBody', cats: sortAlpha(REV_CATEGORIES),
-      empty: 'Aucun revenu pour le moment. Ajoutez votre première ligne ci-dessus.',
+      empty: 'Aucune ressource pour le moment. Ajoutez votre première ligne ci-dessus.',
       wrap: '#revenusTableWrap', left: '#revenusScrollLeft', right: '#revenusScrollRight',
       newestFirst: true, compact: true
     },
@@ -278,7 +279,7 @@
     for (const c of items) {
       /** Suppression confirmée ; done() (facultatif) ferme le pop-up de détail. */
       const askDelete = (done) => {
-        confirmDelete(`Supprimer ${type === 'revenus' ? 'ce revenu' : 'cette charge'} ?`, [
+        confirmDelete(`Supprimer ${type === 'revenus' ? 'cette ressource' : 'cette charge'} ?`, [
           ['Catégorie', c.categorie],
           ['Libellé', c.nom],
           ['Valeur', `${eur2.format(c.mensuel)} / mois`]
@@ -503,11 +504,11 @@
     msg.replaceChildren();
     if (!state.revenus.length && !state.charges.length) msg.append(' ');
     else if (solde > 0.004) msg.append('Il vous reste ', h('span', { class: 'good' }, `${eur2.format(solde)} par mois`), ' après vos charges : de quoi épargner.');
-    else if (solde < -0.004) msg.append('Vos charges dépassent vos revenus de ', h('span', { class: 'bad' }, `${eur2.format(-solde)} par mois`), '.');
-    else msg.append('Vos revenus couvrent exactement vos charges.');
+    else if (solde < -0.004) msg.append('Vos charges dépassent vos ressources de ', h('span', { class: 'bad' }, `${eur2.format(-solde)} par mois`), '.');
+    else msg.append('Vos ressources couvrent exactement vos charges.');
 
     renderBreakdown($('#revBreakdown'), REV_CATEGORIES, state.revenus, (r) => r.mensuel, rev,
-      'Ajoutez des revenus pour voir leur répartition.', 'revenus');
+      'Ajoutez des ressources pour voir leur répartition.', 'revenus');
   }
 
   function renderChargeTotals() {
@@ -582,7 +583,7 @@
     };
     const clearAll = () => {
       confirmDelete('Êtes-vous sûr de tout effacer ?', [
-        ['Revenus', `${state.revenus.length}`],
+        ['Ressources', `${state.revenus.length}`],
         ['Charges', `${state.charges.length}`],
         ['Comparaisons', `${state.scenarios.length}`],
         ['Dépenses', `${state.depenses.length}`],
@@ -610,7 +611,7 @@
       });
     };
     const clearRevenus = () => {
-      confirmDelete('Effacer TOUS les revenus ?', [], () => {
+      confirmDelete('Effacer TOUTES les ressources ?', [], () => {
         state.revenus = [];
         renderLines('revenus');
         refresh();
@@ -2615,7 +2616,7 @@
 
   /** Une couleur fixe par catégorie, la même dans le camembert et dans les barres. */
   const CAT_KEY = {
-    Salaire: 'salaire', Aide: 'aide',
+    Salaire: 'salaire', Aide: 'aide', Budget: 'budget',
     Loyer: 'loyer', Factures: 'factures', Courses: 'courses',
     Transport: 'transport', Abonnements: 'abonnements', 'Activité': 'activite', Plaisir: 'plaisir', Autre: 'autre',
     Assurance: 'assurance', 'Épargne': 'epargne', Placement: 'placement', 'Prêt': 'pret', 'Famille / Proche': 'famille'
@@ -2641,7 +2642,7 @@
       }))
       .filter((x) => x.value > 0);
     const slices = [...byCat];
-    if (solde > 0.004) slices.push({ key: 'reste', label: 'Reste à épargner', value: solde });
+    if (solde > 0.004) slices.push({ key: 'reste', label: 'Restant ou solde', value: solde });
     const total = slices.reduce((a, x) => a + x.value, 0);
     const useRev = rev >= ch && rev > 0;
 
@@ -2657,7 +2658,7 @@
 
     return {
       k, rev, ch, solde, unit: unitLabel(), slices, total,
-      centerLabel: useRev ? 'Revenus' : 'Charges', centerValue: useRev ? rev : ch, items
+      centerLabel: useRev ? 'Ressources' : 'Charges', centerValue: useRev ? rev : ch, items
     };
   }
 
@@ -2677,12 +2678,12 @@
     box.replaceChildren();
     if (m.rev <= 0 && m.ch <= 0) { box.append(' '); return; }
     if (m.rev <= 0) {
-      box.append(`Vous avez ${eur0.format(m.ch)} de charges ${m.unit}, mais aucun revenu n'est saisi.`);
+      box.append(`Vous avez ${eur0.format(m.ch)} de charges ${m.unit}, mais aucune ressource n'est saisie.`);
       return;
     }
-    box.append(`Sur ${eur0.format(m.rev)} de revenus ${m.unit}, vous dépensez ${eur0.format(m.ch)}${m.solde >= 0 ? ` (${pct1.format(m.ch / m.rev)})` : ''}. `);
+    box.append(`Sur ${eur0.format(m.rev)} de ressources ${m.unit}, vous dépensez ${eur0.format(m.ch)}${m.solde >= 0 ? ` (${pct1.format(m.ch / m.rev)})` : ''}. `);
     if (m.solde > 0.004) box.append('Il reste ', h('span', { class: 'good' }, `${eur0.format(m.solde)} (${pct1.format(m.solde / m.rev)})`), ' à épargner.');
-    else if (m.solde < -0.004) box.append('Vos charges dépassent vos revenus de ', h('span', { class: 'bad' }, eur0.format(-m.solde)), '.');
+    else if (m.solde < -0.004) box.append('Vos charges dépassent vos ressources de ', h('span', { class: 'bad' }, eur0.format(-m.solde)), '.');
     else box.append('Votre budget est à l\'équilibre.');
   }
 
@@ -2695,10 +2696,10 @@
     const row = (label, value, sub) => h('div', {}, h('dt', {}, label), h('dd', {}, value, sub ? h('small', {}, sub) : null));
 
     $('#bilan').replaceChildren(
-      row('Revenus', eur2.format(m.rev), m.unit),
+      row('Ressources', eur2.format(m.rev), m.unit),
       row('Charges', eur2.format(m.ch), m.unit),
-      row('Solde (revenus − charges)', signedNode(m.solde), m.unit),
-      row('Taux d\'épargne', m.rev > 0 ? h('span', { class: m.solde > 0.004 ? 'good' : m.solde < -0.004 ? 'bad' : '' }, pct1.format(m.solde / m.rev)) : '–', 'solde ÷ revenus'),
+      row('Solde (ressources − charges)', signedNode(m.solde), m.unit),
+      row('Taux d\'épargne', m.rev > 0 ? h('span', { class: m.solde > 0.004 ? 'good' : m.solde < -0.004 ? 'bad' : '' }, pct1.format(m.solde / m.rev)) : '–', 'solde ÷ ressources'),
       row('Économie possible', eur2.format(eco), eco > 0 ? `solde après économies : ${eur2.format(m.solde + eco)}` : 'aucune comparaison (partie 3)'),
       row(`Capital dans ${years} an${years > 1 ? 's' : ''}`, `${eur0.format(high.pts[years].balance)} à ${rHigh}`,
         `${eur0.format(low.pts[years].balance)} à ${rLow} · ${eur0.format(state.yield.versement)} épargnés par mois`)
@@ -2725,7 +2726,7 @@
         s('text', { class: 'pie-c1', x: C, y: C + 4, 'text-anchor': 'middle' }, 'Aucune donnée')
       );
       box.append(svg);
-      legend.append(h('li', { class: 'plegend__empty' }, 'Ajoutez des revenus et des charges pour voir la répartition.'));
+      legend.append(h('li', { class: 'plegend__empty' }, 'Ajoutez des ressources et des charges pour voir la répartition.'));
       $('#pieNote').textContent = '';
       return;
     }
@@ -2746,13 +2747,19 @@
       tip.style.transform = right ? 'none' : 'translateX(-100%)';
     };
 
+    // Parts dessinées par ordre croissant (depuis midi, sens horaire), avec
+    // leur % inscrit dessus, « Restant ou solde » toujours en dernier ; la
+    // légende en dessous liste les montants par ordre décroissant.
+    const isReste = (x) => x.key === 'reste';
+    const ascending = [...m.slices.filter((x) => !isReste(x)).sort((x, y) => x.value - y.value), ...m.slices.filter(isReste)];
+    const pctLabels = [];
     let a = -Math.PI / 2;
-    for (const sl of m.slices) {
+    for (const sl of ascending) {
       const frac = sl.value / m.total;
       const a1 = a + frac * 2 * Math.PI;
       const mid = (a + a1) / 2;
       const node = s('path', {
-        class: 'pie-slice', d: frac >= 0.9999 ? ringPath(C, C, R0, R1) : arcPath(C, C, R0, R1, a, a1),
+        class: `pie-slice${isReste(sl) ? ' pie-slice--reste' : ''}`, d: frac >= 0.9999 ? ringPath(C, C, R0, R1) : arcPath(C, C, R0, R1, a, a1),
         'fill-rule': 'evenodd', style: `fill:${catColor(sl.key)}`,
         tabindex: '0', role: 'img', 'aria-label': `${sl.label} : ${eur2.format(sl.value)} ${m.unit}, ${pct1.format(frac)}`
       });
@@ -2773,11 +2780,27 @@
       svg.append(node);
       a = a1;
 
+      // % sur la part, seulement si elle est assez large pour l'afficher lisiblement.
+      if (frac >= 0.05) {
+        const rr = (R0 + R1) / 2;
+        pctLabels.push(s('text', {
+          class: 'pie-pct', x: C + rr * Math.cos(mid), y: C + rr * Math.sin(mid) + 4, 'text-anchor': 'middle', 'aria-hidden': 'true'
+        }, `${Math.round(frac * 100)} %`));
+      }
+    }
+    svg.append(...pctLabels);
+
+    for (const sl of [...m.slices].sort((x, y) => y.value - x.value)) {
       legend.append(h('li', {},
-        h('span', { class: 'sw', style: `--c:${catColor(sl.key)}` }),
+        // « Restant ou solde » : carré gris dessiné en SVG, pour un pointillé
+        // net (une bordure CSS dashed de 12px ne montre que deux tirets flous).
+        isReste(sl)
+          ? s('svg', { class: 'sw sw--reste', viewBox: '0 0 12 12', width: 12, height: 12, 'aria-hidden': 'true' },
+            s('rect', { x: 0.75, y: 0.75, width: 10.5, height: 10.5, rx: 2.5 }))
+          : h('span', { class: 'sw', style: `--c:${catColor(sl.key)}` }),
         h('span', { class: 'pl-name' }, sl.label),
         h('span', { class: 'pl-val' }, eur2.format(sl.value)),
-        h('span', { class: 'pl-pct' }, pct1.format(frac))
+        h('span', { class: 'pl-pct' }, pct1.format(sl.value / m.total))
       ));
     }
 
@@ -2788,9 +2811,9 @@
     box.append(svg);
 
     $('#pieNote').textContent = m.rev <= 0
-      ? 'Aucun revenu saisi : le camembert montre la répartition de vos charges.'
+      ? 'Aucune ressource saisie : le camembert montre la répartition de vos charges.'
       : m.solde < -0.004
-        ? `Vos charges dépassent vos revenus de ${eur0.format(-m.solde)} ${m.unit} : le camembert montre la répartition de vos charges.`
+        ? `Vos charges dépassent vos ressources de ${eur0.format(-m.solde)} ${m.unit} : le camembert montre la répartition de vos charges.`
         : '';
   }
 
@@ -2827,7 +2850,7 @@
 
     const { items } = m;
     if (!items.length) {
-      box.append(h('p', { class: 'note' }, 'Ajoutez des revenus et des charges pour afficher le graphique.'));
+      box.append(h('p', { class: 'note' }, 'Ajoutez des ressources et des charges pour afficher le graphique.'));
       $('#barScrollLeft').hidden = true;
       $('#barScrollRight').hidden = true;
       return;
@@ -2858,7 +2881,7 @@
 
     const svg = s('svg', {
       viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'group',
-      'aria-label': `Graphique en barres : ${items.length} lignes, revenus puis charges, en euros ${m.unit}`
+      'aria-label': `Graphique en barres : ${items.length} lignes, ressources puis charges, en euros ${m.unit}`
     });
 
     for (let v = 0; v <= yMax + 1e-9; v += step) {
@@ -2895,7 +2918,7 @@
       const show = () => {
         tip.replaceChildren(
           h('div', { class: 'tip__head' }, it.label),
-          h('div', { class: 'tip__row' }, h('span', { class: 'sw', style: `--c:${catColor(it.key)}` }), h('span', { class: 'lbl' }, `${it.cat} · ${it.type === 'revenus' ? 'revenu' : 'charge'}`)),
+          h('div', { class: 'tip__row' }, h('span', { class: 'sw', style: `--c:${catColor(it.key)}` }), h('span', { class: 'lbl' }, `${it.cat} · ${it.type === 'revenus' ? 'ressource' : 'charge'}`)),
           h('div', { class: 'tip__row' }, h('span', { class: 'lbl' }, 'Par mois'), h('strong', {}, eur2.format(it.monthly))),
           h('div', { class: 'tip__row' }, h('span', { class: 'lbl' }, 'Par an (× 12)'), h('strong', {}, eur2.format(annual(it.monthly))))
         );
@@ -2920,7 +2943,7 @@
     });
 
     // Légendes de groupe sous les libellés
-    const captions = { revenus: 'REVENUS', charges: 'CHARGES' };
+    const captions = { revenus: 'RESSOURCES', charges: 'CHARGES' };
     for (const [type, g] of Object.entries(groups)) {
       const mid = (g.start + g.end) / 2;
       svg.append(

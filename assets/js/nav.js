@@ -113,7 +113,7 @@
       const depenses = Array.isArray(saved.depenses) ? saved.depenses : [];
       const depensesHistorique = Array.isArray(saved.depensesHistorique) ? saved.depensesHistorique : [];
       UI.confirmDialog('Êtes-vous sûr de tout effacer ?', [
-        ['Revenus', `${revenus.length}`],
+        ['Ressources', `${revenus.length}`],
         ['Charges', `${charges.length}`],
         ['Comparaisons', `${scenarios.length}`],
         ['Dépenses', `${depenses.length}`],

@@ -14,10 +14,10 @@
 (() => {
   const { h } = UI;
   const STEPS = [
-    { key: 'revenus', page: 'revenus.html', title: 'Vos revenus', btn: 'btnOpenRevenuWizard', action: 'Ajouter un revenu',
-      text: 'Ajoutez ce que vous gagnez chaque mois : salaire, aides, pension… Passez à l\'étape suivante une fois terminé.' },
+    { key: 'revenus', page: 'revenus.html', title: 'Vos ressources', btn: 'btnOpenRevenuWizard', action: 'Ajouter une ressource',
+      text: ['Ajoutez votre budget initial ou vos ressources mensuelles : salaire, aides, pension…', 'Passez à l\'étape suivante une fois terminé.'] },
     { key: 'charges', page: 'charges.html', title: 'Vos charges', btn: 'btnOpenChargeWizard', action: 'Ajouter une charge',
-      text: 'Ajoutez vos charges fixes : loyer, factures, abonnements, assurances… Revenus moins charges donnent votre solde du mois.' },
+      text: 'Ajoutez vos charges fixes : loyer, factures, abonnements, assurances… Ressources moins charges donnent votre solde du mois.' },
     { key: 'depenses', page: 'depenses.html', title: 'Vos dépenses', btn: 'btnOpenDepenseWizard', action: 'Nouvelle dépense',
       text: 'Au fil du mois, notez vos dépenses du quotidien : courses, sorties, imprévus… Chaque mois est ensuite archivé dans l\'historique.' },
     { key: 'economie', page: 'economie.html', title: 'Vos économies', btn: 'btnOpenScenarioWizard', action: 'Ajouter une comparaison',
@@ -103,7 +103,8 @@
   const box = h('section', { class: 'card guide-step', 'aria-labelledby': 'guideStepTitle' },
     h('p', { class: 'guide-step__count' }, `Guide · étape ${index + 1} sur ${STEPS.length}`),
     h('h2', { id: 'guideStepTitle', class: 'guide-step__title' }, step.title),
-    h('p', { class: 'guide-step__text' }, step.text),
+    // Texte sur une ou plusieurs lignes (tableau : un retour à la ligne entre chaque).
+    h('p', { class: 'guide-step__text' }, ...[step.text].flat().flatMap((t, i) => (i ? [h('br'), t] : [t]))),
     h('div', { class: 'guide-step__actions' },
       index > 0 ? h('button', { type: 'button', class: 'btn btn--ghost', onclick: () => goTo(index - 1) }, 'Étape précédente') : null,
       // Sur la page de l'étape : le bouton ouvre l'ajout ; ailleurs, il y ramène.

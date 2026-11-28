@@ -22,7 +22,7 @@
   const REVEAL = 700;       // ms de la cascade d'arrivée du contenu
   const MAX_WAIT = 8000;    // filet de sécurité : le contenu s'affiche quoi qu'il arrive
   const MAX_SETTLE = 6000;  // fin de l'étape en cours : jamais plus longue que ça
-  const STEPS = ['Chargement des revenus', 'Chargement des charges', 'Chargement des dépenses', 'Calcul des économies', 'Préparation de la synthèse'];
+  const STEPS = ['Chargement des ressources', 'Chargement des charges', 'Chargement des dépenses', 'Calcul des économies', 'Préparation de la synthèse'];
 
   const timers = [];
   let loader = null;

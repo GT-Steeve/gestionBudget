@@ -5,7 +5,7 @@ cashback et arrondi automatique, économies potentielles, simulation de
 placement, exemples de produits financiers et synthèse visuelle,
 **le tout avec AUCUNE FUITE DE DONNÉE !!**
 
-**Version actuelle :** v1.26.0 (historique dans [`patchNote.txt`](patchNote.txt))
+**Version actuelle :** v1.26.3 (historique dans [`patchNote.txt`](patchNote.txt))
 
 **Démo en ligne :** https://gt-steeve.github.io/gestionBudget/
 
@@ -146,8 +146,8 @@ placement, exemples de produits financiers et synthèse visuelle,
     fonctionnalités et n'est utilisée nulle part pour l'instant.
 - **Interface responsive** — sur bureau, menu latéral replié sur ses icônes
   qui se déplie au survol ; sur tablette, menu latéral déplié ; sur mobile,
-  Accueil (maison) en icône à gauche, sélecteur de budget au centre,
-  Paramètres en icône à droite et onglets en dessous (Guide en premier).
+  icône du projet à gauche (vers la Synthèse), sélecteur de budget au centre,
+  Paramètres en icône à droite et onglets en dessous (Synthèse, Ressources…, puis Guide et À propos en dernier).
 - Toutes les données restent **dans le navigateur** (`localStorage`) —
   aucun serveur, aucun compte.
 - **Aucune connexion sortante** — chaque page déclare une

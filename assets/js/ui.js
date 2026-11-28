@@ -504,7 +504,7 @@
     const closeIsIcon = closeBtn.classList.contains('icon-btn');
     let draft = null; // { nom, categorie, montant, ajout } pendant la modification
 
-    $('#detailTitle').textContent = isCharge ? 'Détail de la charge' : isRevenu ? 'Détail du revenu' : 'Détail de la dépense';
+    $('#detailTitle').textContent = isCharge ? 'Détail de la charge' : isRevenu ? 'Détail de la ressource' : 'Détail de la dépense';
     $('#detailStamp').hidden = false;
     const fmtDate = (d) => (d ? fmtAjoutDate(d) : 'Date non connue');
     const fmtTime = (d) => (d ? `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}` : '?? h ??');

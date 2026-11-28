@@ -30,7 +30,7 @@
 
   /** Types d'évènements : libellé (singulier, pluriel), signe du montant. L'ordre est celui d'affichage. */
   const TYPES = {
-    revenu: { label: 'Revenu', plural: 'revenus', sign: 1 },
+    revenu: { label: 'Ressource', plural: 'ressources', sign: 1 },
     charge: { label: 'Charge', plural: 'charges', sign: -1 },
     depense: { label: 'Dépense', plural: 'dépenses', sign: -1 }
   };
@@ -271,7 +271,7 @@
     const after = () => { save(); render(); };
     const onDelete = (done) => {
       const monthly = kind !== 'depenses';
-      confirmDialog(`Supprimer ${{ revenus: 'ce revenu', charges: 'cette charge', depenses: 'cette dépense' }[kind]} ?`, [
+      confirmDialog(`Supprimer ${{ revenus: 'cette ressource', charges: 'cette charge', depenses: 'cette dépense' }[kind]} ?`, [
         ['Catégorie', ev.item.categorie],
         ['Libellé', ev.item.nom],
         [monthly ? 'Valeur' : 'Montant', `${eur2.format(monthly ? ev.item.mensuel : ev.item.montant)}${monthly ? ' / mois' : ''}`]

@@ -12,7 +12,9 @@
   if (root) root.BudgetState = state;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   const CATEGORIES = ['Loyer', 'Factures', 'Courses', 'Transport', 'Abonnements', 'Activité', 'Plaisir', 'Assurance', 'Épargne', 'Placement', 'Prêt', 'Famille / Proche', 'Autre'];
-  const REV_CATEGORIES = ['Salaire', 'Aide', 'Autre'];
+  // Budget : une somme de départ (ex. économies pour les vacances), pour suivre
+  // ses dépenses à partir d'un montant mis de côté plutôt que d'un revenu.
+  const REV_CATEGORIES = ['Salaire', 'Aide', 'Budget', 'Autre'];
   const DEP_CATEGORIES = ['Course', 'Alimentaire', 'Transport', 'Shopping', 'Divertissement', 'Sortie', 'Détente', 'Équipement', 'Entretien ménager', 'Cadeau', 'Famille / Proche', 'Santé', 'Amende', 'Imprévu', 'Restaurant', 'Épargne', 'Placement', 'Autre'];
   const DEFAULT_RATES = [2, 10]; // rendements annuels proposés par défaut, en % (modifiables)
   const MAX_RATE = 100;          // plafond des rendements saisis, en %
