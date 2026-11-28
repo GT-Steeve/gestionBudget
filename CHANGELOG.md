@@ -1,3 +1,10 @@
+## [1.55.4](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.3...v1.55.4) (2026-11-28)
+
+
+### Bug Fixes
+
+* **export:** page Sauvegarder adaptée au mobile, période de l'historique ([50d40bf](https://github.com/GT-Steeve/gestionBudget/commit/50d40bfa75976f2f83c6a25690134ec03f80d76d))
+
 ## [1.55.3](https://github.com/GT-Steeve/gestionBudget/compare/v1.55.2...v1.55.3) (2026-11-27)
 
 
